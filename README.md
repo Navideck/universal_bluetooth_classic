@@ -15,21 +15,21 @@ A cross-platform (Android/iOS/macOS/Windows/Linux) plugin for managing Bluetooth
 
 ## API Support
 
-|                      | Android | iOS | macOS | Windows | Linux |
-| :------------------- | :-----: | :-: | :---: | :-----: | :---: |
-| showBluetoothAccessoryPicker |   ✔️    | ✔️  |  ✔️   |   ✔️    | ❌  |
-| startScan/stopScan   |   ✔️    | ❌  |  ✔️   |   ✔️    | ✔️  |
-| pair/unpair          |   ✔️    | ❌  |  ✔️   |   ✔️    | ✔️  |
-| getPairedDevices     |   ✔️    | ❌  |  ✔️   |   ✔️    | ✔️  |
-| connect (HID)        |   ✔️    | ❌  |  ✔️   |   ✔️    | ❌  |
-| disconnect           |   ✔️    | ❌  |  ✔️   |   ✔️    | ✔️* |
-| sendReport           |   ✔️    | ❌  |  ✔️   |   ✔️    | ❌  |
-| setupSdp/closeSdp    |   ✔️    | ❌  |  ✔️   |   ✔️    | ❌  |
-| closeEASession       |   ❌    | ✔️  |  ❌   |   ❌    | ❌  |
-| accessoryConnected/Disconnected |   ❌    | ✔️  |  ❌   |   ❌    | ❌  |
-| onConnectionStateChanged (HID) |   ✔️    | ❌  |  ✔️   |   ✔️    | ❌  |
-| onGetReport          |   ✔️    | ❌  |  ✔️   |   ✔️    | ❌  |
-| onSdpServiceRegistrationUpdate |   ✔️    | ❌  |  ✔️   |   ✔️    | ❌  |
+|                      | Android | iOS | macOS | Windows | Linux | Web |
+| :------------------- | :-----: | :-: | :---: | :-----: | :---: | :-: |
+| showBluetoothAccessoryPicker |   ✔️    | ✔️  |  ✔️   |   ✔️    | ❌  | ❌  |
+| startScan/stopScan   |   ✔️    | ❌  |  ✔️   |   ✔️    | ✔️  | ❌  |
+| pair/unpair          |   ✔️    | ❌  |  ✔️   |   ✔️    | ✔️  | ❌  |
+| getPairedDevices     |   ✔️    | ❌  |  ✔️   |   ✔️    | ✔️  | ❌  |
+| connect (HID)        |   ✔️    | ❌  |  ✔️   |   ✔️    | ❌  | ❌  |
+| disconnect           |   ✔️    | ❌  |  ✔️   |   ✔️    | ✔️* | ❌  |
+| sendReport           |   ✔️    | ❌  |  ✔️   |   ✔️    | ❌  | ❌  |
+| setupSdp/closeSdp    |   ✔️    | ❌  |  ✔️   |   ✔️    | ❌  | ❌  |
+| closeEASession       |   ❌    | ✔️  |  ❌   |   ❌    | ❌  | ❌  |
+| accessoryConnected/Disconnected |   ❌    | ✔️  |  ❌   |   ❌    | ❌  | ❌  |
+| onConnectionStateChanged (HID) |   ✔️    | ❌  |  ✔️   |   ✔️    | ❌  | ❌  |
+| onGetReport          |   ✔️    | ❌  |  ✔️   |   ✔️    | ❌  | ❌  |
+| onSdpServiceRegistrationUpdate |   ✔️    | ❌  |  ✔️   |   ✔️    | ❌  | ❌  |
 
 *Linux `disconnect()` is basic disconnect only, not HID-specific.
 
