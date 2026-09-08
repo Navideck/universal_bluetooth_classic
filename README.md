@@ -1,5 +1,9 @@
 # Bluetooth Accessory Manager
 
+<div align="center">
+  <img src="assets/bluetooth_accessory_manager_banner.jpg" alt="Bluetooth Accessory Manager — Bluetooth Classic and External Accessory for Flutter" width="100%">
+</div>
+
 [![bluetooth_accessory_manager version](https://img.shields.io/pub/v/bluetooth_accessory_manager?label=bluetooth_accessory_manager)](https://pub.dev/packages/bluetooth_accessory_manager)
 
 A cross-platform (Android/iOS/macOS/Windows/Linux) plugin for managing Bluetooth accessories and HID devices in Flutter.
