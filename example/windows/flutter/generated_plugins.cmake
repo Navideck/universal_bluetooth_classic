@@ -3,7 +3,7 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
-  flutter_accessory_manager
+  bluetooth_accessory_manager
   permission_handler_windows
 )
 

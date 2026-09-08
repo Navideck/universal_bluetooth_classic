@@ -1,6 +1,6 @@
-# flutter_accessory_manager_example
+# bluetooth_accessory_manager_example
 
-Demonstrates how to use the flutter_accessory_manager plugin.
+Demonstrates how to use the bluetooth_accessory_manager plugin.
 
 ## Getting Started
 

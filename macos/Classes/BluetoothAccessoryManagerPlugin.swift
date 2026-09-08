@@ -6,7 +6,7 @@ import Foundation
 import IOBluetooth
 import IOKit.hid
 
-public class FlutterAccessoryManagerPlugin: NSObject, FlutterPlugin {
+public class BluetoothAccessoryManagerPlugin: NSObject, FlutterPlugin {
     var accessoryManagerCallbackChannel: FlutterAccessoryCallbackChannel
     var hidCallbackChannel: BluetoothHidManagerCallbackChannel
 
@@ -32,13 +32,13 @@ public class FlutterAccessoryManagerPlugin: NSObject, FlutterPlugin {
         let messenger: FlutterBinaryMessenger = registrar.messenger
         let callbackChannel = FlutterAccessoryCallbackChannel(binaryMessenger: messenger)
         let hidCallback = BluetoothHidManagerCallbackChannel(binaryMessenger: messenger)
-        let instance = FlutterAccessoryManagerPlugin(callbackChannel: callbackChannel, hidCallback: hidCallback)
+        let instance = BluetoothAccessoryManagerPlugin(callbackChannel: callbackChannel, hidCallback: hidCallback)
         FlutterAccessoryPlatformChannelSetup.setUp(binaryMessenger: messenger, api: instance)
         BluetoothHidManagerPlatformChannelSetup.setUp(binaryMessenger: messenger, api: instance)
     }
 }
 
-extension FlutterAccessoryManagerPlugin: BluetoothHidManagerPlatformChannel {
+extension BluetoothAccessoryManagerPlugin: BluetoothHidManagerPlatformChannel {
     func setupSdp(config: SdpConfig) throws {
         if let macConfig = config.macSdpConfig {
             try setupBluetoothSdpConfig(config: macConfig)
@@ -161,7 +161,7 @@ extension FlutterAccessoryManagerPlugin: BluetoothHidManagerPlatformChannel {
     }
 }
 
-extension FlutterAccessoryManagerPlugin: FlutterAccessoryPlatformChannel {
+extension BluetoothAccessoryManagerPlugin: FlutterAccessoryPlatformChannel {
     func startScan() throws {
         inquiry.updateNewDeviceNames = true
         inquiry.inquiryLength = 3
@@ -243,7 +243,7 @@ extension FlutterAccessoryManagerPlugin: FlutterAccessoryPlatformChannel {
     }
 }
 
-extension FlutterAccessoryManagerPlugin: IOBluetoothDeviceAsyncCallbacks {
+extension BluetoothAccessoryManagerPlugin: IOBluetoothDeviceAsyncCallbacks {
     public func remoteNameRequestComplete(_ device: IOBluetoothDevice, status: IOReturn) {
         print("RemoteNameRequestComplete \(String(describing: device.addressString)) \(status)")
     }
@@ -261,7 +261,7 @@ extension FlutterAccessoryManagerPlugin: IOBluetoothDeviceAsyncCallbacks {
     }
 }
 
-extension FlutterAccessoryManagerPlugin: IOBluetoothDeviceInquiryDelegate {
+extension BluetoothAccessoryManagerPlugin: IOBluetoothDeviceInquiryDelegate {
     @objc public func deviceInquiryStarted(_: IOBluetoothDeviceInquiry) {
         isInquiryStarted = true
     }
@@ -286,7 +286,7 @@ extension FlutterAccessoryManagerPlugin: IOBluetoothDeviceInquiryDelegate {
     }
 }
 
-extension FlutterAccessoryManagerPlugin: IOBluetoothL2CAPChannelDelegate {
+extension BluetoothAccessoryManagerPlugin: IOBluetoothL2CAPChannelDelegate {
     func setupBluetoothSdpConfig(config: MacSdpConfig) throws {
         if sdpService != nil {
             throw PigeonError(code: "AlreadyInitialized", message: "SDP service already initialized", details: nil)

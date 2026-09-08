@@ -1,9 +1,9 @@
 #
 # To learn more about a Podspec see http://guides.cocoapods.org/syntax/podspec.html.
-# Run `pod lib lint flutter_accessory_manager.podspec` to validate before publishing.
+# Run `pod lib lint bluetooth_accessory_manager.podspec` to validate before publishing.
 #
 Pod::Spec.new do |s|
-  s.name             = 'flutter_accessory_manager'
+  s.name             = 'bluetooth_accessory_manager'
   s.version          = '0.0.1'
   s.summary          = 'A new Flutter plugin project.'
   s.description      = <<-DESC

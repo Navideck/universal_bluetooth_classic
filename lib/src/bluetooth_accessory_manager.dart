@@ -1,17 +1,17 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter_accessory_manager/flutter_accessory_manager.dart';
-import 'package:flutter_accessory_manager/src/platforms/accessory_manager.dart';
-import 'package:flutter_accessory_manager/src/platforms/accessory_manager_bluez.dart';
-import 'package:flutter_accessory_manager/src/platforms/external_accessory.dart';
+import 'package:bluetooth_accessory_manager/bluetooth_accessory_manager.dart';
+import 'package:bluetooth_accessory_manager/src/platforms/accessory_manager.dart';
+import 'package:bluetooth_accessory_manager/src/platforms/accessory_manager_bluez.dart';
+import 'package:bluetooth_accessory_manager/src/platforms/external_accessory.dart';
 
-class FlutterAccessoryManager {
+class BluetoothAccessoryManager {
   /// Default platform accessor.
-  static FlutterAccessoryManagerInterface? _platformInstance;
-  static FlutterAccessoryManagerInterface get _platform =>
+  static BluetoothAccessoryManagerInterface? _platformInstance;
+  static BluetoothAccessoryManagerInterface get _platform =>
       _platformInstance ??= _defaultPlatform();
 
   /// Set custom platform specific implementation (e.g. for testing).
-  static void setInstance(FlutterAccessoryManagerInterface? instance) {
+  static void setInstance(BluetoothAccessoryManagerInterface? instance) {
     _platformInstance = instance;
   }
 
@@ -55,35 +55,36 @@ class FlutterAccessoryManager {
       _platform.getPairedDevices();
 
   static set accessoryConnected(AccessoryCallback? callback) {
-    FlutterAccessoryManagerInterface.accessoryConnected = callback;
+    BluetoothAccessoryManagerInterface.accessoryConnected = callback;
   }
 
   static set accessoryDisconnected(AccessoryCallback? callback) {
-    FlutterAccessoryManagerInterface.accessoryDisconnected = callback;
+    BluetoothAccessoryManagerInterface.accessoryDisconnected = callback;
   }
 
   static set onBluetoothDeviceDiscover(BluetoothDeviceCallback? callback) {
-    FlutterAccessoryManagerInterface.onBluetoothDeviceDiscover = callback;
+    BluetoothAccessoryManagerInterface.onBluetoothDeviceDiscover = callback;
   }
 
   static set onBluetoothDeviceRemoved(BluetoothDeviceCallback? callback) {
-    FlutterAccessoryManagerInterface.onBluetoothDeviceRemoved = callback;
+    BluetoothAccessoryManagerInterface.onBluetoothDeviceRemoved = callback;
   }
 
   static set onConnectionStateChanged(ConnectionChangeCallback? callback) {
-    FlutterAccessoryManagerInterface.onConnectionStateChanged = callback;
+    BluetoothAccessoryManagerInterface.onConnectionStateChanged = callback;
   }
 
   static set onGetReport(GetReportCallback? callback) {
-    FlutterAccessoryManagerInterface.onGetReport = callback;
+    BluetoothAccessoryManagerInterface.onGetReport = callback;
   }
 
   static set onSdpServiceRegistrationUpdate(
       SdpServiceRegistrationUpdateCallback? callback) {
-    FlutterAccessoryManagerInterface.onSdpServiceRegistrationUpdate = callback;
+    BluetoothAccessoryManagerInterface.onSdpServiceRegistrationUpdate =
+        callback;
   }
 
-  static FlutterAccessoryManagerInterface _defaultPlatform() {
+  static BluetoothAccessoryManagerInterface _defaultPlatform() {
     if (kIsWeb) return _DefaultImpl();
     if (defaultTargetPlatform == TargetPlatform.linux) {
       return AccessoryManagerBluez.instance;
@@ -95,4 +96,4 @@ class FlutterAccessoryManager {
   }
 }
 
-class _DefaultImpl extends FlutterAccessoryManagerInterface {}
+class _DefaultImpl extends BluetoothAccessoryManagerInterface {}

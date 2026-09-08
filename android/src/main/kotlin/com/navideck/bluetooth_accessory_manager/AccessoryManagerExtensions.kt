@@ -1,4 +1,4 @@
-package com.navideck.flutter_accessory_manager
+package com.navideck.bluetooth_accessory_manager
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
@@ -15,7 +15,7 @@ internal var btHidProxy: BluetoothHidDevice? = null
 internal var bluetoothAdapter: BluetoothAdapter? = null
 
 @SuppressLint("MissingPermission")
-internal fun BluetoothDevice.toFlutter(rssi: Long?): com.navideck.flutter_accessory_manager.BluetoothDevice {
+internal fun BluetoothDevice.toFlutter(rssi: Long?): com.navideck.bluetooth_accessory_manager.BluetoothDevice {
     return BluetoothDevice(
         address = this.address,
         name = this.name,

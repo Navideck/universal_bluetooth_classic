@@ -1,5 +1,5 @@
-name: flutter_accessory_manager_example
-description: "Demonstrates how to use the flutter_accessory_manager plugin."
+name: bluetooth_accessory_manager_example
+description: "Demonstrates how to use the bluetooth_accessory_manager plugin."
 version: 1.0.0+1
 publish_to: "none"
 
@@ -12,7 +12,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   permission_handler: ^11.3.1
   device_info_plus: ^9.0.2
-  flutter_accessory_manager:
+  bluetooth_accessory_manager:
     path: ../
 
 dev_dependencies:

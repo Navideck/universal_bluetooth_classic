@@ -1,4 +1,4 @@
-package com.navideck.flutter_accessory_manager
+package com.navideck.bluetooth_accessory_manager
 
 import android.annotation.SuppressLint
 import android.app.Activity
@@ -20,10 +20,10 @@ import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 
-private const val TAG = "FlutterAccessoryManagerPlugin"
+private const val TAG = "BluetoothAccessoryManagerPlugin"
 
 @SuppressLint("MissingPermission")
-class FlutterAccessoryManagerPlugin : FlutterAccessoryPlatformChannel, FlutterPlugin,
+class BluetoothAccessoryManagerPlugin : FlutterAccessoryPlatformChannel, FlutterPlugin,
     ActivityAware {
     private var callbackChannel: FlutterAccessoryCallbackChannel? = null
     private val pairResultFutures = mutableMapOf<String, (Result<Boolean>) -> Unit>()
@@ -126,7 +126,7 @@ class FlutterAccessoryManagerPlugin : FlutterAccessoryPlatformChannel, FlutterPl
         return bluetoothAdapter?.isDiscovering ?: false
     }
 
-    override fun getPairedDevices(): List<com.navideck.flutter_accessory_manager.BluetoothDevice> {
+    override fun getPairedDevices(): List<com.navideck.bluetooth_accessory_manager.BluetoothDevice> {
         return bluetoothAdapter?.bondedDevices?.filter { it.type != BluetoothDevice.DEVICE_TYPE_LE }
             ?.map { it.toFlutter(null) } ?: listOf()
     }

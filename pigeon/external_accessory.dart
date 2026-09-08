@@ -4,7 +4,7 @@ import 'package:pigeon/pigeon.dart';
 // Generates File for IOS
 @ConfigurePigeon(
   PigeonOptions(
-    dartPackageName: 'flutter_accessory_manager',
+    dartPackageName: 'bluetooth_accessory_manager',
     dartOut: 'lib/src/generated/external_accessory.g.dart',
     dartOptions: DartOptions(),
     swiftOut: 'ios/Classes/ExternalAccessory.g.swift',

@@ -1,7 +1,7 @@
-import 'package:flutter_accessory_manager/src/flutter_accessory_manager_interface.dart';
-import 'package:flutter_accessory_manager/src/generated/external_accessory.g.dart';
+import 'package:bluetooth_accessory_manager/src/bluetooth_accessory_manager_interface.dart';
+import 'package:bluetooth_accessory_manager/src/generated/external_accessory.g.dart';
 
-class ExternalAccessory extends FlutterAccessoryManagerInterface {
+class ExternalAccessory extends BluetoothAccessoryManagerInterface {
   static ExternalAccessory? _instance;
   static ExternalAccessory get instance => _instance ??= ExternalAccessory._();
 
@@ -27,11 +27,11 @@ class ExternalAccessory extends FlutterAccessoryManagerInterface {
 class _CallbackHandler extends ExternalAccessoryCallbackChannel {
   @override
   void accessoryConnected(EAAccessory accessory) {
-    FlutterAccessoryManagerInterface.accessoryConnected?.call(accessory);
+    BluetoothAccessoryManagerInterface.accessoryConnected?.call(accessory);
   }
 
   @override
   void accessoryDisconnected(EAAccessory accessory) {
-    FlutterAccessoryManagerInterface.accessoryDisconnected?.call(accessory);
+    BluetoothAccessoryManagerInterface.accessoryDisconnected?.call(accessory);
   }
 }

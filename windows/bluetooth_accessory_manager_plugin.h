@@ -1,9 +1,9 @@
-#ifndef FLUTTER_PLUGIN_FLUTTER_ACCESSORY_MANAGER_PLUGIN_H_
-#define FLUTTER_PLUGIN_FLUTTER_ACCESSORY_MANAGER_PLUGIN_H_
+#ifndef FLUTTER_PLUGIN_BLUETOOTH_ACCESSORY_MANAGER_PLUGIN_H_
+#define FLUTTER_PLUGIN_BLUETOOTH_ACCESSORY_MANAGER_PLUGIN_H_
 
 #include <flutter/method_channel.h>
 #include <flutter/plugin_registrar_windows.h>
-#include "FlutterAccessoryManager.g.h"
+#include "BluetoothAccessoryManager.g.h"
 
 #include <winrt/Windows.Devices.Bluetooth.h>
 #include <winrt/Windows.Devices.Bluetooth.Advertisement.h>
@@ -23,7 +23,7 @@
 #define STATUS_SUCCESS (0x00000000)
 typedef NTSTATUS(WINAPI *RtlGetVersionPtr)(PRTL_OSVERSIONINFOW);
 
-namespace flutter_accessory_manager
+namespace bluetooth_accessory_manager
 {
     using namespace winrt;
     using namespace winrt::Windows;
@@ -39,13 +39,13 @@ namespace flutter_accessory_manager
 
     constexpr uint32_t TEN_SECONDS_IN_MSECS = 10000;
 
-    class FlutterAccessoryManagerPlugin : public flutter::Plugin, FlutterAccessoryPlatformChannel
+    class BluetoothAccessoryManagerPlugin : public flutter::Plugin, FlutterAccessoryPlatformChannel
     {
     public:
         static void RegisterWithRegistrar(flutter::PluginRegistrarWindows *registrar);
 
-        FlutterAccessoryManagerPlugin(flutter::PluginRegistrarWindows *registrar);
-        virtual ~FlutterAccessoryManagerPlugin();
+        BluetoothAccessoryManagerPlugin(flutter::PluginRegistrarWindows *registrar);
+        virtual ~BluetoothAccessoryManagerPlugin();
 
         static void SuccessCallback() {}
         static void ErrorCallback(const FlutterError &error)
@@ -53,8 +53,8 @@ namespace flutter_accessory_manager
             std::cout << "ErrorCallback: " << error.message() << std::endl;
         }
 
-        FlutterAccessoryManagerPlugin(const FlutterAccessoryManagerPlugin &) = delete;
-        FlutterAccessoryManagerPlugin &operator=(const FlutterAccessoryManagerPlugin &) = delete;
+        BluetoothAccessoryManagerPlugin(const BluetoothAccessoryManagerPlugin &) = delete;
+        BluetoothAccessoryManagerPlugin &operator=(const BluetoothAccessoryManagerPlugin &) = delete;
 
         UiThreadHandler uiThreadHandler_;
         DeviceWatcher deviceWatcher{nullptr};
@@ -251,6 +251,6 @@ namespace flutter_accessory_manager
         }
     };
 
-} // namespace flutter_accessory_manager
+} // namespace bluetooth_accessory_manager
 
 #endif

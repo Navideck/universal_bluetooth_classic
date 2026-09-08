@@ -1,10 +1,10 @@
 import 'dart:typed_data';
 
-import 'package:flutter_accessory_manager/src/flutter_accessory_manager_interface.dart';
-import 'package:flutter_accessory_manager/src/generated/bluetooth_hid_manager.g.dart';
-import 'package:flutter_accessory_manager/src/generated/flutter_accessory_manager.g.dart';
+import 'package:bluetooth_accessory_manager/src/bluetooth_accessory_manager_interface.dart';
+import 'package:bluetooth_accessory_manager/src/generated/bluetooth_hid_manager.g.dart';
+import 'package:bluetooth_accessory_manager/src/generated/bluetooth_accessory_manager.g.dart';
 
-class AccessoryManager extends FlutterAccessoryManagerInterface {
+class AccessoryManager extends BluetoothAccessoryManagerInterface {
   static AccessoryManager? _instance;
   static AccessoryManager get instance => _instance ??= AccessoryManager._();
 
@@ -67,25 +67,25 @@ class AccessoryManager extends FlutterAccessoryManagerInterface {
 class _AccessoryCallbackHandler extends FlutterAccessoryCallbackChannel {
   @override
   void onDeviceDiscover(BluetoothDevice device) {
-    FlutterAccessoryManagerInterface.onBluetoothDeviceDiscover?.call(device);
+    BluetoothAccessoryManagerInterface.onBluetoothDeviceDiscover?.call(device);
   }
 
   @override
   void onDeviceRemoved(BluetoothDevice device) {
-    FlutterAccessoryManagerInterface.onBluetoothDeviceRemoved?.call(device);
+    BluetoothAccessoryManagerInterface.onBluetoothDeviceRemoved?.call(device);
   }
 }
 
 class _HidCallbackHandler extends BluetoothHidManagerCallbackChannel {
   @override
   void onConnectionStateChanged(String deviceId, bool connected) {
-    FlutterAccessoryManagerInterface.onConnectionStateChanged
+    BluetoothAccessoryManagerInterface.onConnectionStateChanged
         ?.call(deviceId, connected);
   }
 
   @override
   ReportReply? onGetReport(String deviceId, ReportType type, int bufferSize) {
-    return FlutterAccessoryManagerInterface.onGetReport?.call(
+    return BluetoothAccessoryManagerInterface.onGetReport?.call(
       deviceId,
       type,
       bufferSize,
@@ -94,7 +94,7 @@ class _HidCallbackHandler extends BluetoothHidManagerCallbackChannel {
 
   @override
   void onSdpServiceRegistrationUpdate(bool registered) {
-    FlutterAccessoryManagerInterface.onSdpServiceRegistrationUpdate?.call(
+    BluetoothAccessoryManagerInterface.onSdpServiceRegistrationUpdate?.call(
       registered,
     );
   }

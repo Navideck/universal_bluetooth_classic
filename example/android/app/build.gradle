@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.navideck.flutter_accessory_manager_example"
+    namespace = "com.navideck.bluetooth_accessory_manager_example"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -19,7 +19,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.navideck.flutter_accessory_manager_example"
+        applicationId = "com.navideck.bluetooth_accessory_manager_example"
         minSdkVersion = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

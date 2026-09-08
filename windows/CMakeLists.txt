@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.14)
-set(PROJECT_NAME "flutter_accessory_manager")
+set(PROJECT_NAME "bluetooth_accessory_manager")
 project(${PROJECT_NAME} LANGUAGES CXX)
 cmake_policy(VERSION 3.14...3.25)
 include(FetchContent)
 set(CPPWINRT_VERSION "2.0.220418.1")
-set(PLUGIN_NAME "flutter_accessory_manager_plugin")
+set(PLUGIN_NAME "bluetooth_accessory_manager_plugin")
 
 # ############### NuGet intall begin ################
 FetchContent_Declare(nuget
@@ -32,17 +32,17 @@ endif()
 
 # ############### NuGet install end ################
 list(APPEND PLUGIN_SOURCES
-  "FlutterAccessoryManager.g.cpp"
-  "FlutterAccessoryManager.g.h"
-  "flutter_accessory_manager_plugin.cpp"
-  "flutter_accessory_manager_plugin.h"
+  "BluetoothAccessoryManager.g.cpp"
+  "BluetoothAccessoryManager.g.h"
+  "bluetooth_accessory_manager_plugin.cpp"
+  "bluetooth_accessory_manager_plugin.h"
   "ui_thread_handler.hpp"
   "pin_entry.h"
 )
 
 add_library(${PLUGIN_NAME} SHARED
-  "include/flutter_accessory_manager/flutter_accessory_manager_plugin_c_api.h"
-  "flutter_accessory_manager_plugin_c_api.cpp"
+  "include/bluetooth_accessory_manager/bluetooth_accessory_manager_plugin_c_api.h"
+  "bluetooth_accessory_manager_plugin_c_api.cpp"
   ${PLUGIN_SOURCES}
 )
 
@@ -66,7 +66,7 @@ target_include_directories(${PLUGIN_NAME} INTERFACE
   "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_link_libraries(${PLUGIN_NAME} PRIVATE flutter flutter_wrapper_plugin)
 
-set(flutter_accessory_manager_bundled_libraries
+set(bluetooth_accessory_manager_bundled_libraries
   ""
   PARENT_SCOPE
 )

@@ -1,4 +1,4 @@
-package com.navideck.flutter_accessory_manager
+package com.navideck.bluetooth_accessory_manager
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
@@ -12,7 +12,7 @@ import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
 
-private const val TAG = "FlutterAccessoryManagerPlugin"
+private const val TAG = "BluetoothAccessoryManagerPlugin"
 
 typealias ConnectionFuture = (Result<Unit>) -> Unit
 

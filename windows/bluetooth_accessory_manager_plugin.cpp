@@ -1,4 +1,4 @@
-#include "flutter_accessory_manager_plugin.h"
+#include "bluetooth_accessory_manager_plugin.h"
 
 #include <windows.h>
 #include <VersionHelpers.h>
@@ -11,7 +11,7 @@
 #include <sstream>
 #include "pin_entry.h"
 
-namespace flutter_accessory_manager
+namespace bluetooth_accessory_manager
 {
   const auto isConnectableKey = L"System.Devices.Aep.Bluetooth.Le.IsConnectable";
   const auto isConnectedKey = L"System.Devices.Aep.IsConnected";
@@ -22,35 +22,35 @@ namespace flutter_accessory_manager
 
   std::unique_ptr<FlutterAccessoryCallbackChannel> callbackChannel;
 
-  void FlutterAccessoryManagerPlugin::RegisterWithRegistrar(
+  void BluetoothAccessoryManagerPlugin::RegisterWithRegistrar(
       flutter::PluginRegistrarWindows *registrar)
   {
-    auto plugin = std::make_unique<FlutterAccessoryManagerPlugin>(registrar);
+    auto plugin = std::make_unique<BluetoothAccessoryManagerPlugin>(registrar);
     FlutterAccessoryPlatformChannel::SetUp(registrar->messenger(), plugin.get());
     callbackChannel = std::make_unique<FlutterAccessoryCallbackChannel>(registrar->messenger());
     registrar->AddPlugin(std::move(plugin));
   }
 
-  FlutterAccessoryManagerPlugin::FlutterAccessoryManagerPlugin(flutter::PluginRegistrarWindows *registrar)
+  BluetoothAccessoryManagerPlugin::BluetoothAccessoryManagerPlugin(flutter::PluginRegistrarWindows *registrar)
       : uiThreadHandler_(registrar)
   {
   }
 
-  FlutterAccessoryManagerPlugin::~FlutterAccessoryManagerPlugin() {}
+  BluetoothAccessoryManagerPlugin::~BluetoothAccessoryManagerPlugin() {}
 
-  void FlutterAccessoryManagerPlugin::ShowBluetoothAccessoryPicker(
+  void BluetoothAccessoryManagerPlugin::ShowBluetoothAccessoryPicker(
       const flutter::EncodableList &with_names,
       std::function<void(std::optional<FlutterError> reply)> result)
   {
     ShowDevicePicker(result);
   }
 
-  // void FlutterAccessoryManagerPlugin::Disconnect(const std::string &device_id,std::function<void(std::optional<FlutterError> reply)> result)
+  // void BluetoothAccessoryManagerPlugin::Disconnect(const std::string &device_id,std::function<void(std::optional<FlutterError> reply)> result)
   // {
   //   DisconnectAsync(device_id, result);
   // }
 
-  std::optional<FlutterError> FlutterAccessoryManagerPlugin::StartScan()
+  std::optional<FlutterError> BluetoothAccessoryManagerPlugin::StartScan()
   {
     try
     {
@@ -78,7 +78,7 @@ namespace flutter_accessory_manager
     return std::nullopt;
   }
 
-  std::optional<FlutterError> FlutterAccessoryManagerPlugin::StopScan()
+  std::optional<FlutterError> BluetoothAccessoryManagerPlugin::StopScan()
   {
     try
     {
@@ -115,7 +115,7 @@ namespace flutter_accessory_manager
     return std::nullopt;
   }
 
-  ErrorOr<bool> FlutterAccessoryManagerPlugin::IsScanning()
+  ErrorOr<bool> BluetoothAccessoryManagerPlugin::IsScanning()
   {
     if (deviceWatcher == nullptr)
     {
@@ -126,7 +126,7 @@ namespace flutter_accessory_manager
     return status != DeviceWatcherStatus::Stopped;
   }
 
-  ErrorOr<flutter::EncodableList> FlutterAccessoryManagerPlugin::GetPairedDevices()
+  ErrorOr<flutter::EncodableList> BluetoothAccessoryManagerPlugin::GetPairedDevices()
   {
     try
     {
@@ -159,7 +159,7 @@ namespace flutter_accessory_manager
     }
   }
 
-  void FlutterAccessoryManagerPlugin::Pair(
+  void BluetoothAccessoryManagerPlugin::Pair(
       const std::string &address,
       std::function<void(ErrorOr<bool> reply)> result)
   {
@@ -180,13 +180,13 @@ namespace flutter_accessory_manager
     }
   }
 
-  void FlutterAccessoryManagerPlugin::Unpair(const std::string &address, std::function<void(std::optional<FlutterError> reply)> result)
+  void BluetoothAccessoryManagerPlugin::Unpair(const std::string &address, std::function<void(std::optional<FlutterError> reply)> result)
   {
     UnPairAsync(address, result);
   }
 
   // Helper methods
-  void FlutterAccessoryManagerPlugin::setupDeviceWatcher()
+  void BluetoothAccessoryManagerPlugin::setupDeviceWatcher()
   {
     if (deviceWatcher != nullptr)
       return;
@@ -273,7 +273,7 @@ namespace flutter_accessory_manager
                                                       });
   }
 
-  winrt::fire_and_forget FlutterAccessoryManagerPlugin::ShowDevicePicker(std::function<void(std::optional<FlutterError> reply)> result)
+  winrt::fire_and_forget BluetoothAccessoryManagerPlugin::ShowDevicePicker(std::function<void(std::optional<FlutterError> reply)> result)
   {
     DevicePicker picker = DevicePicker();
     picker.Filter().SupportedDeviceSelectors().Append(Bluetooth::BluetoothDevice::GetDeviceSelectorFromPairingState(false));
@@ -302,7 +302,7 @@ namespace flutter_accessory_manager
     Pair(address, pairCallback);
   }
 
-  winrt::fire_and_forget FlutterAccessoryManagerPlugin::UnPairAsync(const std::string &address, std::function<void(std::optional<FlutterError> reply)> result)
+  winrt::fire_and_forget BluetoothAccessoryManagerPlugin::UnPairAsync(const std::string &address, std::function<void(std::optional<FlutterError> reply)> result)
   {
     try
     {
@@ -357,7 +357,7 @@ namespace flutter_accessory_manager
     }
   }
 
-  winrt::fire_and_forget FlutterAccessoryManagerPlugin::PairAsync(const std::string &address, std::function<void(ErrorOr<bool> reply)> result)
+  winrt::fire_and_forget BluetoothAccessoryManagerPlugin::PairAsync(const std::string &address, std::function<void(ErrorOr<bool> reply)> result)
   {
     try
     {
@@ -397,7 +397,7 @@ namespace flutter_accessory_manager
     }
   }
 
-  winrt::fire_and_forget FlutterAccessoryManagerPlugin::CustomPairAsync(
+  winrt::fire_and_forget BluetoothAccessoryManagerPlugin::CustomPairAsync(
       const std::string &address,
       std::function<void(ErrorOr<bool> reply)> result)
   {
@@ -417,7 +417,7 @@ namespace flutter_accessory_manager
       else
       {
         auto customPairing = deviceInformation.Pairing().Custom();
-        winrt::event_token token = customPairing.PairingRequested({this, &FlutterAccessoryManagerPlugin::PairingRequestedHandler});
+        winrt::event_token token = customPairing.PairingRequested({this, &BluetoothAccessoryManagerPlugin::PairingRequestedHandler});
         std::cout << "PairLog: Trying to pair" << std::endl;
         DevicePairingProtectionLevel protectionLevel = deviceInformation.Pairing().ProtectionLevel();
         // DevicePairingKinds => None, ConfirmOnly, DisplayPin, ProvidePin, ConfirmPinMatch, ProvidePasswordCredential
@@ -449,7 +449,7 @@ namespace flutter_accessory_manager
     }
   }
 
-  void FlutterAccessoryManagerPlugin::PairingRequestedHandler(DeviceInformationCustomPairing sender, DevicePairingRequestedEventArgs eventArgs)
+  void BluetoothAccessoryManagerPlugin::PairingRequestedHandler(DeviceInformationCustomPairing sender, DevicePairingRequestedEventArgs eventArgs)
   {
     std::cout << "PairLog: Got PairingRequest" << std::endl;
     DevicePairingKinds kind = eventArgs.PairingKind();
@@ -486,7 +486,7 @@ namespace flutter_accessory_manager
     }
   }
 
-  winrt::fire_and_forget FlutterAccessoryManagerPlugin::DisconnectAsync(const std::string &device_id, std::function<void(std::optional<FlutterError> reply)> result)
+  winrt::fire_and_forget BluetoothAccessoryManagerPlugin::DisconnectAsync(const std::string &device_id, std::function<void(std::optional<FlutterError> reply)> result)
   {
     try
     {
@@ -515,7 +515,7 @@ namespace flutter_accessory_manager
     }
   }
 
-  BluetoothDevice FlutterAccessoryManagerPlugin::DeviceInfoToBluetoothDevice(DeviceInformation deviceInfo)
+  BluetoothDevice BluetoothAccessoryManagerPlugin::DeviceInfoToBluetoothDevice(DeviceInformation deviceInfo)
   {
     auto properties = deviceInfo.Properties();
     hstring address = deviceInfo.Id();
@@ -557,4 +557,4 @@ namespace flutter_accessory_manager
     return BluetoothDevice(deviceAddress, &name, isPaired, is_connected_with_hid, rssi, device_class, device_type);
   }
 
-} // namespace flutter_accessory_manager
+} // namespace bluetooth_accessory_manager

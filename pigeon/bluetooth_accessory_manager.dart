@@ -1,21 +1,21 @@
 import 'package:pigeon/pigeon.dart';
 
-// dart run pigeon --input pigeon/flutter_accessory_manager.dart
+// dart run pigeon --input pigeon/bluetooth_accessory_manager.dart
 // Generates File for Android, Mac, Windows
 @ConfigurePigeon(
   PigeonOptions(
-    dartPackageName: 'flutter_accessory_manager',
-    dartOut: 'lib/src/generated/flutter_accessory_manager.g.dart',
+    dartPackageName: 'bluetooth_accessory_manager',
+    dartOut: 'lib/src/generated/bluetooth_accessory_manager.g.dart',
     dartOptions: DartOptions(),
     kotlinOut:
-        'android/src/main/kotlin/com/navideck/flutter_accessory_manager/FlutterAccessoryManager.g.kt',
-    swiftOut: 'macos/Classes/FlutterAccessoryManager.g.swift',
+        'android/src/main/kotlin/com/navideck/bluetooth_accessory_manager/BluetoothAccessoryManager.g.kt',
+    swiftOut: 'macos/Classes/BluetoothAccessoryManager.g.swift',
     swiftOptions: SwiftOptions(),
     kotlinOptions:
-        KotlinOptions(package: 'com.navideck.flutter_accessory_manager'),
-    cppOptions: CppOptions(namespace: 'flutter_accessory_manager'),
-    cppHeaderOut: 'windows/FlutterAccessoryManager.g.h',
-    cppSourceOut: 'windows/FlutterAccessoryManager.g.cpp',
+        KotlinOptions(package: 'com.navideck.bluetooth_accessory_manager'),
+    cppOptions: CppOptions(namespace: 'bluetooth_accessory_manager'),
+    cppHeaderOut: 'windows/BluetoothAccessoryManager.g.h',
+    cppSourceOut: 'windows/BluetoothAccessoryManager.g.cpp',
     debugGenerators: true,
   ),
 )

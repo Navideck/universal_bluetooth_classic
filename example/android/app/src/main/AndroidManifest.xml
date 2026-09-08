@@ -11,7 +11,7 @@
         android:maxSdkVersion="28" />
 
     <application
-        android:label="flutter_accessory_manager_example"
+        android:label="Bluetooth Accessory Manager Example"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

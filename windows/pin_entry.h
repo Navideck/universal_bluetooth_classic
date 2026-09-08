@@ -4,7 +4,7 @@
 #include <tchar.h>
 #include <winstring.h>
 
-namespace flutter_accessory_manager
+namespace bluetooth_accessory_manager
 {
     typedef struct SizeAndPos_s
     {

@@ -4,18 +4,18 @@ import 'package:pigeon/pigeon.dart';
 // Generates File for Android, Mac
 @ConfigurePigeon(
   PigeonOptions(
-    dartPackageName: 'flutter_accessory_manager',
+    dartPackageName: 'bluetooth_accessory_manager',
     dartOut: 'lib/src/generated/bluetooth_hid_manager.g.dart',
     dartOptions: DartOptions(),
     kotlinOut:
-        'android/src/main/kotlin/com/navideck/flutter_accessory_manager/BluetoothHidManager.g.kt',
+        'android/src/main/kotlin/com/navideck/bluetooth_accessory_manager/BluetoothHidManager.g.kt',
     swiftOut: 'macos/Classes/BluetoothHidManager.g.swift',
     swiftOptions: SwiftOptions(includeErrorClass: false),
     kotlinOptions: KotlinOptions(
-      package: 'com.navideck.flutter_accessory_manager',
+      package: 'com.navideck.bluetooth_accessory_manager',
       includeErrorClass: false,
     ),
-    // cppOptions: CppOptions(namespace: 'flutter_accessory_manager'),
+    // cppOptions: CppOptions(namespace: 'bluetooth_accessory_manager'),
     // cppHeaderOut: 'windows/BluetoothHidManager.g.h',
     // cppSourceOut: 'windows/BluetoothHidManager.g.cpp',
     debugGenerators: true,

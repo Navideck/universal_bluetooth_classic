@@ -2,10 +2,10 @@ import 'dart:async';
 import 'dart:developer';
 
 import 'package:bluez/bluez.dart';
-import 'package:flutter_accessory_manager/src/flutter_accessory_manager_interface.dart';
-import 'package:flutter_accessory_manager/src/generated/flutter_accessory_manager.g.dart';
+import 'package:bluetooth_accessory_manager/src/bluetooth_accessory_manager_interface.dart';
+import 'package:bluetooth_accessory_manager/src/generated/bluetooth_accessory_manager.g.dart';
 
-class AccessoryManagerBluez extends FlutterAccessoryManagerInterface {
+class AccessoryManagerBluez extends BluetoothAccessoryManagerInterface {
   static AccessoryManagerBluez? _instance;
   static AccessoryManagerBluez get instance =>
       _instance ??= AccessoryManagerBluez._();
@@ -102,7 +102,7 @@ class AccessoryManagerBluez extends FlutterAccessoryManagerInterface {
 
   void _onDeviceAdd(BlueZDevice device) {
     _devices[device.address] = device;
-    FlutterAccessoryManagerInterface.onBluetoothDeviceDiscover?.call(
+    BluetoothAccessoryManagerInterface.onBluetoothDeviceDiscover?.call(
       device.toBluetoothDevice(),
     );
   }

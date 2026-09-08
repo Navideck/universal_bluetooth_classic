@@ -1,10 +1,10 @@
-name: flutter_accessory_manager
+name: bluetooth_accessory_manager
 description: A cross-platform (Android/iOS/macOS/Windows/Linux) plugin for managing Bluetooth accessories and HID devices in Flutter
 version: 0.1.0
 homepage: https://navideck.com
-repository: https://github.com/Navideck/flutter_accessory_manager
-issue_tracker: https://github.com/Navideck/flutter_accessory_manager/issues
-documentation: https://github.com/Navideck/flutter_accessory_manager#readme
+repository: https://github.com/Navideck/bluetooth_accessory_manager
+issue_tracker: https://github.com/Navideck/bluetooth_accessory_manager/issues
+documentation: https://github.com/Navideck/bluetooth_accessory_manager#readme
 
 funding:
   - https://github.com/sponsors/Navideck
@@ -42,11 +42,11 @@ flutter:
   plugin:
     platforms:
       android:
-        package: com.navideck.flutter_accessory_manager
-        pluginClass: FlutterAccessoryManagerPlugin
+        package: com.navideck.bluetooth_accessory_manager
+        pluginClass: BluetoothAccessoryManagerPlugin
       ios:
-        pluginClass: FlutterAccessoryManagerPlugin
+        pluginClass: BluetoothAccessoryManagerPlugin
       macos:
-        pluginClass: FlutterAccessoryManagerPlugin
+        pluginClass: BluetoothAccessoryManagerPlugin
       windows:
-        pluginClass: FlutterAccessoryManagerPluginCApi
+        pluginClass: BluetoothAccessoryManagerPluginCApi

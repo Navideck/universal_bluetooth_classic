@@ -2,7 +2,7 @@ import ExternalAccessory
 import Flutter
 import UIKit
 
-public class FlutterAccessoryManagerPlugin: NSObject, FlutterPlugin, ExternalAccessoryChannel {
+public class BluetoothAccessoryManagerPlugin: NSObject, FlutterPlugin, ExternalAccessoryChannel {
   var callbackChannel: ExternalAccessoryCallbackChannel
   private var manager = EAAccessoryManager.shared()
   private var eaSessionDisconnectionCompleterMap = [String: (Result<Void, any Error>) -> Void]()
@@ -19,7 +19,7 @@ public class FlutterAccessoryManagerPlugin: NSObject, FlutterPlugin, ExternalAcc
   public static func register(with registrar: FlutterPluginRegistrar) {
     let messenger: FlutterBinaryMessenger = registrar.messenger()
     let callbackChannel = ExternalAccessoryCallbackChannel(binaryMessenger: messenger)
-    let instance = FlutterAccessoryManagerPlugin(callbackChannel: callbackChannel)
+    let instance = BluetoothAccessoryManagerPlugin(callbackChannel: callbackChannel)
     ExternalAccessoryChannelSetup.setUp(binaryMessenger: messenger, api: instance)
   }
 

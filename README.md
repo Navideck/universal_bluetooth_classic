@@ -1,6 +1,6 @@
-# Flutter Accessory Manager
+# Bluetooth Accessory Manager
 
-[![flutter_accessory_manager version](https://img.shields.io/pub/v/flutter_accessory_manager?label=flutter_accessory_manager)](https://pub.dev/packages/flutter_accessory_manager)
+[![bluetooth_accessory_manager version](https://img.shields.io/pub/v/bluetooth_accessory_manager?label=bluetooth_accessory_manager)](https://pub.dev/packages/bluetooth_accessory_manager)
 
 A cross-platform (Android/iOS/macOS/Windows/Linux) plugin for managing Bluetooth accessories and HID devices in Flutter.
 
@@ -35,17 +35,17 @@ A cross-platform (Android/iOS/macOS/Windows/Linux) plugin for managing Bluetooth
 
 ## Getting Started
 
-Add flutter_accessory_manager in your pubspec.yaml:
+Add bluetooth_accessory_manager in your pubspec.yaml:
 
 ```yaml
 dependencies:
-  flutter_accessory_manager:
+  bluetooth_accessory_manager:
 ```
 
 and import it wherever you want to use it:
 
 ```dart
-import 'package:flutter_accessory_manager/flutter_accessory_manager.dart';
+import 'package:bluetooth_accessory_manager/bluetooth_accessory_manager.dart';
 ```
 
 ## Scanning
@@ -55,7 +55,7 @@ import 'package:flutter_accessory_manager/flutter_accessory_manager.dart';
 Start scanning for Bluetooth devices:
 
 ```dart
-await FlutterAccessoryManager.startScan();
+await BluetoothAccessoryManager.startScan();
 ```
 
 ### Stop Scanning
@@ -63,7 +63,7 @@ await FlutterAccessoryManager.startScan();
 Stop scanning for Bluetooth devices:
 
 ```dart
-await FlutterAccessoryManager.stopScan();
+await BluetoothAccessoryManager.stopScan();
 ```
 
 ### Check Scanning Status
@@ -71,7 +71,7 @@ await FlutterAccessoryManager.stopScan();
 Check if currently scanning:
 
 ```dart
-bool isScanning = await FlutterAccessoryManager.isScanning();
+bool isScanning = await BluetoothAccessoryManager.isScanning();
 ```
 
 ### Device Discovery
@@ -79,7 +79,7 @@ bool isScanning = await FlutterAccessoryManager.isScanning();
 Listen to discovered devices:
 
 ```dart
-FlutterAccessoryManager.onBluetoothDeviceDiscover = (BluetoothDevice device) {
+BluetoothAccessoryManager.onBluetoothDeviceDiscover = (BluetoothDevice device) {
   print('Device discovered: ${device.name} (${device.address})');
   print('RSSI: ${device.rssi}');
   print('Paired: ${device.paired}');
@@ -93,7 +93,7 @@ FlutterAccessoryManager.onBluetoothDeviceDiscover = (BluetoothDevice device) {
 Listen to device removal events:
 
 ```dart
-FlutterAccessoryManager.onBluetoothDeviceRemoved = (BluetoothDevice device) {
+BluetoothAccessoryManager.onBluetoothDeviceRemoved = (BluetoothDevice device) {
   print('Device removed: ${device.name} (${device.address})');
 };
 ```
@@ -103,7 +103,7 @@ FlutterAccessoryManager.onBluetoothDeviceRemoved = (BluetoothDevice device) {
 Get a list of all paired devices:
 
 ```dart
-List<BluetoothDevice> devices = await FlutterAccessoryManager.getPairedDevices();
+List<BluetoothDevice> devices = await BluetoothAccessoryManager.getPairedDevices();
 
 for (var device in devices) {
   print('Paired device: ${device.name} - ${device.address}');
@@ -115,13 +115,13 @@ for (var device in devices) {
 Show the native Bluetooth accessory picker dialog. On iOS, this displays the External Accessory picker.
 
 ```dart
-await FlutterAccessoryManager.showBluetoothAccessoryPicker();
+await BluetoothAccessoryManager.showBluetoothAccessoryPicker();
 ```
 
 Optionally filter by device names:
 
 ```dart
-await FlutterAccessoryManager.showBluetoothAccessoryPicker(
+await BluetoothAccessoryManager.showBluetoothAccessoryPicker(
   withNames: ['MyDevice', 'AnotherDevice'],
 );
 ```
@@ -135,7 +135,7 @@ await FlutterAccessoryManager.showBluetoothAccessoryPicker(
 Pair with a Bluetooth device by its address:
 
 ```dart
-bool success = await FlutterAccessoryManager.pair('00:11:22:33:44:55');
+bool success = await BluetoothAccessoryManager.pair('00:11:22:33:44:55');
 
 if (success) {
   print('Device paired successfully');
@@ -149,7 +149,7 @@ if (success) {
 Unpair a Bluetooth device:
 
 ```dart
-await FlutterAccessoryManager.unpair('00:11:22:33:44:55');
+await BluetoothAccessoryManager.unpair('00:11:22:33:44:55');
 ```
 
 ## Connecting
@@ -159,7 +159,7 @@ await FlutterAccessoryManager.unpair('00:11:22:33:44:55');
 Connect to a Bluetooth HID device:
 
 ```dart
-await FlutterAccessoryManager.connect('00:11:22:33:44:55');
+await BluetoothAccessoryManager.connect('00:11:22:33:44:55');
 ```
 
 > **Platform Note:** Available on Android, macOS, and Windows. Not available on iOS (uses External Accessory framework) or Linux.
@@ -169,7 +169,7 @@ await FlutterAccessoryManager.connect('00:11:22:33:44:55');
 Disconnect from a Bluetooth device:
 
 ```dart
-await FlutterAccessoryManager.disconnect('00:11:22:33:44:55');
+await BluetoothAccessoryManager.disconnect('00:11:22:33:44:55');
 ```
 
 ### Connection State Changes
@@ -177,7 +177,7 @@ await FlutterAccessoryManager.disconnect('00:11:22:33:44:55');
 Listen to connection state changes:
 
 ```dart
-FlutterAccessoryManager.onConnectionStateChanged = (String deviceId, bool connected) {
+BluetoothAccessoryManager.onConnectionStateChanged = (String deviceId, bool connected) {
   print('Device $deviceId: ${connected ? "connected" : "disconnected"}');
 };
 ```
@@ -194,7 +194,7 @@ Send a HID report to a connected device:
 import 'dart:typed_data';
 
 Uint8List reportData = Uint8List.fromList([0x01, 0x02, 0x03]);
-await FlutterAccessoryManager.sendReport('00:11:22:33:44:55', reportData);
+await BluetoothAccessoryManager.sendReport('00:11:22:33:44:55', reportData);
 ```
 
 > **Platform Note:** Available on Android, macOS, and Windows. Not available on iOS or Linux.
@@ -206,7 +206,7 @@ Handle HID get report requests:
 ```dart
 import 'dart:typed_data';
 
-FlutterAccessoryManager.onGetReport = (String deviceId, ReportType type, int bufferSize) {
+BluetoothAccessoryManager.onGetReport = (String deviceId, ReportType type, int bufferSize) {
   print('Get report request from $deviceId, type: $type, size: $bufferSize');
   
   // Return a report reply
@@ -244,7 +244,7 @@ SdpConfig config = SdpConfig(
   ),
 );
 
-await FlutterAccessoryManager.setupSdp(config: config);
+await BluetoothAccessoryManager.setupSdp(config: config);
 ```
 
 ### Close SDP
@@ -252,7 +252,7 @@ await FlutterAccessoryManager.setupSdp(config: config);
 Close the SDP service registration:
 
 ```dart
-await FlutterAccessoryManager.closeSdp();
+await BluetoothAccessoryManager.closeSdp();
 ```
 
 ### SDP Registration Updates
@@ -260,7 +260,7 @@ await FlutterAccessoryManager.closeSdp();
 Listen to SDP service registration status changes:
 
 ```dart
-FlutterAccessoryManager.onSdpServiceRegistrationUpdate = (bool registered) {
+BluetoothAccessoryManager.onSdpServiceRegistrationUpdate = (bool registered) {
   print('SDP service ${registered ? "registered" : "unregistered"}');
 };
 ```
@@ -276,7 +276,7 @@ FlutterAccessoryManager.onSdpServiceRegistrationUpdate = (bool registered) {
 Close an External Accessory session. If no protocol string is provided, it will use the first available protocol:
 
 ```dart
-await FlutterAccessoryManager.closeEASession('com.mycompany.myprotocol');
+await BluetoothAccessoryManager.closeEASession('com.mycompany.myprotocol');
 ```
 
 ### Accessory Connected
@@ -284,7 +284,7 @@ await FlutterAccessoryManager.closeEASession('com.mycompany.myprotocol');
 Listen to iOS External Accessory connection events:
 
 ```dart
-FlutterAccessoryManager.accessoryConnected = (EAAccessory accessory) {
+BluetoothAccessoryManager.accessoryConnected = (EAAccessory accessory) {
   print('Accessory connected: ${accessory.name}');
   print('Manufacturer: ${accessory.manufacturer}');
   print('Model: ${accessory.modelNumber}');
@@ -297,7 +297,7 @@ FlutterAccessoryManager.accessoryConnected = (EAAccessory accessory) {
 Listen to iOS External Accessory disconnection events:
 
 ```dart
-FlutterAccessoryManager.accessoryDisconnected = (EAAccessory accessory) {
+BluetoothAccessoryManager.accessoryDisconnected = (EAAccessory accessory) {
   print('Accessory disconnected: ${accessory.name}');
 };
 ```
@@ -522,21 +522,21 @@ On Linux, the following APIs are **not implemented**:
 ## Customizing Platform Implementation
 
 ```dart
-// Create a class that extends FlutterAccessoryManagerInterface
-class FlutterAccessoryManagerMock extends FlutterAccessoryManagerInterface {
+// Create a class that extends BluetoothAccessoryManagerInterface
+class BluetoothAccessoryManagerMock extends BluetoothAccessoryManagerInterface {
   // Implement all methods
 }
 
 // Set custom platform specific implementation (e.g. for testing)
-FlutterAccessoryManager.setInstance(FlutterAccessoryManagerMock());
+BluetoothAccessoryManager.setInstance(BluetoothAccessoryManagerMock());
 ```
 
-## 🧩 Apps using Flutter Accessory Manager
+## 🧩 Apps using Bluetooth Accessory Manager
 
-Here are some of the apps leveraging the power of `flutter_accessory_manager` in production:
+Here are some of the apps leveraging the power of `bluetooth_accessory_manager` in production:
 
-| <img src="assets/bt_cam_icon.svg" alt="BT Cam Icon" width="224" height="224"> | [**BT Cam**](https://btcam.app)<br>A Bluetooth remote app for DSLR and mirrorless cameras. Compatible with Canon, Nikon, Sony, Fujifilm, GoPro, Olympus, Panasonic, Pentax, and Blackmagic. Built using Flutter Accessory Manager to connect and control cameras across iOS, Android, macOS, Windows, Linux & Web. |
+| <img src="assets/bt_cam_icon.svg" alt="BT Cam Icon" width="224" height="224"> | [**BT Cam**](https://btcam.app)<br>A Bluetooth remote app for DSLR and mirrorless cameras. Compatible with Canon, Nikon, Sony, Fujifilm, GoPro, Olympus, Panasonic, Pentax, and Blackmagic. Built using Bluetooth Accessory Manager to connect and control cameras across iOS, Android, macOS, Windows, Linux & Web. |
 |:--:|:--|
-> 💡 **Built something cool with Flutter Accessory Manager?**  
+> 💡 **Built something cool with Bluetooth Accessory Manager?**
 > We'd love to showcase your app here!  
 > Open a pull request and add it to this section. Please include your app icon in svg!

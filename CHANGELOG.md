@@ -1,3 +1,4 @@
-## 0.0.1
+## 0.1.0
 
-* TODO: Describe initial release.
+* Rename the package from `flutter_accessory_manager` to
+  `bluetooth_accessory_manager`.
