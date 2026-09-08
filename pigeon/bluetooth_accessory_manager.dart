@@ -9,7 +9,8 @@ import 'package:pigeon/pigeon.dart';
     dartOptions: DartOptions(),
     kotlinOut:
         'android/src/main/kotlin/com/navideck/bluetooth_accessory_manager/BluetoothAccessoryManager.g.kt',
-    swiftOut: 'macos/Classes/BluetoothAccessoryManager.g.swift',
+    swiftOut:
+        'macos/bluetooth_accessory_manager/Sources/bluetooth_accessory_manager/BluetoothAccessoryManager.g.swift',
     swiftOptions: SwiftOptions(),
     kotlinOptions:
         KotlinOptions(package: 'com.navideck.bluetooth_accessory_manager'),

@@ -7,7 +7,8 @@ import 'package:pigeon/pigeon.dart';
     dartPackageName: 'bluetooth_accessory_manager',
     dartOut: 'lib/src/generated/external_accessory.g.dart',
     dartOptions: DartOptions(),
-    swiftOut: 'ios/Classes/ExternalAccessory.g.swift',
+    swiftOut:
+        'ios/bluetooth_accessory_manager/Sources/bluetooth_accessory_manager/ExternalAccessory.g.swift',
     swiftOptions: SwiftOptions(),
     debugGenerators: true,
   ),

@@ -5,6 +5,9 @@ import FlutterMacOS
 import Foundation
 import IOBluetooth
 import IOKit.hid
+#if SWIFT_PACKAGE
+import BluetoothPairingController
+#endif
 
 public class BluetoothAccessoryManagerPlugin: NSObject, FlutterPlugin {
     var accessoryManagerCallbackChannel: FlutterAccessoryCallbackChannel

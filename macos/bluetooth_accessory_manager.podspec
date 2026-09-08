@@ -14,11 +14,11 @@ A new Flutter plugin project.
   s.author           = { 'Your Company' => 'email@example.com' }
 
   s.source           = { :path => '.' }
-  s.source_files = 'Classes/**/*'
+  s.source_files = 'bluetooth_accessory_manager/Sources/**/*'
   s.dependency 'FlutterMacOS'
 
   s.platform = :osx, '10.15'
   s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES' }
   s.swift_version = '5.0'
-  s.public_header_files = 'Classes/**/*.h'
+  s.public_header_files = 'bluetooth_accessory_manager/Sources/**/*.h'
 end
