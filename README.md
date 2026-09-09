@@ -105,7 +105,7 @@ for (final device in devices) {
 
 ### Native accessory picker
 
-Open the platform's Bluetooth accessory picker. On iOS, this uses the External Accessory picker — the only supported way to pair Bluetooth Classic MFi devices, and a capability no other Flutter plugin exposes.
+Open the platform's Bluetooth accessory picker. On iOS, this uses the External Accessory picker — the only way to use Bluetooth Classic MFi devices.
 
 ```dart
 await UniversalBluetooth.showBluetoothAccessoryPicker();
