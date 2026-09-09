@@ -19,7 +19,7 @@ A cross-platform Flutter plugin for discovering, pairing, and managing Bluetooth
 
 - [**Device discovery**](#scanning) — scan for nearby Bluetooth devices and retrieve paired devices.
 - [**Pairing**](#pairing) — pair and unpair accessories by address.
-- [**Native accessory picker**](#native-accessory-picker) — open the platform picker, with optional device-name filtering.
+- [**Native accessory picker**](#native-accessory-picker) — open the platform picker, with optional device-name filtering. On iOS, this is the only way to pair Bluetooth Classic MFi devices.
 - [**Bluetooth HID**](#connecting) — connect to HID devices and exchange reports.
 - [**SDP registration**](#sdp-service-registration) — advertise a Bluetooth HID service.
 - [**Apple External Accessory**](#ios-external-accessory) — receive connection events and manage EA sessions on iOS.
@@ -105,7 +105,7 @@ for (final device in devices) {
 
 ### Native accessory picker
 
-Open the platform's Bluetooth accessory picker. On iOS, this uses the External Accessory picker.
+Open the platform's Bluetooth accessory picker. On iOS, this uses the External Accessory picker — the only supported way to pair Bluetooth Classic MFi devices, and a capability no other Flutter plugin exposes.
 
 ```dart
 await UniversalBluetooth.showBluetoothAccessoryPicker();
@@ -226,6 +226,10 @@ SDP registration is available on Android, macOS, and Windows.
 
 External Accessory sessions are iOS-only, but their connection changes use the
 same callback as the other platforms.
+
+Pair Bluetooth Classic MFi devices through `showBluetoothAccessoryPicker`,
+which presents the system pairing UI for your declared
+`UISupportedExternalAccessoryProtocols`.
 
 ```dart
 UniversalBluetooth.onConnectionStateChanged = (event) {
