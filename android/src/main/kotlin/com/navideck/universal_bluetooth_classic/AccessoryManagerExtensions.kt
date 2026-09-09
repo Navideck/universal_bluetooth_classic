@@ -1,4 +1,4 @@
-package com.navideck.universal_bluetooth
+package com.navideck.universal_bluetooth_classic
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
@@ -15,7 +15,7 @@ internal var btHidProxy: BluetoothHidDevice? = null
 internal var bluetoothAdapter: BluetoothAdapter? = null
 
 @SuppressLint("MissingPermission")
-internal fun BluetoothDevice.toFlutter(rssi: Long?): com.navideck.universal_bluetooth.BluetoothDevice {
+internal fun BluetoothDevice.toFlutter(rssi: Long?): com.navideck.universal_bluetooth_classic.BluetoothDevice {
     return BluetoothDevice(
         address = this.address,
         name = this.name,

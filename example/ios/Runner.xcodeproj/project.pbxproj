@@ -69,7 +69,7 @@
 		F750CD3E2FC2D4E500C6A1AE /* Runner.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Runner.entitlements; sourceTree = "<group>"; };
 		78E0A7A72DC9AD7400C4905E /* FlutterGeneratedPluginSwiftPackage */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = FlutterGeneratedPluginSwiftPackage; path = Flutter/ephemeral/Packages/FlutterGeneratedPluginSwiftPackage; sourceTree = "<group>"; };
 		784666492D4C4C64000A1A5F /* FlutterFramework */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = FlutterFramework; path = Flutter/ephemeral/Packages/.packages/FlutterFramework; sourceTree = "<group>"; };
-		78DABEA22ED26510000E7860 /* universal_bluetooth */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = universal_bluetooth; path = ../../ios/universal_bluetooth; sourceTree = "<group>"; };
+		78DABEA22ED26510000E7860 /* universal_bluetooth */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = universal_bluetooth_classic; path = ../../ios/universal_bluetooth_classic; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */

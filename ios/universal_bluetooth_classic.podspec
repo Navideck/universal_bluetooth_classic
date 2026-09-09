@@ -1,9 +1,9 @@
 #
 # To learn more about a Podspec see http://guides.cocoapods.org/syntax/podspec.html.
-# Run `pod lib lint universal_bluetooth.podspec` to validate before publishing.
+# Run `pod lib lint universal_bluetooth_classic.podspec` to validate before publishing.
 #
 Pod::Spec.new do |s|
-  s.name             = 'universal_bluetooth'
+  s.name             = 'universal_bluetooth_classic'
   s.version          = '0.0.1'
   s.summary          = 'A new Flutter plugin project.'
   s.description      = <<-DESC
@@ -13,13 +13,13 @@ A new Flutter plugin project.
   s.license          = { :file => '../LICENSE' }
   s.author           = { 'Your Company' => 'email@example.com' }
   s.source           = { :path => '.' }
-  s.source_files = 'universal_bluetooth/Sources/universal_bluetooth/**/*.swift'
+  s.source_files = 'universal_bluetooth_classic/Sources/universal_bluetooth_classic/**/*.swift'
   s.dependency 'Flutter'
   s.platform = :ios, '12.0'
 
   s.resource_bundles = {
-    'universal_bluetooth_privacy' => [
-      'universal_bluetooth/Sources/universal_bluetooth/PrivacyInfo.xcprivacy'
+    'universal_bluetooth_classic_privacy' => [
+      'universal_bluetooth_classic/Sources/universal_bluetooth_classic/PrivacyInfo.xcprivacy'
     ]
   }
 

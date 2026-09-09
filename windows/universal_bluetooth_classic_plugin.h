@@ -23,7 +23,7 @@
 #define STATUS_SUCCESS (0x00000000)
 typedef NTSTATUS(WINAPI *RtlGetVersionPtr)(PRTL_OSVERSIONINFOW);
 
-namespace universal_bluetooth
+namespace universal_bluetooth_classic
 {
     using namespace winrt;
     using namespace winrt::Windows;
@@ -251,6 +251,6 @@ namespace universal_bluetooth
         }
     };
 
-} // namespace universal_bluetooth
+} // namespace universal_bluetooth_classic
 
 #endif

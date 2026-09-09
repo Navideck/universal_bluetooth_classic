@@ -2,7 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:universal_bluetooth/universal_bluetooth.dart';
+import 'package:universal_bluetooth_classic/universal_bluetooth_classic.dart';
 import 'package:universal_bluetooth_example/global_widgets.dart';
 
 class BluetoothDeviceItem extends StatelessWidget {

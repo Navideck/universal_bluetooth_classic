@@ -242,7 +242,7 @@ class BluetoothHidManagerPlatformChannelSetup {
   /// Sets up an instance of `BluetoothHidManagerPlatformChannel` to handle messages through the `binaryMessenger`.
   static func setUp(binaryMessenger: FlutterBinaryMessenger, api: BluetoothHidManagerPlatformChannel?, messageChannelSuffix: String = "") {
     let channelSuffix = messageChannelSuffix.count > 0 ? ".\(messageChannelSuffix)" : ""
-    let setupSdpChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.universal_bluetooth.BluetoothHidManagerPlatformChannel.setupSdp\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    let setupSdpChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerPlatformChannel.setupSdp\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
     if let api = api {
       setupSdpChannel.setMessageHandler { message, reply in
         let args = message as! [Any?]
@@ -257,7 +257,7 @@ class BluetoothHidManagerPlatformChannelSetup {
     } else {
       setupSdpChannel.setMessageHandler(nil)
     }
-    let closeSdpChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.universal_bluetooth.BluetoothHidManagerPlatformChannel.closeSdp\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    let closeSdpChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerPlatformChannel.closeSdp\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
     if let api = api {
       closeSdpChannel.setMessageHandler { _, reply in
         do {
@@ -270,7 +270,7 @@ class BluetoothHidManagerPlatformChannelSetup {
     } else {
       closeSdpChannel.setMessageHandler(nil)
     }
-    let connectChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.universal_bluetooth.BluetoothHidManagerPlatformChannel.connect\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    let connectChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerPlatformChannel.connect\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
     if let api = api {
       connectChannel.setMessageHandler { message, reply in
         let args = message as! [Any?]
@@ -287,7 +287,7 @@ class BluetoothHidManagerPlatformChannelSetup {
     } else {
       connectChannel.setMessageHandler(nil)
     }
-    let disconnectChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.universal_bluetooth.BluetoothHidManagerPlatformChannel.disconnect\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    let disconnectChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerPlatformChannel.disconnect\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
     if let api = api {
       disconnectChannel.setMessageHandler { message, reply in
         let args = message as! [Any?]
@@ -304,7 +304,7 @@ class BluetoothHidManagerPlatformChannelSetup {
     } else {
       disconnectChannel.setMessageHandler(nil)
     }
-    let sendReportChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.universal_bluetooth.BluetoothHidManagerPlatformChannel.sendReport\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    let sendReportChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerPlatformChannel.sendReport\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
     if let api = api {
       sendReportChannel.setMessageHandler { message, reply in
         let args = message as! [Any?]
@@ -341,7 +341,7 @@ class BluetoothHidManagerCallbackChannel: BluetoothHidManagerCallbackChannelProt
     return BluetoothHidManagerPigeonCodec.shared
   }
   func onConnectionStateChanged(deviceId deviceIdArg: String, connected connectedArg: Bool, completion: @escaping (Result<Void, PigeonError>) -> Void) {
-    let channelName: String = "dev.flutter.pigeon.universal_bluetooth.BluetoothHidManagerCallbackChannel.onConnectionStateChanged\(messageChannelSuffix)"
+    let channelName: String = "dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerCallbackChannel.onConnectionStateChanged\(messageChannelSuffix)"
     let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
     channel.sendMessage([deviceIdArg, connectedArg] as [Any?]) { response in
       guard let listResponse = response as? [Any?] else {
@@ -359,7 +359,7 @@ class BluetoothHidManagerCallbackChannel: BluetoothHidManagerCallbackChannelProt
     }
   }
   func onSdpServiceRegistrationUpdate(registered registeredArg: Bool, completion: @escaping (Result<Void, PigeonError>) -> Void) {
-    let channelName: String = "dev.flutter.pigeon.universal_bluetooth.BluetoothHidManagerCallbackChannel.onSdpServiceRegistrationUpdate\(messageChannelSuffix)"
+    let channelName: String = "dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerCallbackChannel.onSdpServiceRegistrationUpdate\(messageChannelSuffix)"
     let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
     channel.sendMessage([registeredArg] as [Any?]) { response in
       guard let listResponse = response as? [Any?] else {
@@ -377,7 +377,7 @@ class BluetoothHidManagerCallbackChannel: BluetoothHidManagerCallbackChannelProt
     }
   }
   func onGetReport(deviceId deviceIdArg: String, type typeArg: ReportType, bufferSize bufferSizeArg: Int64, completion: @escaping (Result<ReportReply?, PigeonError>) -> Void) {
-    let channelName: String = "dev.flutter.pigeon.universal_bluetooth.BluetoothHidManagerCallbackChannel.onGetReport\(messageChannelSuffix)"
+    let channelName: String = "dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerCallbackChannel.onGetReport\(messageChannelSuffix)"
     let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
     channel.sendMessage([deviceIdArg, typeArg, bufferSizeArg] as [Any?]) { response in
       guard let listResponse = response as? [Any?] else {

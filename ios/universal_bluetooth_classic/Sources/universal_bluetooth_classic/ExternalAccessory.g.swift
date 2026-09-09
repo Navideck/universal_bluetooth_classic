@@ -175,7 +175,7 @@ class ExternalAccessoryChannelSetup {
   /// Sets up an instance of `ExternalAccessoryChannel` to handle messages through the `binaryMessenger`.
   static func setUp(binaryMessenger: FlutterBinaryMessenger, api: ExternalAccessoryChannel?, messageChannelSuffix: String = "") {
     let channelSuffix = messageChannelSuffix.count > 0 ? ".\(messageChannelSuffix)" : ""
-    let showBluetoothAccessoryPickerChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.universal_bluetooth.ExternalAccessoryChannel.showBluetoothAccessoryPicker\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    let showBluetoothAccessoryPickerChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.universal_bluetooth_classic.ExternalAccessoryChannel.showBluetoothAccessoryPicker\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
     if let api = api {
       showBluetoothAccessoryPickerChannel.setMessageHandler { message, reply in
         let args = message as! [Any?]
@@ -192,7 +192,7 @@ class ExternalAccessoryChannelSetup {
     } else {
       showBluetoothAccessoryPickerChannel.setMessageHandler(nil)
     }
-    let closeEASessionChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.universal_bluetooth.ExternalAccessoryChannel.closeEASession\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    let closeEASessionChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.universal_bluetooth_classic.ExternalAccessoryChannel.closeEASession\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
     if let api = api {
       closeEASessionChannel.setMessageHandler { message, reply in
         let args = message as! [Any?]
@@ -228,7 +228,7 @@ class ExternalAccessoryCallbackChannel: ExternalAccessoryCallbackChannelProtocol
     return ExternalAccessoryPigeonCodec.shared
   }
   func onConnectionStateChanged(accessory accessoryArg: EAAccessory, connected connectedArg: Bool, completion: @escaping (Result<Void, PigeonError>) -> Void) {
-    let channelName: String = "dev.flutter.pigeon.universal_bluetooth.ExternalAccessoryCallbackChannel.onConnectionStateChanged\(messageChannelSuffix)"
+    let channelName: String = "dev.flutter.pigeon.universal_bluetooth_classic.ExternalAccessoryCallbackChannel.onConnectionStateChanged\(messageChannelSuffix)"
     let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
     channel.sendMessage([accessoryArg, connectedArg] as [Any?]) { response in
       guard let listResponse = response as? [Any?] else {

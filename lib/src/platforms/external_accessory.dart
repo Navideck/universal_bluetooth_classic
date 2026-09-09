@@ -1,5 +1,5 @@
-import 'package:universal_bluetooth/src/universal_bluetooth_interface.dart';
-import 'package:universal_bluetooth/src/generated/external_accessory.g.dart';
+import 'package:universal_bluetooth_classic/src/universal_bluetooth_interface.dart';
+import 'package:universal_bluetooth_classic/src/generated/external_accessory.g.dart';
 
 class ExternalAccessory extends UniversalBluetoothInterface {
   static ExternalAccessory? _instance;

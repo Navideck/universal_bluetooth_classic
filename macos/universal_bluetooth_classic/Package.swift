@@ -3,12 +3,12 @@
 import PackageDescription
 
 let package = Package(
-    name: "universal_bluetooth",
+    name: "universal_bluetooth_classic",
     platforms: [.macOS("10.15")],
     products: [
         .library(
-            name: "universal-bluetooth",
-            targets: ["universal_bluetooth"]
+            name: "universal-bluetooth-classic",
+            targets: ["universal_bluetooth_classic"]
         )
     ],
     dependencies: [
@@ -16,7 +16,7 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "universal_bluetooth",
+            name: "universal_bluetooth_classic",
             dependencies: [
                 .product(name: "FlutterFramework", package: "FlutterFramework"),
                 "BluetoothPairingController"

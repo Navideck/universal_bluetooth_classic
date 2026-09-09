@@ -4,7 +4,7 @@
 #include <tchar.h>
 #include <winstring.h>
 
-namespace universal_bluetooth
+namespace universal_bluetooth_classic
 {
     typedef struct SizeAndPos_s
     {

@@ -12,7 +12,7 @@
 #include <optional>
 #include <string>
 
-namespace universal_bluetooth {
+namespace universal_bluetooth_classic {
 
 
 // Generated class from Pigeon.
@@ -223,5 +223,5 @@ class FlutterAccessoryCallbackChannel {
   std::string message_channel_suffix_;
 };
 
-}  // namespace universal_bluetooth
+}  // namespace universal_bluetooth_classic
 #endif  // PIGEON_UNIVERSALBLUETOOTH_G_H_

@@ -1,5 +1,5 @@
 name: universal_bluetooth_example
-description: "Demonstrates how to use the universal_bluetooth plugin."
+description: "Demonstrates how to use the universal_bluetooth_classic plugin."
 version: 1.0.0+1
 publish_to: "none"
 
@@ -12,7 +12,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   permission_handler: ^11.3.1
   device_info_plus: ^9.0.2
-  universal_bluetooth:
+  universal_bluetooth_classic:
     path: ../
 
 dev_dependencies:

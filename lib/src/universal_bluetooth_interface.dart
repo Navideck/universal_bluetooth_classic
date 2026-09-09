@@ -1,12 +1,12 @@
 import 'dart:typed_data';
 
-import 'package:universal_bluetooth/src/generated/bluetooth_hid_manager.g.dart';
-import 'package:universal_bluetooth/src/generated/external_accessory.g.dart';
-import 'package:universal_bluetooth/src/generated/universal_bluetooth.g.dart';
+import 'package:universal_bluetooth_classic/src/generated/bluetooth_hid_manager.g.dart';
+import 'package:universal_bluetooth_classic/src/generated/external_accessory.g.dart';
+import 'package:universal_bluetooth_classic/src/generated/universal_bluetooth.g.dart';
 
 abstract class UniversalBluetoothInterface {
-  static BluetoothDeviceCallback? onBluetoothDeviceDiscover;
-  static BluetoothDeviceCallback? onBluetoothDeviceRemoved;
+  static BluetoothDeviceCallback? onDeviceDiscovered;
+  static BluetoothDeviceCallback? onDeviceRemoved;
   static ConnectionChangeCallback? onConnectionStateChanged;
   static GetReportCallback? onGetReport;
   static SdpServiceRegistrationUpdateCallback? onSdpServiceRegistrationUpdate;

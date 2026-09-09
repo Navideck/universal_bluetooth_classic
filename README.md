@@ -4,10 +4,10 @@
   <img src="assets/universal_bluetooth_banner.png" alt="Universal Bluetooth — Bluetooth Classic and External Accessory for Flutter" width="100%">
 </div>
 
-[![pub package](https://img.shields.io/pub/v/universal_bluetooth?label=universal_bluetooth&color=blue)](https://pub.dev/packages/universal_bluetooth)
+[![pub package](https://img.shields.io/pub/v/universal_bluetooth_classic?label=universal_bluetooth_classic&color=blue)](https://pub.dev/packages/universal_bluetooth_classic)
 [![Platform](https://img.shields.io/badge/platform-Android%20%7C%20iOS%20%7C%20macOS%20%7C%20Windows%20%7C%20Linux-lightgrey)](https://github.com/Navideck/universal_bluetooth)
 [![GitHub stars](https://img.shields.io/github/stars/Navideck/universal_bluetooth?style=social)](https://github.com/Navideck/universal_bluetooth)
-[![pub points](https://img.shields.io/pub/points/universal_bluetooth?color=2E7D32)](https://pub.dev/packages/universal_bluetooth/score)
+[![pub points](https://img.shields.io/pub/points/universal_bluetooth_classic?color=2E7D32)](https://pub.dev/packages/universal_bluetooth_classic/score)
 [![Flutter](https://img.shields.io/badge/Flutter-%3E%3D3.3.0-blue.svg?logo=flutter)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/Dart-%3E%3D3.1.3-blue.svg?logo=dart)](https://dart.dev)
 
@@ -50,13 +50,13 @@ Add the package to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  universal_bluetooth: ^0.2.0
+  universal_bluetooth_classic: ^0.2.0
 ```
 
 Import it where you need it:
 
 ```dart
-import 'package:universal_bluetooth/universal_bluetooth.dart';
+import 'package:universal_bluetooth_classic/universal_bluetooth_classic.dart';
 ```
 
 Complete the setup for each target in [Platform-specific setup](#platform-specific-setup) before using the APIs below.
@@ -66,11 +66,11 @@ Complete the setup for each target in [Platform-specific setup](#platform-specif
 Register discovery callbacks before starting a scan:
 
 ```dart
-UniversalBluetooth.onBluetoothDeviceDiscover = (device) {
+UniversalBluetooth.onDeviceDiscovered = (device) {
   print('${device.name ?? 'Unknown'} (${device.address}), RSSI ${device.rssi}');
 };
 
-UniversalBluetooth.onBluetoothDeviceRemoved = (device) {
+UniversalBluetooth.onDeviceRemoved = (device) {
   print('Removed: ${device.address}');
 };
 

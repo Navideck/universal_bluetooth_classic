@@ -3,7 +3,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:universal_bluetooth/universal_bluetooth.dart';
+import 'package:universal_bluetooth_classic/universal_bluetooth_classic.dart';
 import 'package:universal_bluetooth_example/bluetooth_device.dart';
 import 'package:universal_bluetooth_example/global_widgets.dart';
 import 'package:universal_bluetooth_example/permission_handler.dart';
@@ -31,11 +31,11 @@ class _MyAppState extends State<MyApp> {
 
   @override
   void initState() {
-    UniversalBluetooth.onBluetoothDeviceDiscover = (device) {
-      onBluetoothDeviceDiscover(device);
+    UniversalBluetooth.onDeviceDiscovered = (device) {
+      onDeviceDiscovered(device);
     };
 
-    UniversalBluetooth.onBluetoothDeviceRemoved = (device) {
+    UniversalBluetooth.onDeviceRemoved = (device) {
       print("Device Removed ${device.name} ${device.address}");
       devices.removeWhere((e) => e.address == device.address);
       setState(() {});
@@ -68,7 +68,7 @@ class _MyAppState extends State<MyApp> {
     super.initState();
   }
 
-  void onBluetoothDeviceDiscover(device) {
+  void onDeviceDiscovered(device) {
     if (!showDevicesWithoutName && (device.name == null || device.name == "")) {
       return;
     }

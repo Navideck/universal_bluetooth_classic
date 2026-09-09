@@ -4,16 +4,16 @@ import 'package:pigeon/pigeon.dart';
 // Generates File for Android, Mac, Windows
 @ConfigurePigeon(
   PigeonOptions(
-    dartPackageName: 'universal_bluetooth',
+    dartPackageName: 'universal_bluetooth_classic',
     dartOut: 'lib/src/generated/universal_bluetooth.g.dart',
     dartOptions: DartOptions(),
     kotlinOut:
-        'android/src/main/kotlin/com/navideck/universal_bluetooth/UniversalBluetooth.g.kt',
+        'android/src/main/kotlin/com/navideck/universal_bluetooth_classic/UniversalBluetooth.g.kt',
     swiftOut:
-        'macos/universal_bluetooth/Sources/universal_bluetooth/UniversalBluetooth.g.swift',
+        'macos/universal_bluetooth_classic/Sources/universal_bluetooth_classic/UniversalBluetooth.g.swift',
     swiftOptions: SwiftOptions(),
-    kotlinOptions: KotlinOptions(package: 'com.navideck.universal_bluetooth'),
-    cppOptions: CppOptions(namespace: 'universal_bluetooth'),
+    kotlinOptions: KotlinOptions(package: 'com.navideck.universal_bluetooth_classic'),
+    cppOptions: CppOptions(namespace: 'universal_bluetooth_classic'),
     cppHeaderOut: 'windows/UniversalBluetooth.g.h',
     cppSourceOut: 'windows/UniversalBluetooth.g.cpp',
     debugGenerators: true,
