@@ -6,12 +6,12 @@
 
 #include "generated_plugin_registrant.h"
 
-#include <universal_bluetooth/universal_bluetooth_plugin_c_api.h>
+#include <universal_bluetooth_classic/universal_bluetooth_classic_plugin_c_api.h>
 #include <permission_handler_windows/permission_handler_windows_plugin.h>
 
 void RegisterPlugins(flutter::PluginRegistry* registry) {
-  UniversalBluetoothPluginCApiRegisterWithRegistrar(
-      registry->GetRegistrarForPlugin("UniversalBluetoothPluginCApi"));
+  UniversalBluetoothClassicPluginCApiRegisterWithRegistrar(
+      registry->GetRegistrarForPlugin("UniversalBluetoothClassicPluginCApi"));
   PermissionHandlerWindowsPluginRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("PermissionHandlerWindowsPlugin"));
 }

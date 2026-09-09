@@ -49,4 +49,4 @@ flutter:
       macos:
         pluginClass: UniversalBluetoothPlugin
       windows:
-        pluginClass: UniversalBluetoothPluginCApi
+        pluginClass: UniversalBluetoothClassicPluginCApi

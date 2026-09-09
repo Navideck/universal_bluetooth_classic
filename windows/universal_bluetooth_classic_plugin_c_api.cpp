@@ -4,7 +4,7 @@
 
 #include "universal_bluetooth_classic_plugin.h"
 
-void UniversalBluetoothPluginCApiRegisterWithRegistrar(
+void UniversalBluetoothClassicPluginCApiRegisterWithRegistrar(
     FlutterDesktopPluginRegistrarRef registrar) {
   universal_bluetooth_classic::UniversalBluetoothPlugin::RegisterWithRegistrar(
       flutter::PluginRegistrarManager::GetInstance()

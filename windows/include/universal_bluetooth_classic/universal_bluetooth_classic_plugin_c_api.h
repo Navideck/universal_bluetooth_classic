@@ -13,7 +13,7 @@
 extern "C" {
 #endif
 
-FLUTTER_PLUGIN_EXPORT void UniversalBluetoothPluginCApiRegisterWithRegistrar(
+FLUTTER_PLUGIN_EXPORT void UniversalBluetoothClassicPluginCApiRegisterWithRegistrar(
     FlutterDesktopPluginRegistrarRef registrar);
 
 #if defined(__cplusplus)
