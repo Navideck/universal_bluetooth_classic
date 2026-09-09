@@ -1,7 +1,7 @@
-# Universal Bluetooth
+# Universal Bluetooth Classic
 
 <div align="center">
-  <img src="assets/universal_bluetooth_banner.png" alt="Universal Bluetooth — Bluetooth Classic and External Accessory for Flutter" width="100%">
+  <img src="assets/universal_bluetooth_classic_banner.jpg" alt="Universal Bluetooth Classic — Bluetooth Classic and External Accessory for Flutter" width="100%">
 </div>
 
 [![pub package](https://img.shields.io/pub/v/universal_bluetooth_classic?label=universal_bluetooth_classic&color=blue)](https://pub.dev/packages/universal_bluetooth_classic)
