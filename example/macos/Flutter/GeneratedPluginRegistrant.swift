@@ -5,10 +5,10 @@
 import FlutterMacOS
 import Foundation
 
-import bluetooth_accessory_manager
 import device_info_plus
+import universal_bluetooth
 
 func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
-  BluetoothAccessoryManagerPlugin.register(with: registry.registrar(forPlugin: "BluetoothAccessoryManagerPlugin"))
   DeviceInfoPlusMacosPlugin.register(with: registry.registrar(forPlugin: "DeviceInfoPlusMacosPlugin"))
+  UniversalBluetoothPlugin.register(with: registry.registrar(forPlugin: "UniversalBluetoothPlugin"))
 }

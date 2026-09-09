@@ -3,7 +3,7 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
-  bluetooth_accessory_manager
+  universal_bluetooth
   permission_handler_windows
 )
 

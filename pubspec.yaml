@@ -1,10 +1,10 @@
-name: bluetooth_accessory_manager
+name: universal_bluetooth
 description: A cross-platform (Android/iOS/macOS/Windows/Linux) plugin for managing Bluetooth accessories and HID devices in Flutter
 version: 0.1.0
 homepage: https://navideck.com
-repository: https://github.com/Navideck/bluetooth_accessory_manager
-issue_tracker: https://github.com/Navideck/bluetooth_accessory_manager/issues
-documentation: https://github.com/Navideck/bluetooth_accessory_manager#readme
+repository: https://github.com/Navideck/universal_bluetooth
+issue_tracker: https://github.com/Navideck/universal_bluetooth/issues
+documentation: https://github.com/Navideck/universal_bluetooth#readme
 
 funding:
   - https://github.com/sponsors/Navideck
@@ -42,11 +42,11 @@ flutter:
   plugin:
     platforms:
       android:
-        package: com.navideck.bluetooth_accessory_manager
-        pluginClass: BluetoothAccessoryManagerPlugin
+        package: com.navideck.universal_bluetooth
+        pluginClass: UniversalBluetoothPlugin
       ios:
-        pluginClass: BluetoothAccessoryManagerPlugin
+        pluginClass: UniversalBluetoothPlugin
       macos:
-        pluginClass: BluetoothAccessoryManagerPlugin
+        pluginClass: UniversalBluetoothPlugin
       windows:
-        pluginClass: BluetoothAccessoryManagerPluginCApi
+        pluginClass: UniversalBluetoothPluginCApi

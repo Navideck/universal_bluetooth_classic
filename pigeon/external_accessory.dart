@@ -4,11 +4,11 @@ import 'package:pigeon/pigeon.dart';
 // Generates File for IOS
 @ConfigurePigeon(
   PigeonOptions(
-    dartPackageName: 'bluetooth_accessory_manager',
+    dartPackageName: 'universal_bluetooth',
     dartOut: 'lib/src/generated/external_accessory.g.dart',
     dartOptions: DartOptions(),
     swiftOut:
-        'ios/bluetooth_accessory_manager/Sources/bluetooth_accessory_manager/ExternalAccessory.g.swift',
+        'ios/universal_bluetooth/Sources/universal_bluetooth/ExternalAccessory.g.swift',
     swiftOptions: SwiftOptions(),
     debugGenerators: true,
   ),

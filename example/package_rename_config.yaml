@@ -1,0 +1,22 @@
+package_rename_config:
+  android:
+    app_name: Universal Bluetooth Example
+    package_name: com.navideck.universal_bluetooth_example
+    lang: kotlin
+  ios:
+    app_name: Universal Bluetooth Example
+    bundle_name: UniversalBT
+    package_name: com.navideck.universalBluetoothExample
+  linux:
+    app_name: Universal Bluetooth Example
+    package_name: com.navideck.universal_bluetooth_example
+    exe_name: universal_bluetooth_example
+  macos:
+    app_name: Universal Bluetooth Example
+    package_name: com.navideck.universalBluetoothExample
+    copyright_notice: Copyright © 2026 Navideck
+  windows:
+    app_name: Universal Bluetooth Example
+    organization: Navideck
+    copyright_notice: Copyright © 2026 Navideck
+    exe_name: universal_bluetooth_example

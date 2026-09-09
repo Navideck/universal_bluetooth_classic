@@ -3,10 +3,10 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:bluetooth_accessory_manager/bluetooth_accessory_manager.dart';
-import 'package:bluetooth_accessory_manager_example/bluetooth_device.dart';
-import 'package:bluetooth_accessory_manager_example/global_widgets.dart';
-import 'package:bluetooth_accessory_manager_example/permission_handler.dart';
+import 'package:universal_bluetooth/universal_bluetooth.dart';
+import 'package:universal_bluetooth_example/bluetooth_device.dart';
+import 'package:universal_bluetooth_example/global_widgets.dart';
+import 'package:universal_bluetooth_example/permission_handler.dart';
 
 void main() {
   runApp(
@@ -31,32 +31,31 @@ class _MyAppState extends State<MyApp> {
 
   @override
   void initState() {
-    BluetoothAccessoryManager.accessoryConnected = (EAAccessory accessory) {
+    UniversalBluetooth.accessoryConnected = (EAAccessory accessory) {
       print("Accessory Connected ${accessory.name}");
     };
 
-    BluetoothAccessoryManager.accessoryDisconnected = (EAAccessory accessory) {
+    UniversalBluetooth.accessoryDisconnected = (EAAccessory accessory) {
       print("Accessory Disconnected ${accessory.name}");
     };
 
-    BluetoothAccessoryManager.onBluetoothDeviceDiscover = (device) {
+    UniversalBluetooth.onBluetoothDeviceDiscover = (device) {
       onBluetoothDeviceDiscover(device);
     };
 
-    BluetoothAccessoryManager.onBluetoothDeviceRemoved = (device) {
+    UniversalBluetooth.onBluetoothDeviceRemoved = (device) {
       print("Device Removed ${device.name} ${device.address}");
       devices.removeWhere((e) => e.address == device.address);
       setState(() {});
     };
 
-    BluetoothAccessoryManager.onConnectionStateChanged =
+    UniversalBluetooth.onConnectionStateChanged =
         (String deviceId, bool connected) {
       print("Connection State Changed $deviceId $connected");
       showSnackbar("$deviceId : ${connected ? 'Connected' : 'Disconnected'}");
     };
 
-    BluetoothAccessoryManager.onGetReport =
-        (String deviceId, reportType, reportId) {
+    UniversalBluetooth.onGetReport = (String deviceId, reportType, reportId) {
       print("Get Report $deviceId $reportType $reportId");
 
       if (reportType != ReportType.input) {
@@ -68,8 +67,7 @@ class _MyAppState extends State<MyApp> {
       );
     };
 
-    BluetoothAccessoryManager.onSdpServiceRegistrationUpdate =
-        (bool registered) {
+    UniversalBluetooth.onSdpServiceRegistrationUpdate = (bool registered) {
       print("SDP Service Registered $registered");
       showSnackbar("SDP Service Registered $registered");
     };
@@ -103,7 +101,7 @@ class _MyAppState extends State<MyApp> {
       isScanning = true;
     });
     try {
-      await BluetoothAccessoryManager.startScan();
+      await UniversalBluetooth.startScan();
     } catch (e) {
       print(e);
 
@@ -118,7 +116,7 @@ class _MyAppState extends State<MyApp> {
       isScanning = false;
     });
     try {
-      await BluetoothAccessoryManager.stopScan();
+      await UniversalBluetooth.stopScan();
     } catch (e) {
       print(e);
       setState(() {
@@ -129,7 +127,7 @@ class _MyAppState extends State<MyApp> {
 
   Future<void> getPairedDevices() async {
     try {
-      var devices = await BluetoothAccessoryManager.getPairedDevices();
+      var devices = await UniversalBluetooth.getPairedDevices();
       print(devices.map((e) => "${e.address} ${e.name}"));
     } catch (e) {
       print(e);
@@ -138,7 +136,7 @@ class _MyAppState extends State<MyApp> {
 
   Future<void> setupSdp() async {
     try {
-      await BluetoothAccessoryManager.setupSdp(
+      await UniversalBluetooth.setupSdp(
         config: SdpConfig(
           macSdpConfig: MacSdpConfig(
             sdpPlistFile: "SerialPortDictionary",
@@ -160,7 +158,7 @@ class _MyAppState extends State<MyApp> {
 
   Future<void> closeSdp() async {
     try {
-      await BluetoothAccessoryManager.closeSdp();
+      await UniversalBluetooth.closeSdp();
     } catch (e) {
       print(e);
       showSnackbar(e);
@@ -207,7 +205,7 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('BluetoothAccessoryManager'),
+        title: const Text('UniversalBluetooth'),
         actions: [
           if (isScanning)
             const Padding(
@@ -232,8 +230,7 @@ class _MyAppState extends State<MyApp> {
                 onPressed: () async {
                   try {
                     print("Opening Picker");
-                    await BluetoothAccessoryManager
-                        .showBluetoothAccessoryPicker();
+                    await UniversalBluetooth.showBluetoothAccessoryPicker();
                     print("showed BluetoothAccessoryPicker");
                   } catch (e) {
                     print(e);
@@ -244,7 +241,7 @@ class _MyAppState extends State<MyApp> {
               PlatformButton(
                 onPressed: () async {
                   print("Closing EASession");
-                  await BluetoothAccessoryManager.closeEASession();
+                  await UniversalBluetooth.closeEASession();
                   print("Closed EASession");
                 },
                 text: "Close EASession",
@@ -270,8 +267,7 @@ class _MyAppState extends State<MyApp> {
               PlatformButton(
                 onPressed: () async {
                   try {
-                    bool scanning =
-                        await BluetoothAccessoryManager.isScanning();
+                    bool scanning = await UniversalBluetooth.isScanning();
                     print("Scanning: $scanning");
                   } catch (e) {
                     print(e);
@@ -284,7 +280,7 @@ class _MyAppState extends State<MyApp> {
                   try {
                     devices.clear();
                     devices.addAll(
-                      await BluetoothAccessoryManager.getPairedDevices(),
+                      await UniversalBluetooth.getPairedDevices(),
                     );
                     print(devices.map((e) => "${e.address} ${e.name}"));
                     setState(() {});

@@ -1,13 +1,13 @@
-# Bluetooth Accessory Manager
+# Universal Bluetooth
 
 <div align="center">
-  <img src="assets/bluetooth_accessory_manager_banner.jpg" alt="Bluetooth Accessory Manager — Bluetooth Classic and External Accessory for Flutter" width="100%">
+  <img src="assets/universal_bluetooth_banner.png" alt="Universal Bluetooth — Bluetooth Classic and External Accessory for Flutter" width="100%">
 </div>
 
-[![pub package](https://img.shields.io/pub/v/bluetooth_accessory_manager?label=bluetooth_accessory_manager&color=blue)](https://pub.dev/packages/bluetooth_accessory_manager)
-[![Platform](https://img.shields.io/badge/platform-Android%20%7C%20iOS%20%7C%20macOS%20%7C%20Windows%20%7C%20Linux-lightgrey)](https://github.com/Navideck/bluetooth_accessory_manager)
-[![GitHub stars](https://img.shields.io/github/stars/Navideck/bluetooth_accessory_manager?style=social)](https://github.com/Navideck/bluetooth_accessory_manager)
-[![pub points](https://img.shields.io/pub/points/bluetooth_accessory_manager?color=2E7D32)](https://pub.dev/packages/bluetooth_accessory_manager/score)
+[![pub package](https://img.shields.io/pub/v/universal_bluetooth?label=universal_bluetooth&color=blue)](https://pub.dev/packages/universal_bluetooth)
+[![Platform](https://img.shields.io/badge/platform-Android%20%7C%20iOS%20%7C%20macOS%20%7C%20Windows%20%7C%20Linux-lightgrey)](https://github.com/Navideck/universal_bluetooth)
+[![GitHub stars](https://img.shields.io/github/stars/Navideck/universal_bluetooth?style=social)](https://github.com/Navideck/universal_bluetooth)
+[![pub points](https://img.shields.io/pub/points/universal_bluetooth?color=2E7D32)](https://pub.dev/packages/universal_bluetooth/score)
 [![Flutter](https://img.shields.io/badge/Flutter-%3E%3D3.3.0-blue.svg?logo=flutter)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/Dart-%3E%3D3.1.3-blue.svg?logo=dart)](https://dart.dev)
 
@@ -51,13 +51,13 @@ Add the package to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  bluetooth_accessory_manager: ^0.1.0
+  universal_bluetooth: ^0.1.0
 ```
 
 Import it where you need it:
 
 ```dart
-import 'package:bluetooth_accessory_manager/bluetooth_accessory_manager.dart';
+import 'package:universal_bluetooth/universal_bluetooth.dart';
 ```
 
 Complete the setup for each target in [Platform-specific setup](#platform-specific-setup) before using the APIs below.
@@ -67,24 +67,24 @@ Complete the setup for each target in [Platform-specific setup](#platform-specif
 Register discovery callbacks before starting a scan:
 
 ```dart
-BluetoothAccessoryManager.onBluetoothDeviceDiscover = (device) {
+UniversalBluetooth.onBluetoothDeviceDiscover = (device) {
   print('${device.name ?? 'Unknown'} (${device.address}), RSSI ${device.rssi}');
 };
 
-BluetoothAccessoryManager.onBluetoothDeviceRemoved = (device) {
+UniversalBluetooth.onBluetoothDeviceRemoved = (device) {
   print('Removed: ${device.address}');
 };
 
-await BluetoothAccessoryManager.startScan();
+await UniversalBluetooth.startScan();
 ```
 
 Check or stop the scan when needed:
 
 ```dart
-final isScanning = await BluetoothAccessoryManager.isScanning();
+final isScanning = await UniversalBluetooth.isScanning();
 
 if (isScanning) {
-  await BluetoothAccessoryManager.stopScan();
+  await UniversalBluetooth.stopScan();
 }
 ```
 
@@ -93,7 +93,7 @@ Scanning is available on Android, macOS, Windows, and Linux.
 ### Paired devices
 
 ```dart
-final devices = await BluetoothAccessoryManager.getPairedDevices();
+final devices = await UniversalBluetooth.getPairedDevices();
 
 for (final device in devices) {
   print('${device.name ?? 'Unknown'} — ${device.address}');
@@ -105,13 +105,13 @@ for (final device in devices) {
 Open the platform's Bluetooth accessory picker. On iOS, this uses the External Accessory picker.
 
 ```dart
-await BluetoothAccessoryManager.showBluetoothAccessoryPicker();
+await UniversalBluetooth.showBluetoothAccessoryPicker();
 ```
 
 Optionally filter by device name:
 
 ```dart
-await BluetoothAccessoryManager.showBluetoothAccessoryPicker(
+await UniversalBluetooth.showBluetoothAccessoryPicker(
   withNames: ['MyDevice', 'AnotherDevice'],
 );
 ```
@@ -123,7 +123,7 @@ The native picker is not available on Linux.
 Pair or unpair a device by its Bluetooth address:
 
 ```dart
-final paired = await BluetoothAccessoryManager.pair(
+final paired = await UniversalBluetooth.pair(
   '00:11:22:33:44:55',
 );
 
@@ -131,7 +131,7 @@ if (paired) {
   print('Device paired');
 }
 
-await BluetoothAccessoryManager.unpair('00:11:22:33:44:55');
+await UniversalBluetooth.unpair('00:11:22:33:44:55');
 ```
 
 Pairing APIs are available on Android, macOS, Windows, and Linux.
@@ -143,13 +143,13 @@ Connect to and disconnect from a Bluetooth HID device:
 ```dart
 const deviceId = '00:11:22:33:44:55';
 
-BluetoothAccessoryManager.onConnectionStateChanged =
+UniversalBluetooth.onConnectionStateChanged =
     (deviceId, connected) {
   print('$deviceId: ${connected ? 'connected' : 'disconnected'}');
 };
 
-await BluetoothAccessoryManager.connect(deviceId);
-await BluetoothAccessoryManager.disconnect(deviceId);
+await UniversalBluetooth.connect(deviceId);
+await UniversalBluetooth.disconnect(deviceId);
 ```
 
 HID connections are available on Android, macOS, and Windows. iOS uses the External Accessory framework instead. Linux supports only the basic `disconnect` operation.
@@ -161,7 +161,7 @@ Send a report to a connected HID device:
 ```dart
 import 'dart:typed_data';
 
-await BluetoothAccessoryManager.sendReport(
+await UniversalBluetooth.sendReport(
   '00:11:22:33:44:55',
   Uint8List.fromList([0x01, 0x02, 0x03]),
 );
@@ -170,7 +170,7 @@ await BluetoothAccessoryManager.sendReport(
 Respond to HID get-report requests:
 
 ```dart
-BluetoothAccessoryManager.onGetReport =
+UniversalBluetooth.onGetReport =
     (deviceId, reportType, bufferSize) {
   return ReportReply(
     data: Uint8List.fromList([0x01, 0x02, 0x03]),
@@ -205,17 +205,17 @@ final config = SdpConfig(
   ),
 );
 
-BluetoothAccessoryManager.onSdpServiceRegistrationUpdate = (registered) {
+UniversalBluetooth.onSdpServiceRegistrationUpdate = (registered) {
   print('SDP service registered: $registered');
 };
 
-await BluetoothAccessoryManager.setupSdp(config: config);
+await UniversalBluetooth.setupSdp(config: config);
 ```
 
 Close the registration when it is no longer needed:
 
 ```dart
-await BluetoothAccessoryManager.closeSdp();
+await UniversalBluetooth.closeSdp();
 ```
 
 SDP registration is available on Android, macOS, and Windows.
@@ -225,13 +225,13 @@ SDP registration is available on Android, macOS, and Windows.
 The External Accessory callbacks and session APIs in this section are iOS-only.
 
 ```dart
-BluetoothAccessoryManager.accessoryConnected = (accessory) {
+UniversalBluetooth.accessoryConnected = (accessory) {
   print('Connected: ${accessory.name}');
   print('Manufacturer: ${accessory.manufacturer}');
   print('Protocols: ${accessory.protocolStrings}');
 };
 
-BluetoothAccessoryManager.accessoryDisconnected = (accessory) {
+UniversalBluetooth.accessoryDisconnected = (accessory) {
   print('Disconnected: ${accessory.name}');
 };
 ```
@@ -239,7 +239,7 @@ BluetoothAccessoryManager.accessoryDisconnected = (accessory) {
 Close a session for a specific protocol:
 
 ```dart
-await BluetoothAccessoryManager.closeEASession(
+await UniversalBluetooth.closeEASession(
   'com.mycompany.myprotocol',
 );
 ```
@@ -247,7 +247,7 @@ await BluetoothAccessoryManager.closeEASession(
 Omit the protocol string to close the session using the first available protocol:
 
 ```dart
-await BluetoothAccessoryManager.closeEASession();
+await UniversalBluetooth.closeEASession();
 ```
 
 Calling these APIs on another platform throws `UnimplementedError`.
@@ -339,23 +339,23 @@ Linux supports scanning, paired-device lookup, pairing, unpairing, basic disconn
 
 ## Customizing Platform Implementation
 
-Provide a custom implementation for testing or an unsupported platform by extending `BluetoothAccessoryManagerInterface`:
+Provide a custom implementation for testing or an unsupported platform by extending `UniversalBluetoothInterface`:
 
 ```dart
-class BluetoothAccessoryManagerMock
-    extends BluetoothAccessoryManagerInterface {
+class UniversalBluetoothMock
+    extends UniversalBluetoothInterface {
   // Override the APIs used by your application.
 }
 
-BluetoothAccessoryManager.setInstance(
-  BluetoothAccessoryManagerMock(),
+UniversalBluetooth.setInstance(
+  UniversalBluetoothMock(),
 );
 ```
 
 Restore the default platform implementation with:
 
 ```dart
-BluetoothAccessoryManager.setInstance(null);
+UniversalBluetooth.setInstance(null);
 ```
 
 ## Example app
@@ -375,4 +375,4 @@ flutter run
 | :--: | :-- |
 | <img src="assets/bt_cam_icon.svg" alt="BT Cam icon" width="160" height="160"> | [**BT Cam**](https://btcam.app)<br>A Bluetooth remote for Canon, Nikon, Sony, Fujifilm, GoPro, Olympus, Panasonic, Pentax, and Blackmagic cameras. |
 
-> Built something with Bluetooth Accessory Manager? Open a pull request to add it here, including an SVG app icon.
+> Built something with Universal Bluetooth? Open a pull request to add it here, including an SVG app icon.

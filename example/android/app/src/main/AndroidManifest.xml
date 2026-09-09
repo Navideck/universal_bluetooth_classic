@@ -11,7 +11,7 @@
         android:maxSdkVersion="28" />
 
     <application
-        android:label="Bluetooth Accessory Manager Example"
+        android:label="Universal Bluetooth Example"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

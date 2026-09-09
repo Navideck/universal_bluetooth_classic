@@ -1,28 +1,22 @@
 PODS:
-  - bluetooth_accessory_manager (0.0.1):
-    - FlutterMacOS
   - device_info_plus (0.0.1):
     - FlutterMacOS
   - FlutterMacOS (1.0.0)
 
 DEPENDENCIES:
-  - bluetooth_accessory_manager (from `Flutter/ephemeral/.symlinks/plugins/bluetooth_accessory_manager/macos`)
   - device_info_plus (from `Flutter/ephemeral/.symlinks/plugins/device_info_plus/macos`)
   - FlutterMacOS (from `Flutter/ephemeral`)
 
 EXTERNAL SOURCES:
-  bluetooth_accessory_manager:
-    :path: Flutter/ephemeral/.symlinks/plugins/bluetooth_accessory_manager/macos
   device_info_plus:
     :path: Flutter/ephemeral/.symlinks/plugins/device_info_plus/macos
   FlutterMacOS:
     :path: Flutter/ephemeral
 
 SPEC CHECKSUMS:
-  bluetooth_accessory_manager: c26bf0da7bb6d539eb88ad87770987b6b7dbafa2
-  device_info_plus: 5401765fde0b8d062a2f8eb65510fb17e77cf07f
-  FlutterMacOS: d0db08ddef1a9af05a5ec4b724367152bb0500b1
+  device_info_plus: b0fafc687fb901e2af612763340f1b0d4352f8e5
+  FlutterMacOS: c232990155153907050900a2e175c7773903ba4e
 
-PODFILE CHECKSUM: 9ebaf0ce3d369aaa26a9ea0e159195ed94724cf3
+PODFILE CHECKSUM: f0c21717cb7ee9112f915044c74bfceb5b12e02a
 
 COCOAPODS: 1.16.2

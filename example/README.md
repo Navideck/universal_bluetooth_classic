@@ -1,6 +1,6 @@
-# bluetooth_accessory_manager_example
+# universal_bluetooth_example
 
-Demonstrates how to use the bluetooth_accessory_manager plugin.
+Demonstrates how to use the universal_bluetooth plugin.
 
 ## Getting Started
 

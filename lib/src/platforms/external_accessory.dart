@@ -1,7 +1,7 @@
-import 'package:bluetooth_accessory_manager/src/bluetooth_accessory_manager_interface.dart';
-import 'package:bluetooth_accessory_manager/src/generated/external_accessory.g.dart';
+import 'package:universal_bluetooth/src/universal_bluetooth_interface.dart';
+import 'package:universal_bluetooth/src/generated/external_accessory.g.dart';
 
-class ExternalAccessory extends BluetoothAccessoryManagerInterface {
+class ExternalAccessory extends UniversalBluetoothInterface {
   static ExternalAccessory? _instance;
   static ExternalAccessory get instance => _instance ??= ExternalAccessory._();
 
@@ -27,11 +27,11 @@ class ExternalAccessory extends BluetoothAccessoryManagerInterface {
 class _CallbackHandler extends ExternalAccessoryCallbackChannel {
   @override
   void accessoryConnected(EAAccessory accessory) {
-    BluetoothAccessoryManagerInterface.accessoryConnected?.call(accessory);
+    UniversalBluetoothInterface.accessoryConnected?.call(accessory);
   }
 
   @override
   void accessoryDisconnected(EAAccessory accessory) {
-    BluetoothAccessoryManagerInterface.accessoryDisconnected?.call(accessory);
+    UniversalBluetoothInterface.accessoryDisconnected?.call(accessory);
   }
 }

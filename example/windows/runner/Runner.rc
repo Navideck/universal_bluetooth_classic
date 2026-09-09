@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "Navideck" "\0"
-            VALUE "FileDescription", "Bluetooth Accessory Manager Example" "\0"
+            VALUE "FileDescription", "Universal Bluetooth Example" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "Bluetooth Accessory Manager Example" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2024 com.navideck. All rights reserved." "\0"
-            VALUE "OriginalFilename", "bluetooth_accessory_manager_example.exe" "\0"
-            VALUE "ProductName", "Bluetooth Accessory Manager Example" "\0"
+            VALUE "InternalName", "Universal Bluetooth Example" "\0"
+            VALUE "LegalCopyright", "Copyright © 2026 Navideck" "\0"
+            VALUE "OriginalFilename", "universal_bluetooth_example.exe" "\0"
+            VALUE "ProductName", "Universal Bluetooth Example" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END
