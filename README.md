@@ -17,13 +17,12 @@ A cross-platform Flutter plugin for discovering, pairing, and managing Bluetooth
 
 ## Features
 
-- [**Device discovery**](#scanning) — scan for nearby Bluetooth devices and retrieve paired devices. Available on Android, macOS, Windows, and Linux.
-- [**Pairing**](#pairing) — pair and unpair accessories by address. Available on Android, macOS, Windows, and Linux.
-- [**Native accessory picker**](#native-accessory-picker) — open the platform picker, with optional device-name filtering. Available on Android, iOS, macOS, and Windows.
-- [**Connecting**](#connecting) — connect to and disconnect from Bluetooth HID devices, and receive connection state changes.
-- [**HID reports**](#hid-reports) — send reports and answer get-report requests. Available on Android, macOS, and Windows.
-- [**SDP registration**](#sdp-service-registration) — advertise a Bluetooth HID service. Available on Android, macOS, and Windows.
-- [**iOS External Accessory**](#ios-external-accessory) — receive connection events and manage External Accessory sessions on iOS.
+- [**Device discovery**](#scanning) — scan for nearby Bluetooth devices and retrieve paired devices.
+- [**Pairing**](#pairing) — pair and unpair accessories by address.
+- [**Native accessory picker**](#native-accessory-picker) — open the platform picker, with optional device-name filtering.
+- [**Bluetooth HID**](#connecting) — connect to HID devices and exchange reports.
+- [**SDP registration**](#sdp-service-registration) — advertise a Bluetooth HID service.
+- [**Apple External Accessory**](#ios-external-accessory) — receive connection events and manage EA sessions on iOS.
 - [**Five desktop and mobile platforms**](#api-support) — Android, iOS, macOS, Windows, and Linux.
 
 ## API Support
@@ -34,8 +33,8 @@ All APIs are called through the same `UniversalBluetooth` class. Platform differ
 | :-- | :--: | :--: | :--: | :--: | :--: |
 | `showBluetoothAccessoryPicker` | ✔️ | ✔️ | ✔️ | ✔️ | — |
 | `startScan` / `stopScan` / `isScanning` | ✔️ | — | ✔️ | ✔️ | ✔️ |
-| `getPairedDevices` | ✔️ | — | ✔️ | ✔️ | ✔️ |
 | `pair` / `unpair` | ✔️ | — | ✔️ | ✔️ | ✔️ |
+| `getPairedDevices` | ✔️ | — | ✔️ | ✔️ | ✔️ |
 | `connect` (HID) | ✔️ | — | ✔️ | ✔️ | — |
 | `disconnect` | ✔️ | ✔️² | ✔️ | ✔️ | ✔️¹ |
 | `sendReport` | ✔️ | — | ✔️ | ✔️ | — |
@@ -46,7 +45,7 @@ All APIs are called through the same `UniversalBluetooth` class. Platform differ
 | `onGetReport` | ✔️ | — | ✔️ | ✔️ | — |
 | `onSdpServiceRegistrationUpdate` | ✔️ | — | ✔️ | ✔️ | — |
 
-¹ Linux supports a basic Bluetooth disconnect, not an HID-specific disconnect.
+¹ Linux supports a basic disconnect, not an HID-specific disconnect.
 ² On iOS, `disconnect` closes an External Accessory session.
 
 ## Getting Started
@@ -68,8 +67,6 @@ Complete the setup for each target in [Platform-specific setup](#platform-specif
 
 ## Scanning
 
-### Start scanning
-
 Register discovery callbacks before starting a scan:
 
 ```dart
@@ -84,9 +81,7 @@ UniversalBluetooth.onDeviceRemoved = (device) {
 await UniversalBluetooth.startScan();
 ```
 
-### Stop scanning
-
-Check the current state and stop the scan when needed:
+Check or stop the scan when needed:
 
 ```dart
 final isScanning = await UniversalBluetooth.isScanning();
@@ -96,7 +91,7 @@ if (isScanning) {
 }
 ```
 
-> Scanning is available on Android, macOS, Windows, and Linux. On iOS, use the [native accessory picker](#native-accessory-picker) instead.
+Scanning is available on Android, macOS, Windows, and Linux.
 
 ### Paired devices
 
@@ -107,8 +102,6 @@ for (final device in devices) {
   print('${device.name ?? 'Unknown'} — ${device.address}');
 }
 ```
-
-> Getting paired devices is available on Android, macOS, Windows, and Linux.
 
 ### Native accessory picker
 
@@ -126,7 +119,7 @@ await UniversalBluetooth.showBluetoothAccessoryPicker(
 );
 ```
 
-> The native picker is available on Android, iOS, macOS, and Windows. It is not available on Linux.
+The native picker is not available on Linux.
 
 ## Pairing
 
@@ -144,7 +137,7 @@ if (paired) {
 await UniversalBluetooth.unpair('00:11:22:33:44:55');
 ```
 
-> Pairing and unpairing are available on Android, macOS, Windows, and Linux.
+Pairing APIs are available on Android, macOS, Windows, and Linux.
 
 ## Connecting
 
@@ -161,9 +154,7 @@ await UniversalBluetooth.connect(deviceId);
 await UniversalBluetooth.disconnect(deviceId);
 ```
 
-> HID connections are available on Android, macOS, and Windows. iOS uses the External Accessory framework instead, where `disconnect` closes the session. Linux supports only the basic `disconnect` operation.
-
-> `onConnectionStateChanged` fires on Android, iOS, macOS, and Linux. On Windows the event is not emitted.
+HID connections are available on Android, macOS, and Windows. iOS uses the External Accessory framework instead. Linux supports only the basic `disconnect` operation.
 
 ## HID Reports
 
@@ -189,7 +180,7 @@ UniversalBluetooth.onGetReport =
 };
 ```
 
-> HID reports are available on Android, macOS, and Windows.
+HID reports are available on Android, macOS, and Windows.
 
 ## SDP Service Registration
 
@@ -229,7 +220,7 @@ Close the registration when it is no longer needed:
 await UniversalBluetooth.closeSdp();
 ```
 
-> SDP service registration is available on Android, macOS, and Windows.
+SDP registration is available on Android, macOS, and Windows.
 
 ## iOS External Accessory
 
@@ -261,7 +252,7 @@ Omit the protocol string to close the session using the first available protocol
 await UniversalBluetooth.disconnect();
 ```
 
-> The `externalAccessory` event payload is only available on iOS.
+The `externalAccessory` event payload is only available on iOS.
 
 ## Data Types
 
@@ -269,31 +260,13 @@ await UniversalBluetooth.disconnect();
 
 Discovered and paired devices expose:
 
-- `address` — the device address on most platforms and the connection ID on iOS
+- `address` — the device address on most platforms, the connection ID on iOS
 - `name`
 - `paired`
 - `isConnectedWithHid`
 - `rssi`
-- `deviceType` — one of `classic`, `le`, `dual`, or `unknown`
+- `deviceType` — `classic`, `le`, `dual`, or `unknown`
 - `deviceClass` — for example `peripheral`, `audioVideo`, or `computer`
-
-```dart
-enum DeviceType { classic, le, dual, unknown }
-
-enum DeviceClass {
-  audioVideo,
-  computer,
-  health,
-  imaging,
-  misc,
-  networking,
-  peripheral,
-  phone,
-  toy,
-  uncategorized,
-  wearable,
-}
-```
 
 ### `EAAccessory`
 
@@ -305,16 +278,10 @@ Connection events provide an opaque identifier, a `connected` or `disconnected`
 state, and a source: `hid`, `externalAccessory`, or `system`. The External
 Accessory source also includes the full iOS `EAAccessory` value.
 
-```dart
-enum BluetoothConnectionState { connected, disconnected }
-
-enum BluetoothConnectionSource { hid, externalAccessory, system }
-```
-
 ### HID configuration
 
-- `SdpConfig` holds the optional `MacSdpConfig` and `AndroidSdpConfig` values used for service registration.
-  - `MacSdpConfig` takes an optional `sdpPlistFile` path and an optional `data` map of SDP properties.
+- `SdpConfig` holds the platform-specific `MacSdpConfig` and `AndroidSdpConfig` values used for service registration.
+  - `MacSdpConfig` takes an optional `sdpPlistFile` path and a `data` map of SDP properties.
   - `AndroidSdpConfig` requires `name`, `description`, `provider`, `subclass`, and `descriptors`.
 - `ReportReply` returns optional report `data` or an optional HID `error` code from `onGetReport`.
 - `ReportType` identifies `input`, `output`, and `feature` reports.
