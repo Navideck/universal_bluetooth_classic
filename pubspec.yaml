@@ -1,5 +1,5 @@
 name: universal_bluetooth
-description: A cross-platform (Android/iOS/macOS/Windows/Linux) plugin for managing Bluetooth Classic accessories and HID devices in Flutter
+description: Bluetooth Classic & External Accessory for Flutter
 version: 0.2.0
 homepage: https://navideck.com
 repository: https://github.com/Navideck/universal_bluetooth
