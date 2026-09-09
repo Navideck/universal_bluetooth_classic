@@ -187,9 +187,7 @@ class ExternalAccessoryChannel {
 abstract class ExternalAccessoryCallbackChannel {
   static const MessageCodec<Object?> pigeonChannelCodec = _PigeonCodec();
 
-  void accessoryConnected(EAAccessory accessory);
-
-  void accessoryDisconnected(EAAccessory accessory);
+  void onConnectionStateChanged(EAAccessory accessory, bool connected);
 
   static void setUp(
     ExternalAccessoryCallbackChannel? api, {
@@ -202,7 +200,7 @@ abstract class ExternalAccessoryCallbackChannel {
       final BasicMessageChannel<
           Object?> pigeonVar_channel = BasicMessageChannel<
               Object?>(
-          'dev.flutter.pigeon.universal_bluetooth.ExternalAccessoryCallbackChannel.accessoryConnected$messageChannelSuffix',
+          'dev.flutter.pigeon.universal_bluetooth.ExternalAccessoryCallbackChannel.onConnectionStateChanged$messageChannelSuffix',
           pigeonChannelCodec,
           binaryMessenger: binaryMessenger);
       if (api == null) {
@@ -210,42 +208,16 @@ abstract class ExternalAccessoryCallbackChannel {
       } else {
         pigeonVar_channel.setMessageHandler((Object? message) async {
           assert(message != null,
-              'Argument for dev.flutter.pigeon.universal_bluetooth.ExternalAccessoryCallbackChannel.accessoryConnected was null.');
+              'Argument for dev.flutter.pigeon.universal_bluetooth.ExternalAccessoryCallbackChannel.onConnectionStateChanged was null.');
           final List<Object?> args = (message as List<Object?>?)!;
           final EAAccessory? arg_accessory = (args[0] as EAAccessory?);
           assert(arg_accessory != null,
-              'Argument for dev.flutter.pigeon.universal_bluetooth.ExternalAccessoryCallbackChannel.accessoryConnected was null, expected non-null EAAccessory.');
+              'Argument for dev.flutter.pigeon.universal_bluetooth.ExternalAccessoryCallbackChannel.onConnectionStateChanged was null, expected non-null EAAccessory.');
+          final bool? arg_connected = (args[1] as bool?);
+          assert(arg_connected != null,
+              'Argument for dev.flutter.pigeon.universal_bluetooth.ExternalAccessoryCallbackChannel.onConnectionStateChanged was null, expected non-null bool.');
           try {
-            api.accessoryConnected(arg_accessory!);
-            return wrapResponse(empty: true);
-          } on PlatformException catch (e) {
-            return wrapResponse(error: e);
-          } catch (e) {
-            return wrapResponse(
-                error: PlatformException(code: 'error', message: e.toString()));
-          }
-        });
-      }
-    }
-    {
-      final BasicMessageChannel<
-          Object?> pigeonVar_channel = BasicMessageChannel<
-              Object?>(
-          'dev.flutter.pigeon.universal_bluetooth.ExternalAccessoryCallbackChannel.accessoryDisconnected$messageChannelSuffix',
-          pigeonChannelCodec,
-          binaryMessenger: binaryMessenger);
-      if (api == null) {
-        pigeonVar_channel.setMessageHandler(null);
-      } else {
-        pigeonVar_channel.setMessageHandler((Object? message) async {
-          assert(message != null,
-              'Argument for dev.flutter.pigeon.universal_bluetooth.ExternalAccessoryCallbackChannel.accessoryDisconnected was null.');
-          final List<Object?> args = (message as List<Object?>?)!;
-          final EAAccessory? arg_accessory = (args[0] as EAAccessory?);
-          assert(arg_accessory != null,
-              'Argument for dev.flutter.pigeon.universal_bluetooth.ExternalAccessoryCallbackChannel.accessoryDisconnected was null, expected non-null EAAccessory.');
-          try {
-            api.accessoryDisconnected(arg_accessory!);
+            api.onConnectionStateChanged(arg_accessory!, arg_connected!);
             return wrapResponse(empty: true);
           } on PlatformException catch (e) {
             return wrapResponse(error: e);

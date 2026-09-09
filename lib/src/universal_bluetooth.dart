@@ -21,13 +21,14 @@ class UniversalBluetooth {
     return _platform.showBluetoothAccessoryPicker(withNames: withNames);
   }
 
-  /// Closes the EASession.
-  /// If no protocol string is passed then it will use the first one available
-  static Future<void> closeEASession([String? protocolString]) =>
-      _platform.closeEASession(protocolString);
-
-  static Future<void> disconnect(String deviceId) =>
-      _platform.disconnect(deviceId);
+  /// Disconnects a Bluetooth device or closes an iOS External Accessory
+  /// session.
+  ///
+  /// [identifier] is the device ID on Android, macOS, Windows, and Linux. On
+  /// iOS it is an optional protocol string; when omitted, the first available
+  /// protocol is used.
+  static Future<void> disconnect([String? identifier]) =>
+      _platform.disconnect(identifier);
 
   static Future<void> connect(String deviceId) => _platform.connect(deviceId);
 
@@ -53,14 +54,6 @@ class UniversalBluetooth {
 
   static Future<List<BluetoothDevice>> getPairedDevices() =>
       _platform.getPairedDevices();
-
-  static set accessoryConnected(AccessoryCallback? callback) {
-    UniversalBluetoothInterface.accessoryConnected = callback;
-  }
-
-  static set accessoryDisconnected(AccessoryCallback? callback) {
-    UniversalBluetoothInterface.accessoryDisconnected = callback;
-  }
 
   static set onBluetoothDeviceDiscover(BluetoothDeviceCallback? callback) {
     UniversalBluetoothInterface.onBluetoothDeviceDiscover = callback;

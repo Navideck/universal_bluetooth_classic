@@ -34,16 +34,15 @@ A cross-platform Flutter plugin for discovering, pairing, and managing Bluetooth
 | `pair` / `unpair` | ✔️ | — | ✔️ | ✔️ | ✔️ |
 | `getPairedDevices` | ✔️ | — | ✔️ | ✔️ | ✔️ |
 | `connect` (HID) | ✔️ | — | ✔️ | ✔️ | — |
-| `disconnect` | ✔️ | — | ✔️ | ✔️ | ✔️¹ |
+| `disconnect` | ✔️ | ✔️² | ✔️ | ✔️ | ✔️¹ |
 | `sendReport` | ✔️ | — | ✔️ | ✔️ | — |
 | `setupSdp` / `closeSdp` | ✔️ | — | ✔️ | ✔️ | — |
-| `onConnectionStateChanged` | ✔️ | — | ✔️ | ✔️ | — |
+| `onConnectionStateChanged` | ✔️ | ✔️ | ✔️ | — | ✔️ |
 | `onGetReport` | ✔️ | — | ✔️ | ✔️ | — |
 | `onSdpServiceRegistrationUpdate` | ✔️ | — | ✔️ | ✔️ | — |
-| `closeEASession` | — | ✔️ | — | — | — |
-| `accessoryConnected` / `accessoryDisconnected` | — | ✔️ | — | — | — |
 
 ¹ Linux supports a basic disconnect, not an HID-specific disconnect.
+² On iOS, `disconnect` closes an External Accessory session.
 
 ## Getting Started
 
@@ -51,7 +50,7 @@ Add the package to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  universal_bluetooth: ^0.1.0
+  universal_bluetooth: ^0.2.0
 ```
 
 Import it where you need it:
@@ -143,9 +142,8 @@ Connect to and disconnect from a Bluetooth HID device:
 ```dart
 const deviceId = '00:11:22:33:44:55';
 
-UniversalBluetooth.onConnectionStateChanged =
-    (deviceId, connected) {
-  print('$deviceId: ${connected ? 'connected' : 'disconnected'}');
+UniversalBluetooth.onConnectionStateChanged = (event) {
+  print('${event.identifier}: ${event.state.name} (${event.source.name})');
 };
 
 await UniversalBluetooth.connect(deviceId);
@@ -222,24 +220,24 @@ SDP registration is available on Android, macOS, and Windows.
 
 ## iOS External Accessory
 
-The External Accessory callbacks and session APIs in this section are iOS-only.
+External Accessory sessions are iOS-only, but their connection changes use the
+same callback as the other platforms.
 
 ```dart
-UniversalBluetooth.accessoryConnected = (accessory) {
-  print('Connected: ${accessory.name}');
+UniversalBluetooth.onConnectionStateChanged = (event) {
+  final accessory = event.externalAccessory;
+  if (accessory == null) return;
+
+  print('${event.state.name}: ${accessory.name}');
   print('Manufacturer: ${accessory.manufacturer}');
   print('Protocols: ${accessory.protocolStrings}');
-};
-
-UniversalBluetooth.accessoryDisconnected = (accessory) {
-  print('Disconnected: ${accessory.name}');
 };
 ```
 
 Close a session for a specific protocol:
 
 ```dart
-await UniversalBluetooth.closeEASession(
+await UniversalBluetooth.disconnect(
   'com.mycompany.myprotocol',
 );
 ```
@@ -247,10 +245,10 @@ await UniversalBluetooth.closeEASession(
 Omit the protocol string to close the session using the first available protocol:
 
 ```dart
-await UniversalBluetooth.closeEASession();
+await UniversalBluetooth.disconnect();
 ```
 
-Calling these APIs on another platform throws `UnimplementedError`.
+The `externalAccessory` event payload is only available on iOS.
 
 ## Data Types
 
@@ -268,7 +266,13 @@ Discovered and paired devices expose:
 
 ### `EAAccessory`
 
-iOS External Accessory callbacks provide the accessory name, manufacturer, model and serial numbers, firmware and hardware revisions, dock type, supported protocol strings, connection status, and connection ID.
+iOS External Accessory events provide the accessory name, manufacturer, model and serial numbers, firmware and hardware revisions, dock type, supported protocol strings, connection status, and connection ID.
+
+### `BluetoothConnectionEvent`
+
+Connection events provide an opaque identifier, a `connected` or `disconnected`
+state, and a source: `hid`, `externalAccessory`, or `system`. The External
+Accessory source also includes the full iOS `EAAccessory` value.
 
 ### HID configuration
 
@@ -335,7 +339,7 @@ plugs:
   - bluez
 ```
 
-Linux supports scanning, paired-device lookup, pairing, unpairing, basic disconnects, and discovery callbacks. The native picker, HID connections and reports, and SDP registration are not implemented.
+Linux supports scanning, paired-device lookup, pairing, unpairing, basic disconnects, discovery callbacks, and system connection-state events. The native picker, HID connections and reports, and SDP registration are not implemented.
 
 ## Customizing Platform Implementation
 

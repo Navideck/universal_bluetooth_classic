@@ -31,14 +31,6 @@ class _MyAppState extends State<MyApp> {
 
   @override
   void initState() {
-    UniversalBluetooth.accessoryConnected = (EAAccessory accessory) {
-      print("Accessory Connected ${accessory.name}");
-    };
-
-    UniversalBluetooth.accessoryDisconnected = (EAAccessory accessory) {
-      print("Accessory Disconnected ${accessory.name}");
-    };
-
     UniversalBluetooth.onBluetoothDeviceDiscover = (device) {
       onBluetoothDeviceDiscover(device);
     };
@@ -49,10 +41,11 @@ class _MyAppState extends State<MyApp> {
       setState(() {});
     };
 
-    UniversalBluetooth.onConnectionStateChanged =
-        (String deviceId, bool connected) {
-      print("Connection State Changed $deviceId $connected");
-      showSnackbar("$deviceId : ${connected ? 'Connected' : 'Disconnected'}");
+    UniversalBluetooth.onConnectionStateChanged = (event) {
+      final connected = event.state == BluetoothConnectionState.connected;
+      final label = event.externalAccessory?.name ?? event.identifier;
+      print("Connection State Changed $label ${event.state}");
+      showSnackbar("$label : ${connected ? 'Connected' : 'Disconnected'}");
     };
 
     UniversalBluetooth.onGetReport = (String deviceId, reportType, reportId) {
@@ -241,7 +234,7 @@ class _MyAppState extends State<MyApp> {
               PlatformButton(
                 onPressed: () async {
                   print("Closing EASession");
-                  await UniversalBluetooth.closeEASession();
+                  await UniversalBluetooth.disconnect();
                   print("Closed EASession");
                 },
                 text: "Close EASession",

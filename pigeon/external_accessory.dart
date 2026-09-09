@@ -29,9 +29,7 @@ abstract class ExternalAccessoryChannel {
 /// Native -> Flutter
 @FlutterApi()
 abstract class ExternalAccessoryCallbackChannel {
-  void accessoryConnected(EAAccessory accessory);
-
-  void accessoryDisconnected(EAAccessory accessory);
+  void onConnectionStateChanged(EAAccessory accessory, bool connected);
 }
 
 class EAAccessory {

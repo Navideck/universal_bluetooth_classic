@@ -25,8 +25,8 @@ class AccessoryManager extends UniversalBluetoothInterface {
   }
 
   @override
-  Future<void> disconnect(String deviceId) =>
-      _hidManagerChannel.disconnect(deviceId);
+  Future<void> disconnect([String? identifier]) =>
+      _hidManagerChannel.disconnect(_requireIdentifier(identifier));
 
   @override
   Future<void> startScan() => _accessoryManagerChannel.startScan();
@@ -63,6 +63,9 @@ class AccessoryManager extends UniversalBluetoothInterface {
   Future<void> closeSdp() => _hidManagerChannel.closeSdp();
 }
 
+String _requireIdentifier(String? identifier) =>
+    identifier ?? (throw ArgumentError.notNull('identifier'));
+
 // Handle callbacks from Native to Flutter
 class _AccessoryCallbackHandler extends FlutterAccessoryCallbackChannel {
   @override
@@ -79,8 +82,15 @@ class _AccessoryCallbackHandler extends FlutterAccessoryCallbackChannel {
 class _HidCallbackHandler extends BluetoothHidManagerCallbackChannel {
   @override
   void onConnectionStateChanged(String deviceId, bool connected) {
-    UniversalBluetoothInterface.onConnectionStateChanged
-        ?.call(deviceId, connected);
+    UniversalBluetoothInterface.onConnectionStateChanged?.call(
+      BluetoothConnectionEvent(
+        identifier: deviceId,
+        state: connected
+            ? BluetoothConnectionState.connected
+            : BluetoothConnectionState.disconnected,
+        source: BluetoothConnectionSource.hid,
+      ),
+    );
   }
 
   @override

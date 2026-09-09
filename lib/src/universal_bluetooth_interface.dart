@@ -5,8 +5,6 @@ import 'package:universal_bluetooth/src/generated/external_accessory.g.dart';
 import 'package:universal_bluetooth/src/generated/universal_bluetooth.g.dart';
 
 abstract class UniversalBluetoothInterface {
-  static AccessoryCallback? accessoryConnected;
-  static AccessoryCallback? accessoryDisconnected;
   static BluetoothDeviceCallback? onBluetoothDeviceDiscover;
   static BluetoothDeviceCallback? onBluetoothDeviceRemoved;
   static ConnectionChangeCallback? onConnectionStateChanged;
@@ -19,15 +17,11 @@ abstract class UniversalBluetoothInterface {
     throw UnimplementedError();
   }
 
-  Future<void> closeEASession([String? protocolString]) {
-    throw UnimplementedError();
-  }
-
   Future<void> connect(String deviceId) {
     throw UnimplementedError();
   }
 
-  Future<void> disconnect(String deviceId) {
+  Future<void> disconnect([String? identifier]) {
     throw UnimplementedError();
   }
 
@@ -68,12 +62,29 @@ abstract class UniversalBluetoothInterface {
   }
 }
 
-typedef AccessoryCallback = void Function(EAAccessory accessory);
-
 typedef BluetoothDeviceCallback = void Function(BluetoothDevice device);
 
 typedef ConnectionChangeCallback = void Function(
-    String deviceId, bool connected);
+  BluetoothConnectionEvent event,
+);
+
+enum BluetoothConnectionState { connected, disconnected }
+
+enum BluetoothConnectionSource { hid, externalAccessory, system }
+
+class BluetoothConnectionEvent {
+  const BluetoothConnectionEvent({
+    required this.identifier,
+    required this.state,
+    required this.source,
+    this.externalAccessory,
+  });
+
+  final String identifier;
+  final BluetoothConnectionState state;
+  final BluetoothConnectionSource source;
+  final EAAccessory? externalAccessory;
+}
 
 typedef GetReportCallback = ReportReply? Function(
     String deviceId, ReportType type, int bufferSize);

@@ -18,6 +18,8 @@ class AccessoryManagerBluez extends UniversalBluetoothInterface {
   StreamSubscription? _deviceAdded;
   StreamSubscription? _deviceRemoved;
   final Map<String, BlueZDevice> _devices = {};
+  final Map<String, StreamSubscription<List<String>>> _deviceChanges = {};
+  final Map<String, bool> _connectionStates = {};
 
   @override
   Future<void> startScan() async {
@@ -94,21 +96,55 @@ class AccessoryManagerBluez extends UniversalBluetoothInterface {
   }
 
   @override
-  Future<void> disconnect(String deviceId) async {
+  Future<void> disconnect([String? identifier]) async {
+    if (identifier == null) throw ArgumentError.notNull('identifier');
     await _ensureInitialized();
-    var device = _findDeviceById(deviceId);
+    var device = _findDeviceById(identifier);
     await device.disconnect();
   }
 
   void _onDeviceAdd(BlueZDevice device) {
     _devices[device.address] = device;
+    _watchConnectionChanges(device);
     UniversalBluetoothInterface.onBluetoothDeviceDiscover?.call(
       device.toBluetoothDevice(),
     );
   }
 
+  void _watchConnectionChanges(BlueZDevice device) {
+    _connectionStates.putIfAbsent(device.address, () => device.connected);
+    _deviceChanges.putIfAbsent(
+      device.address,
+      () => device.propertiesChanged.listen(
+        (properties) => _onDevicePropertiesChanged(device, properties),
+      ),
+    );
+  }
+
   void _onDeviceRemoved(BlueZDevice device) {
     _devices.remove(device.address);
+    _connectionStates.remove(device.address);
+    _deviceChanges.remove(device.address)?.cancel();
+  }
+
+  void _onDevicePropertiesChanged(
+    BlueZDevice device,
+    List<String> properties,
+  ) {
+    if (!properties.contains('Connected')) return;
+
+    final connected = device.connected;
+    if (_connectionStates[device.address] == connected) return;
+    _connectionStates[device.address] = connected;
+    UniversalBluetoothInterface.onConnectionStateChanged?.call(
+      BluetoothConnectionEvent(
+        identifier: device.address,
+        state: connected
+            ? BluetoothConnectionState.connected
+            : BluetoothConnectionState.disconnected,
+        source: BluetoothConnectionSource.system,
+      ),
+    );
   }
 
   BlueZDevice _findDeviceById(String deviceId) {
@@ -151,6 +187,10 @@ class AccessoryManagerBluez extends UniversalBluetoothInterface {
 
       _client.deviceAdded.listen(_onDeviceAdd);
       _client.deviceRemoved.listen(_onDeviceRemoved);
+      for (final device in _client.devices) {
+        _devices[device.address] = device;
+        _watchConnectionChanges(device);
+      }
 
       isInitialized = true;
       _initializationCompleter?.complete();

@@ -103,7 +103,10 @@ public class UniversalBluetoothPlugin: NSObject, FlutterPlugin, ExternalAccessor
   @objc private func accessoryConnected(_ notification: NSNotification) {
     let connectedAccessory = notification.userInfo![EAAccessoryKey] as? EAAccessory
     guard let connectedAccessory else { return }
-    callbackChannel.accessoryConnected(accessory: connectedAccessory.toEAAccessoryObject()) { _ in }
+    callbackChannel.onConnectionStateChanged(
+      accessory: connectedAccessory.toEAAccessoryObject(),
+      connected: true
+    ) { _ in }
   }
 
   @objc private func accessoryDisconnected(_ notification: NSNotification) {
@@ -112,7 +115,10 @@ public class UniversalBluetoothPlugin: NSObject, FlutterPlugin, ExternalAccessor
     for protocolString in connectedAccessory.protocolStrings {
       eaSessionDisconnectionCompleterMap.removeValue(forKey: protocolString)?(.success(()))
     }
-    callbackChannel.accessoryDisconnected(accessory: connectedAccessory.toEAAccessoryObject()) { _ in }
+    callbackChannel.onConnectionStateChanged(
+      accessory: connectedAccessory.toEAAccessoryObject(),
+      connected: false
+    ) { _ in }
   }
 }
 
