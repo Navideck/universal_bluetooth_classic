@@ -1,4 +1,4 @@
-group = "com.navideck.flutter_accessory_manager"
+group = "com.navideck.universal_bluetooth"
 version = "1.0-SNAPSHOT"
 
 buildscript {
@@ -26,7 +26,7 @@ apply plugin: "kotlin-android"
 
 android {
     if (project.android.hasProperty("namespace")) {
-        namespace = "com.navideck.flutter_accessory_manager"
+        namespace = "com.navideck.universal_bluetooth"
     }
 
     compileSdk = 34

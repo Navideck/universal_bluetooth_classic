@@ -1,7 +1,7 @@
-import 'package:flutter_accessory_manager/src/flutter_accessory_manager_interface.dart';
-import 'package:flutter_accessory_manager/src/generated/external_accessory.g.dart';
+import 'package:universal_bluetooth/src/universal_bluetooth_interface.dart';
+import 'package:universal_bluetooth/src/generated/external_accessory.g.dart';
 
-class ExternalAccessory extends FlutterAccessoryManagerInterface {
+class ExternalAccessory extends UniversalBluetoothInterface {
   static ExternalAccessory? _instance;
   static ExternalAccessory get instance => _instance ??= ExternalAccessory._();
 
@@ -19,19 +19,23 @@ class ExternalAccessory extends FlutterAccessoryManagerInterface {
   }
 
   @override
-  Future<void> closeEASession([String? protocolString]) =>
-      _channel.closeEASession(protocolString);
+  Future<void> disconnect([String? identifier]) =>
+      _channel.closeEASession(identifier);
 }
 
 // Handle callbacks from Native to Flutter
 class _CallbackHandler extends ExternalAccessoryCallbackChannel {
   @override
-  void accessoryConnected(EAAccessory accessory) {
-    FlutterAccessoryManagerInterface.accessoryConnected?.call(accessory);
-  }
-
-  @override
-  void accessoryDisconnected(EAAccessory accessory) {
-    FlutterAccessoryManagerInterface.accessoryDisconnected?.call(accessory);
+  void onConnectionStateChanged(EAAccessory accessory, bool connected) {
+    UniversalBluetoothInterface.onConnectionStateChanged?.call(
+      BluetoothConnectionEvent(
+        identifier: accessory.connectionID.toString(),
+        state: connected
+            ? BluetoothConnectionState.connected
+            : BluetoothConnectionState.disconnected,
+        source: BluetoothConnectionSource.externalAccessory,
+        externalAccessory: accessory,
+      ),
+    );
   }
 }

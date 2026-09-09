@@ -3,7 +3,7 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
-  flutter_accessory_manager
+  universal_bluetooth
   permission_handler_windows
 )
 

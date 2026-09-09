@@ -3,10 +3,10 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_accessory_manager/flutter_accessory_manager.dart';
-import 'package:flutter_accessory_manager_example/bluetooth_device.dart';
-import 'package:flutter_accessory_manager_example/global_widgets.dart';
-import 'package:flutter_accessory_manager_example/permission_handler.dart';
+import 'package:universal_bluetooth/universal_bluetooth.dart';
+import 'package:universal_bluetooth_example/bluetooth_device.dart';
+import 'package:universal_bluetooth_example/global_widgets.dart';
+import 'package:universal_bluetooth_example/permission_handler.dart';
 
 void main() {
   runApp(
@@ -31,32 +31,24 @@ class _MyAppState extends State<MyApp> {
 
   @override
   void initState() {
-    FlutterAccessoryManager.accessoryConnected = (EAAccessory accessory) {
-      print("Accessory Connected ${accessory.name}");
-    };
-
-    FlutterAccessoryManager.accessoryDisconnected = (EAAccessory accessory) {
-      print("Accessory Disconnected ${accessory.name}");
-    };
-
-    FlutterAccessoryManager.onBluetoothDeviceDiscover = (device) {
+    UniversalBluetooth.onBluetoothDeviceDiscover = (device) {
       onBluetoothDeviceDiscover(device);
     };
 
-    FlutterAccessoryManager.onBluetoothDeviceRemoved = (device) {
+    UniversalBluetooth.onBluetoothDeviceRemoved = (device) {
       print("Device Removed ${device.name} ${device.address}");
       devices.removeWhere((e) => e.address == device.address);
       setState(() {});
     };
 
-    FlutterAccessoryManager.onConnectionStateChanged =
-        (String deviceId, bool connected) {
-      print("Connection State Changed $deviceId $connected");
-      showSnackbar("$deviceId : ${connected ? 'Connected' : 'Disconnected'}");
+    UniversalBluetooth.onConnectionStateChanged = (event) {
+      final connected = event.state == BluetoothConnectionState.connected;
+      final label = event.externalAccessory?.name ?? event.identifier;
+      print("Connection State Changed $label ${event.state}");
+      showSnackbar("$label : ${connected ? 'Connected' : 'Disconnected'}");
     };
 
-    FlutterAccessoryManager.onGetReport =
-        (String deviceId, reportType, reportId) {
+    UniversalBluetooth.onGetReport = (String deviceId, reportType, reportId) {
       print("Get Report $deviceId $reportType $reportId");
 
       if (reportType != ReportType.input) {
@@ -68,7 +60,7 @@ class _MyAppState extends State<MyApp> {
       );
     };
 
-    FlutterAccessoryManager.onSdpServiceRegistrationUpdate = (bool registered) {
+    UniversalBluetooth.onSdpServiceRegistrationUpdate = (bool registered) {
       print("SDP Service Registered $registered");
       showSnackbar("SDP Service Registered $registered");
     };
@@ -102,7 +94,7 @@ class _MyAppState extends State<MyApp> {
       isScanning = true;
     });
     try {
-      await FlutterAccessoryManager.startScan();
+      await UniversalBluetooth.startScan();
     } catch (e) {
       print(e);
 
@@ -117,7 +109,7 @@ class _MyAppState extends State<MyApp> {
       isScanning = false;
     });
     try {
-      await FlutterAccessoryManager.stopScan();
+      await UniversalBluetooth.stopScan();
     } catch (e) {
       print(e);
       setState(() {
@@ -128,7 +120,7 @@ class _MyAppState extends State<MyApp> {
 
   Future<void> getPairedDevices() async {
     try {
-      var devices = await FlutterAccessoryManager.getPairedDevices();
+      var devices = await UniversalBluetooth.getPairedDevices();
       print(devices.map((e) => "${e.address} ${e.name}"));
     } catch (e) {
       print(e);
@@ -137,7 +129,7 @@ class _MyAppState extends State<MyApp> {
 
   Future<void> setupSdp() async {
     try {
-      await FlutterAccessoryManager.setupSdp(
+      await UniversalBluetooth.setupSdp(
         config: SdpConfig(
           macSdpConfig: MacSdpConfig(
             sdpPlistFile: "SerialPortDictionary",
@@ -159,7 +151,7 @@ class _MyAppState extends State<MyApp> {
 
   Future<void> closeSdp() async {
     try {
-      await FlutterAccessoryManager.closeSdp();
+      await UniversalBluetooth.closeSdp();
     } catch (e) {
       print(e);
       showSnackbar(e);
@@ -206,7 +198,7 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('FlutterAccessoryManager'),
+        title: const Text('UniversalBluetooth'),
         actions: [
           if (isScanning)
             const Padding(
@@ -231,8 +223,7 @@ class _MyAppState extends State<MyApp> {
                 onPressed: () async {
                   try {
                     print("Opening Picker");
-                    await FlutterAccessoryManager
-                        .showBluetoothAccessoryPicker();
+                    await UniversalBluetooth.showBluetoothAccessoryPicker();
                     print("showed BluetoothAccessoryPicker");
                   } catch (e) {
                     print(e);
@@ -243,7 +234,7 @@ class _MyAppState extends State<MyApp> {
               PlatformButton(
                 onPressed: () async {
                   print("Closing EASession");
-                  await FlutterAccessoryManager.closeEASession();
+                  await UniversalBluetooth.disconnect();
                   print("Closed EASession");
                 },
                 text: "Close EASession",
@@ -269,7 +260,7 @@ class _MyAppState extends State<MyApp> {
               PlatformButton(
                 onPressed: () async {
                   try {
-                    bool scanning = await FlutterAccessoryManager.isScanning();
+                    bool scanning = await UniversalBluetooth.isScanning();
                     print("Scanning: $scanning");
                   } catch (e) {
                     print(e);
@@ -282,7 +273,7 @@ class _MyAppState extends State<MyApp> {
                   try {
                     devices.clear();
                     devices.addAll(
-                      await FlutterAccessoryManager.getPairedDevices(),
+                      await UniversalBluetooth.getPairedDevices(),
                     );
                     print(devices.map((e) => "${e.address} ${e.name}"));
                     setState(() {});

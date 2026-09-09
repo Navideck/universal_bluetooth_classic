@@ -3,7 +3,7 @@ import UIKit
 import XCTest
 
 
-@testable import flutter_accessory_manager
+@testable import universal_bluetooth
 
 // This demonstrates a simple unit test of the Swift portion of this plugin's implementation.
 //
@@ -12,7 +12,7 @@ import XCTest
 class RunnerTests: XCTestCase {
 
   func testGetPlatformVersion() {
-    let plugin = FlutterAccessoryManagerPlugin()
+    let plugin = UniversalBluetoothPlugin()
 
     let call = FlutterMethodCall(methodName: "getPlatformVersion", arguments: [])
 

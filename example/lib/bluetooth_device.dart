@@ -2,8 +2,8 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_accessory_manager/flutter_accessory_manager.dart';
-import 'package:flutter_accessory_manager_example/global_widgets.dart';
+import 'package:universal_bluetooth/universal_bluetooth.dart';
+import 'package:universal_bluetooth_example/global_widgets.dart';
 
 class BluetoothDeviceItem extends StatelessWidget {
   final BluetoothDevice device;
@@ -12,7 +12,7 @@ class BluetoothDeviceItem extends StatelessWidget {
   Future<void> pairDevice() async {
     try {
       print("Pairing");
-      bool paired = await FlutterAccessoryManager.pair(device.address);
+      bool paired = await UniversalBluetooth.pair(device.address);
       print("Pair: $paired");
     } catch (e) {
       print(e);
@@ -22,7 +22,7 @@ class BluetoothDeviceItem extends StatelessWidget {
   Future<void> unPairDevice() async {
     try {
       print("Unpairing ${device.address}");
-      await FlutterAccessoryManager.unpair(device.address);
+      await UniversalBluetooth.unpair(device.address);
       print("Unpaired");
     } catch (e) {
       print(e);
@@ -31,14 +31,14 @@ class BluetoothDeviceItem extends StatelessWidget {
 
   Future<void> disconnect() async {
     print("Disconnecting");
-    await FlutterAccessoryManager.disconnect(device.address);
+    await UniversalBluetooth.disconnect(device.address);
     print("Disconnected");
   }
 
   Future<void> connect() async {
     try {
       print("Connecting");
-      await FlutterAccessoryManager.connect(device.address);
+      await UniversalBluetooth.connect(device.address);
       print("Connected Successfully");
     } catch (e) {
       print("ConnectionFailed $e");
@@ -58,14 +58,14 @@ class BluetoothDeviceItem extends StatelessWidget {
   }
 
   Future<void> sendAndroidKeyboardKey() async {
-    await FlutterAccessoryManager.sendReport(
+    await UniversalBluetooth.sendReport(
       device.address,
       Uint8List.fromList(
         [0x01, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00],
       ), // Key A Down
     );
     await Future.delayed(const Duration(milliseconds: 200));
-    await FlutterAccessoryManager.sendReport(
+    await UniversalBluetooth.sendReport(
       device.address,
       Uint8List.fromList(
         [0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
@@ -74,12 +74,12 @@ class BluetoothDeviceItem extends StatelessWidget {
   }
 
   Future<void> sendMacKeyboardKey() async {
-    await FlutterAccessoryManager.sendReport(
+    await UniversalBluetooth.sendReport(
       device.address,
       Uint8List.fromList(macHidReport(0x04, 0)), //  Key A Down
     );
     await Future.delayed(const Duration(milliseconds: 200));
-    await FlutterAccessoryManager.sendReport(
+    await UniversalBluetooth.sendReport(
       device.address,
       Uint8List.fromList(macHidReport(0, 0)), // Key A Up
     );

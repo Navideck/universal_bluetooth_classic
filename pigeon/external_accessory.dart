@@ -4,10 +4,11 @@ import 'package:pigeon/pigeon.dart';
 // Generates File for IOS
 @ConfigurePigeon(
   PigeonOptions(
-    dartPackageName: 'flutter_accessory_manager',
+    dartPackageName: 'universal_bluetooth',
     dartOut: 'lib/src/generated/external_accessory.g.dart',
     dartOptions: DartOptions(),
-    swiftOut: 'ios/Classes/ExternalAccessory.g.swift',
+    swiftOut:
+        'ios/universal_bluetooth/Sources/universal_bluetooth/ExternalAccessory.g.swift',
     swiftOptions: SwiftOptions(),
     debugGenerators: true,
   ),
@@ -28,9 +29,7 @@ abstract class ExternalAccessoryChannel {
 /// Native -> Flutter
 @FlutterApi()
 abstract class ExternalAccessoryCallbackChannel {
-  void accessoryConnected(EAAccessory accessory);
-
-  void accessoryDisconnected(EAAccessory accessory);
+  void onConnectionStateChanged(EAAccessory accessory, bool connected);
 }
 
 class EAAccessory {
