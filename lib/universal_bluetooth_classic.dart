@@ -1,3 +1,10 @@
+/// A Flutter plugin for discovering, pairing, and managing Bluetooth Classic
+/// accessories, Bluetooth HID devices, and Apple External Accessory sessions.
+///
+/// Use the [UniversalBluetooth] class as the single entry point for all
+/// platforms.
+library;
+
 export 'package:universal_bluetooth_classic/src/generated/external_accessory.g.dart'
     show EAAccessory;
 export 'package:universal_bluetooth_classic/src/generated/universal_bluetooth.g.dart'
