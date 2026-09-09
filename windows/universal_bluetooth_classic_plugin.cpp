@@ -1,4 +1,4 @@
-#include "universal_bluetooth_plugin.h"
+#include "universal_bluetooth_classic_plugin.h"
 
 #include <windows.h>
 #include <VersionHelpers.h>
@@ -11,7 +11,7 @@
 #include <sstream>
 #include "pin_entry.h"
 
-namespace universal_bluetooth
+namespace universal_bluetooth_classic
 {
   const auto isConnectableKey = L"System.Devices.Aep.Bluetooth.Le.IsConnectable";
   const auto isConnectedKey = L"System.Devices.Aep.IsConnected";
@@ -557,4 +557,4 @@ namespace universal_bluetooth
     return BluetoothDevice(deviceAddress, &name, isPaired, is_connected_with_hid, rssi, device_class, device_type);
   }
 
-} // namespace universal_bluetooth
+} // namespace universal_bluetooth_classic

@@ -207,7 +207,7 @@ class FlutterAccessoryPlatformChannelSetup {
   /// Sets up an instance of `FlutterAccessoryPlatformChannel` to handle messages through the `binaryMessenger`.
   static func setUp(binaryMessenger: FlutterBinaryMessenger, api: FlutterAccessoryPlatformChannel?, messageChannelSuffix: String = "") {
     let channelSuffix = messageChannelSuffix.count > 0 ? ".\(messageChannelSuffix)" : ""
-    let showBluetoothAccessoryPickerChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.universal_bluetooth.FlutterAccessoryPlatformChannel.showBluetoothAccessoryPicker\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    let showBluetoothAccessoryPickerChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryPlatformChannel.showBluetoothAccessoryPicker\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
     if let api = api {
       showBluetoothAccessoryPickerChannel.setMessageHandler { message, reply in
         let args = message as! [Any?]
@@ -224,7 +224,7 @@ class FlutterAccessoryPlatformChannelSetup {
     } else {
       showBluetoothAccessoryPickerChannel.setMessageHandler(nil)
     }
-    let startScanChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.universal_bluetooth.FlutterAccessoryPlatformChannel.startScan\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    let startScanChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryPlatformChannel.startScan\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
     if let api = api {
       startScanChannel.setMessageHandler { _, reply in
         do {
@@ -237,7 +237,7 @@ class FlutterAccessoryPlatformChannelSetup {
     } else {
       startScanChannel.setMessageHandler(nil)
     }
-    let stopScanChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.universal_bluetooth.FlutterAccessoryPlatformChannel.stopScan\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    let stopScanChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryPlatformChannel.stopScan\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
     if let api = api {
       stopScanChannel.setMessageHandler { _, reply in
         do {
@@ -250,7 +250,7 @@ class FlutterAccessoryPlatformChannelSetup {
     } else {
       stopScanChannel.setMessageHandler(nil)
     }
-    let isScanningChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.universal_bluetooth.FlutterAccessoryPlatformChannel.isScanning\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    let isScanningChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryPlatformChannel.isScanning\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
     if let api = api {
       isScanningChannel.setMessageHandler { _, reply in
         do {
@@ -263,7 +263,7 @@ class FlutterAccessoryPlatformChannelSetup {
     } else {
       isScanningChannel.setMessageHandler(nil)
     }
-    let getPairedDevicesChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.universal_bluetooth.FlutterAccessoryPlatformChannel.getPairedDevices\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    let getPairedDevicesChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryPlatformChannel.getPairedDevices\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
     if let api = api {
       getPairedDevicesChannel.setMessageHandler { _, reply in
         do {
@@ -276,7 +276,7 @@ class FlutterAccessoryPlatformChannelSetup {
     } else {
       getPairedDevicesChannel.setMessageHandler(nil)
     }
-    let pairChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.universal_bluetooth.FlutterAccessoryPlatformChannel.pair\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    let pairChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryPlatformChannel.pair\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
     if let api = api {
       pairChannel.setMessageHandler { message, reply in
         let args = message as! [Any?]
@@ -293,7 +293,7 @@ class FlutterAccessoryPlatformChannelSetup {
     } else {
       pairChannel.setMessageHandler(nil)
     }
-    let unpairChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.universal_bluetooth.FlutterAccessoryPlatformChannel.unpair\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    let unpairChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryPlatformChannel.unpair\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
     if let api = api {
       unpairChannel.setMessageHandler { message, reply in
         let args = message as! [Any?]
@@ -330,7 +330,7 @@ class FlutterAccessoryCallbackChannel: FlutterAccessoryCallbackChannelProtocol {
     return UniversalBluetoothPigeonCodec.shared
   }
   func onDeviceDiscover(device deviceArg: BluetoothDevice, completion: @escaping (Result<Void, PigeonError>) -> Void) {
-    let channelName: String = "dev.flutter.pigeon.universal_bluetooth.FlutterAccessoryCallbackChannel.onDeviceDiscover\(messageChannelSuffix)"
+    let channelName: String = "dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryCallbackChannel.onDeviceDiscover\(messageChannelSuffix)"
     let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
     channel.sendMessage([deviceArg] as [Any?]) { response in
       guard let listResponse = response as? [Any?] else {
@@ -348,7 +348,7 @@ class FlutterAccessoryCallbackChannel: FlutterAccessoryCallbackChannelProtocol {
     }
   }
   func onDeviceRemoved(device deviceArg: BluetoothDevice, completion: @escaping (Result<Void, PigeonError>) -> Void) {
-    let channelName: String = "dev.flutter.pigeon.universal_bluetooth.FlutterAccessoryCallbackChannel.onDeviceRemoved\(messageChannelSuffix)"
+    let channelName: String = "dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryCallbackChannel.onDeviceRemoved\(messageChannelSuffix)"
     let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
     channel.sendMessage([deviceArg] as [Any?]) { response in
       guard let listResponse = response as? [Any?] else {

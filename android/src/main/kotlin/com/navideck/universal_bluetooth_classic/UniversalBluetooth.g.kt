@@ -2,7 +2,7 @@
 // See also: https://pub.dev/packages/pigeon
 @file:Suppress("UNCHECKED_CAST", "ArrayInDataClass")
 
-package com.navideck.universal_bluetooth
+package com.navideck.universal_bluetooth_classic
 
 import android.util.Log
 import io.flutter.plugin.common.BasicMessageChannel
@@ -182,7 +182,7 @@ interface FlutterAccessoryPlatformChannel {
     fun setUp(binaryMessenger: BinaryMessenger, api: FlutterAccessoryPlatformChannel?, messageChannelSuffix: String = "") {
       val separatedMessageChannelSuffix = if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
       run {
-        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.universal_bluetooth.FlutterAccessoryPlatformChannel.showBluetoothAccessoryPicker$separatedMessageChannelSuffix", codec)
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryPlatformChannel.showBluetoothAccessoryPicker$separatedMessageChannelSuffix", codec)
         if (api != null) {
           channel.setMessageHandler { message, reply ->
             val args = message as List<Any?>
@@ -201,7 +201,7 @@ interface FlutterAccessoryPlatformChannel {
         }
       }
       run {
-        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.universal_bluetooth.FlutterAccessoryPlatformChannel.startScan$separatedMessageChannelSuffix", codec)
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryPlatformChannel.startScan$separatedMessageChannelSuffix", codec)
         if (api != null) {
           channel.setMessageHandler { _, reply ->
             val wrapped: List<Any?> = try {
@@ -217,7 +217,7 @@ interface FlutterAccessoryPlatformChannel {
         }
       }
       run {
-        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.universal_bluetooth.FlutterAccessoryPlatformChannel.stopScan$separatedMessageChannelSuffix", codec)
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryPlatformChannel.stopScan$separatedMessageChannelSuffix", codec)
         if (api != null) {
           channel.setMessageHandler { _, reply ->
             val wrapped: List<Any?> = try {
@@ -233,7 +233,7 @@ interface FlutterAccessoryPlatformChannel {
         }
       }
       run {
-        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.universal_bluetooth.FlutterAccessoryPlatformChannel.isScanning$separatedMessageChannelSuffix", codec)
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryPlatformChannel.isScanning$separatedMessageChannelSuffix", codec)
         if (api != null) {
           channel.setMessageHandler { _, reply ->
             val wrapped: List<Any?> = try {
@@ -248,7 +248,7 @@ interface FlutterAccessoryPlatformChannel {
         }
       }
       run {
-        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.universal_bluetooth.FlutterAccessoryPlatformChannel.getPairedDevices$separatedMessageChannelSuffix", codec)
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryPlatformChannel.getPairedDevices$separatedMessageChannelSuffix", codec)
         if (api != null) {
           channel.setMessageHandler { _, reply ->
             val wrapped: List<Any?> = try {
@@ -263,7 +263,7 @@ interface FlutterAccessoryPlatformChannel {
         }
       }
       run {
-        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.universal_bluetooth.FlutterAccessoryPlatformChannel.pair$separatedMessageChannelSuffix", codec)
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryPlatformChannel.pair$separatedMessageChannelSuffix", codec)
         if (api != null) {
           channel.setMessageHandler { message, reply ->
             val args = message as List<Any?>
@@ -283,7 +283,7 @@ interface FlutterAccessoryPlatformChannel {
         }
       }
       run {
-        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.universal_bluetooth.FlutterAccessoryPlatformChannel.unpair$separatedMessageChannelSuffix", codec)
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryPlatformChannel.unpair$separatedMessageChannelSuffix", codec)
         if (api != null) {
           channel.setMessageHandler { message, reply ->
             val args = message as List<Any?>
@@ -319,7 +319,7 @@ class FlutterAccessoryCallbackChannel(private val binaryMessenger: BinaryMesseng
   fun onDeviceDiscover(deviceArg: BluetoothDevice, callback: (Result<Unit>) -> Unit)
 {
     val separatedMessageChannelSuffix = if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
-    val channelName = "dev.flutter.pigeon.universal_bluetooth.FlutterAccessoryCallbackChannel.onDeviceDiscover$separatedMessageChannelSuffix"
+    val channelName = "dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryCallbackChannel.onDeviceDiscover$separatedMessageChannelSuffix"
     val channel = BasicMessageChannel<Any?>(binaryMessenger, channelName, codec)
     channel.send(listOf(deviceArg)) {
       if (it is List<*>) {
@@ -336,7 +336,7 @@ class FlutterAccessoryCallbackChannel(private val binaryMessenger: BinaryMesseng
   fun onDeviceRemoved(deviceArg: BluetoothDevice, callback: (Result<Unit>) -> Unit)
 {
     val separatedMessageChannelSuffix = if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
-    val channelName = "dev.flutter.pigeon.universal_bluetooth.FlutterAccessoryCallbackChannel.onDeviceRemoved$separatedMessageChannelSuffix"
+    val channelName = "dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryCallbackChannel.onDeviceRemoved$separatedMessageChannelSuffix"
     val channel = BasicMessageChannel<Any?>(binaryMessenger, channelName, codec)
     channel.send(listOf(deviceArg)) {
       if (it is List<*>) {

@@ -2,7 +2,7 @@
 // See also: https://pub.dev/packages/pigeon
 @file:Suppress("UNCHECKED_CAST", "ArrayInDataClass")
 
-package com.navideck.universal_bluetooth
+package com.navideck.universal_bluetooth_classic
 
 import android.util.Log
 import io.flutter.plugin.common.BasicMessageChannel
@@ -222,7 +222,7 @@ interface BluetoothHidManagerPlatformChannel {
     fun setUp(binaryMessenger: BinaryMessenger, api: BluetoothHidManagerPlatformChannel?, messageChannelSuffix: String = "") {
       val separatedMessageChannelSuffix = if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
       run {
-        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.universal_bluetooth.BluetoothHidManagerPlatformChannel.setupSdp$separatedMessageChannelSuffix", codec)
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerPlatformChannel.setupSdp$separatedMessageChannelSuffix", codec)
         if (api != null) {
           channel.setMessageHandler { message, reply ->
             val args = message as List<Any?>
@@ -240,7 +240,7 @@ interface BluetoothHidManagerPlatformChannel {
         }
       }
       run {
-        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.universal_bluetooth.BluetoothHidManagerPlatformChannel.closeSdp$separatedMessageChannelSuffix", codec)
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerPlatformChannel.closeSdp$separatedMessageChannelSuffix", codec)
         if (api != null) {
           channel.setMessageHandler { _, reply ->
             val wrapped: List<Any?> = try {
@@ -256,7 +256,7 @@ interface BluetoothHidManagerPlatformChannel {
         }
       }
       run {
-        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.universal_bluetooth.BluetoothHidManagerPlatformChannel.connect$separatedMessageChannelSuffix", codec)
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerPlatformChannel.connect$separatedMessageChannelSuffix", codec)
         if (api != null) {
           channel.setMessageHandler { message, reply ->
             val args = message as List<Any?>
@@ -275,7 +275,7 @@ interface BluetoothHidManagerPlatformChannel {
         }
       }
       run {
-        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.universal_bluetooth.BluetoothHidManagerPlatformChannel.disconnect$separatedMessageChannelSuffix", codec)
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerPlatformChannel.disconnect$separatedMessageChannelSuffix", codec)
         if (api != null) {
           channel.setMessageHandler { message, reply ->
             val args = message as List<Any?>
@@ -294,7 +294,7 @@ interface BluetoothHidManagerPlatformChannel {
         }
       }
       run {
-        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.universal_bluetooth.BluetoothHidManagerPlatformChannel.sendReport$separatedMessageChannelSuffix", codec)
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerPlatformChannel.sendReport$separatedMessageChannelSuffix", codec)
         if (api != null) {
           channel.setMessageHandler { message, reply ->
             val args = message as List<Any?>
@@ -330,7 +330,7 @@ class BluetoothHidManagerCallbackChannel(private val binaryMessenger: BinaryMess
   fun onConnectionStateChanged(deviceIdArg: String, connectedArg: Boolean, callback: (Result<Unit>) -> Unit)
 {
     val separatedMessageChannelSuffix = if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
-    val channelName = "dev.flutter.pigeon.universal_bluetooth.BluetoothHidManagerCallbackChannel.onConnectionStateChanged$separatedMessageChannelSuffix"
+    val channelName = "dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerCallbackChannel.onConnectionStateChanged$separatedMessageChannelSuffix"
     val channel = BasicMessageChannel<Any?>(binaryMessenger, channelName, codec)
     channel.send(listOf(deviceIdArg, connectedArg)) {
       if (it is List<*>) {
@@ -347,7 +347,7 @@ class BluetoothHidManagerCallbackChannel(private val binaryMessenger: BinaryMess
   fun onSdpServiceRegistrationUpdate(registeredArg: Boolean, callback: (Result<Unit>) -> Unit)
 {
     val separatedMessageChannelSuffix = if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
-    val channelName = "dev.flutter.pigeon.universal_bluetooth.BluetoothHidManagerCallbackChannel.onSdpServiceRegistrationUpdate$separatedMessageChannelSuffix"
+    val channelName = "dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerCallbackChannel.onSdpServiceRegistrationUpdate$separatedMessageChannelSuffix"
     val channel = BasicMessageChannel<Any?>(binaryMessenger, channelName, codec)
     channel.send(listOf(registeredArg)) {
       if (it is List<*>) {
@@ -364,7 +364,7 @@ class BluetoothHidManagerCallbackChannel(private val binaryMessenger: BinaryMess
   fun onGetReport(deviceIdArg: String, typeArg: ReportType, bufferSizeArg: Long, callback: (Result<ReportReply?>) -> Unit)
 {
     val separatedMessageChannelSuffix = if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
-    val channelName = "dev.flutter.pigeon.universal_bluetooth.BluetoothHidManagerCallbackChannel.onGetReport$separatedMessageChannelSuffix"
+    val channelName = "dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerCallbackChannel.onGetReport$separatedMessageChannelSuffix"
     val channel = BasicMessageChannel<Any?>(binaryMessenger, channelName, codec)
     channel.send(listOf(deviceIdArg, typeArg, bufferSizeArg)) {
       if (it is List<*>) {

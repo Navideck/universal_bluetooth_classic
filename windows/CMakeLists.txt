@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.14)
-set(PROJECT_NAME "universal_bluetooth")
+set(PROJECT_NAME "universal_bluetooth_classic")
 project(${PROJECT_NAME} LANGUAGES CXX)
 cmake_policy(VERSION 3.14...3.25)
 include(FetchContent)
 set(CPPWINRT_VERSION "2.0.220418.1")
-set(PLUGIN_NAME "universal_bluetooth_plugin")
+set(PLUGIN_NAME "universal_bluetooth_classic_plugin")
 
 # ############### NuGet intall begin ################
 FetchContent_Declare(nuget
@@ -34,15 +34,15 @@ endif()
 list(APPEND PLUGIN_SOURCES
   "UniversalBluetooth.g.cpp"
   "UniversalBluetooth.g.h"
-  "universal_bluetooth_plugin.cpp"
-  "universal_bluetooth_plugin.h"
+  "universal_bluetooth_classic_plugin.cpp"
+  "universal_bluetooth_classic_plugin.h"
   "ui_thread_handler.hpp"
   "pin_entry.h"
 )
 
 add_library(${PLUGIN_NAME} SHARED
-  "include/universal_bluetooth/universal_bluetooth_plugin_c_api.h"
-  "universal_bluetooth_plugin_c_api.cpp"
+  "include/universal_bluetooth_classic/universal_bluetooth_classic_plugin_c_api.h"
+  "universal_bluetooth_classic_plugin_c_api.cpp"
   ${PLUGIN_SOURCES}
 )
 
@@ -66,7 +66,7 @@ target_include_directories(${PLUGIN_NAME} INTERFACE
   "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_link_libraries(${PLUGIN_NAME} PRIVATE flutter flutter_wrapper_plugin)
 
-set(universal_bluetooth_bundled_libraries
+set(universal_bluetooth_classic_bundled_libraries
   ""
   PARENT_SCOPE
 )

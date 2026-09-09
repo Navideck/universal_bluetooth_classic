@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:universal_bluetooth/universal_bluetooth.dart';
+import 'package:universal_bluetooth_classic/universal_bluetooth_classic.dart';
 
 void main() {
   late _FakeUniversalBluetooth platform;
@@ -13,8 +13,8 @@ void main() {
 
   tearDown(() {
     UniversalBluetooth.setInstance(null);
-    UniversalBluetooth.onBluetoothDeviceDiscover = null;
-    UniversalBluetooth.onBluetoothDeviceRemoved = null;
+    UniversalBluetooth.onDeviceDiscovered = null;
+    UniversalBluetooth.onDeviceRemoved = null;
     UniversalBluetooth.onConnectionStateChanged = null;
     UniversalBluetooth.onGetReport = null;
     UniversalBluetooth.onSdpServiceRegistrationUpdate = null;

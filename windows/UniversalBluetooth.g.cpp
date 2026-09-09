@@ -14,7 +14,7 @@
 #include <optional>
 #include <string>
 
-namespace universal_bluetooth {
+namespace universal_bluetooth_classic {
 using flutter::BasicMessageChannel;
 using flutter::CustomEncodableValue;
 using flutter::EncodableList;
@@ -236,7 +236,7 @@ void FlutterAccessoryPlatformChannel::SetUp(
   const std::string& message_channel_suffix) {
   const std::string prepended_suffix = message_channel_suffix.length() > 0 ? std::string(".") + message_channel_suffix : "";
   {
-    BasicMessageChannel<> channel(binary_messenger, "dev.flutter.pigeon.universal_bluetooth.FlutterAccessoryPlatformChannel.showBluetoothAccessoryPicker" + prepended_suffix, &GetCodec());
+    BasicMessageChannel<> channel(binary_messenger, "dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryPlatformChannel.showBluetoothAccessoryPicker" + prepended_suffix, &GetCodec());
     if (api != nullptr) {
       channel.SetMessageHandler([api](const EncodableValue& message, const flutter::MessageReply<EncodableValue>& reply) {
         try {
@@ -265,7 +265,7 @@ void FlutterAccessoryPlatformChannel::SetUp(
     }
   }
   {
-    BasicMessageChannel<> channel(binary_messenger, "dev.flutter.pigeon.universal_bluetooth.FlutterAccessoryPlatformChannel.startScan" + prepended_suffix, &GetCodec());
+    BasicMessageChannel<> channel(binary_messenger, "dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryPlatformChannel.startScan" + prepended_suffix, &GetCodec());
     if (api != nullptr) {
       channel.SetMessageHandler([api](const EncodableValue& message, const flutter::MessageReply<EncodableValue>& reply) {
         try {
@@ -286,7 +286,7 @@ void FlutterAccessoryPlatformChannel::SetUp(
     }
   }
   {
-    BasicMessageChannel<> channel(binary_messenger, "dev.flutter.pigeon.universal_bluetooth.FlutterAccessoryPlatformChannel.stopScan" + prepended_suffix, &GetCodec());
+    BasicMessageChannel<> channel(binary_messenger, "dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryPlatformChannel.stopScan" + prepended_suffix, &GetCodec());
     if (api != nullptr) {
       channel.SetMessageHandler([api](const EncodableValue& message, const flutter::MessageReply<EncodableValue>& reply) {
         try {
@@ -307,7 +307,7 @@ void FlutterAccessoryPlatformChannel::SetUp(
     }
   }
   {
-    BasicMessageChannel<> channel(binary_messenger, "dev.flutter.pigeon.universal_bluetooth.FlutterAccessoryPlatformChannel.isScanning" + prepended_suffix, &GetCodec());
+    BasicMessageChannel<> channel(binary_messenger, "dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryPlatformChannel.isScanning" + prepended_suffix, &GetCodec());
     if (api != nullptr) {
       channel.SetMessageHandler([api](const EncodableValue& message, const flutter::MessageReply<EncodableValue>& reply) {
         try {
@@ -328,7 +328,7 @@ void FlutterAccessoryPlatformChannel::SetUp(
     }
   }
   {
-    BasicMessageChannel<> channel(binary_messenger, "dev.flutter.pigeon.universal_bluetooth.FlutterAccessoryPlatformChannel.getPairedDevices" + prepended_suffix, &GetCodec());
+    BasicMessageChannel<> channel(binary_messenger, "dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryPlatformChannel.getPairedDevices" + prepended_suffix, &GetCodec());
     if (api != nullptr) {
       channel.SetMessageHandler([api](const EncodableValue& message, const flutter::MessageReply<EncodableValue>& reply) {
         try {
@@ -349,7 +349,7 @@ void FlutterAccessoryPlatformChannel::SetUp(
     }
   }
   {
-    BasicMessageChannel<> channel(binary_messenger, "dev.flutter.pigeon.universal_bluetooth.FlutterAccessoryPlatformChannel.pair" + prepended_suffix, &GetCodec());
+    BasicMessageChannel<> channel(binary_messenger, "dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryPlatformChannel.pair" + prepended_suffix, &GetCodec());
     if (api != nullptr) {
       channel.SetMessageHandler([api](const EncodableValue& message, const flutter::MessageReply<EncodableValue>& reply) {
         try {
@@ -378,7 +378,7 @@ void FlutterAccessoryPlatformChannel::SetUp(
     }
   }
   {
-    BasicMessageChannel<> channel(binary_messenger, "dev.flutter.pigeon.universal_bluetooth.FlutterAccessoryPlatformChannel.unpair" + prepended_suffix, &GetCodec());
+    BasicMessageChannel<> channel(binary_messenger, "dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryPlatformChannel.unpair" + prepended_suffix, &GetCodec());
     if (api != nullptr) {
       channel.SetMessageHandler([api](const EncodableValue& message, const flutter::MessageReply<EncodableValue>& reply) {
         try {
@@ -443,7 +443,7 @@ void FlutterAccessoryCallbackChannel::OnDeviceDiscover(
   const BluetoothDevice& device_arg,
   std::function<void(void)>&& on_success,
   std::function<void(const FlutterError&)>&& on_error) {
-  const std::string channel_name = "dev.flutter.pigeon.universal_bluetooth.FlutterAccessoryCallbackChannel.onDeviceDiscover" + message_channel_suffix_;
+  const std::string channel_name = "dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryCallbackChannel.onDeviceDiscover" + message_channel_suffix_;
   BasicMessageChannel<> channel(binary_messenger_, channel_name, &GetCodec());
   EncodableValue encoded_api_arguments = EncodableValue(EncodableList{
     CustomEncodableValue(device_arg),
@@ -468,7 +468,7 @@ void FlutterAccessoryCallbackChannel::OnDeviceRemoved(
   const BluetoothDevice& device_arg,
   std::function<void(void)>&& on_success,
   std::function<void(const FlutterError&)>&& on_error) {
-  const std::string channel_name = "dev.flutter.pigeon.universal_bluetooth.FlutterAccessoryCallbackChannel.onDeviceRemoved" + message_channel_suffix_;
+  const std::string channel_name = "dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryCallbackChannel.onDeviceRemoved" + message_channel_suffix_;
   BasicMessageChannel<> channel(binary_messenger_, channel_name, &GetCodec());
   EncodableValue encoded_api_arguments = EncodableValue(EncodableList{
     CustomEncodableValue(device_arg),
@@ -489,4 +489,4 @@ void FlutterAccessoryCallbackChannel::OnDeviceRemoved(
   });
 }
 
-}  // namespace universal_bluetooth
+}  // namespace universal_bluetooth_classic

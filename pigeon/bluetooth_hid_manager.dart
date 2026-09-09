@@ -4,19 +4,19 @@ import 'package:pigeon/pigeon.dart';
 // Generates File for Android, Mac
 @ConfigurePigeon(
   PigeonOptions(
-    dartPackageName: 'universal_bluetooth',
+    dartPackageName: 'universal_bluetooth_classic',
     dartOut: 'lib/src/generated/bluetooth_hid_manager.g.dart',
     dartOptions: DartOptions(),
     kotlinOut:
-        'android/src/main/kotlin/com/navideck/universal_bluetooth/BluetoothHidManager.g.kt',
+        'android/src/main/kotlin/com/navideck/universal_bluetooth_classic/BluetoothHidManager.g.kt',
     swiftOut:
-        'macos/universal_bluetooth/Sources/universal_bluetooth/BluetoothHidManager.g.swift',
+        'macos/universal_bluetooth_classic/Sources/universal_bluetooth_classic/BluetoothHidManager.g.swift',
     swiftOptions: SwiftOptions(includeErrorClass: false),
     kotlinOptions: KotlinOptions(
-      package: 'com.navideck.universal_bluetooth',
+      package: 'com.navideck.universal_bluetooth_classic',
       includeErrorClass: false,
     ),
-    // cppOptions: CppOptions(namespace: 'universal_bluetooth'),
+    // cppOptions: CppOptions(namespace: 'universal_bluetooth_classic'),
     // cppHeaderOut: 'windows/BluetoothHidManager.g.h',
     // cppSourceOut: 'windows/BluetoothHidManager.g.cpp',
     debugGenerators: true,

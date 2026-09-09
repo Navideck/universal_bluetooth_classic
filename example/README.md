@@ -1,6 +1,6 @@
 # universal_bluetooth_example
 
-Demonstrates how to use the universal_bluetooth plugin.
+Demonstrates how to use the universal_bluetooth_classic plugin.
 
 ## Getting Started
 

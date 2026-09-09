@@ -1,4 +1,4 @@
-package com.navideck.universal_bluetooth
+package com.navideck.universal_bluetooth_classic
 
 import android.annotation.SuppressLint
 import android.app.Activity
@@ -126,7 +126,7 @@ class UniversalBluetoothPlugin : FlutterAccessoryPlatformChannel, FlutterPlugin,
         return bluetoothAdapter?.isDiscovering ?: false
     }
 
-    override fun getPairedDevices(): List<com.navideck.universal_bluetooth.BluetoothDevice> {
+    override fun getPairedDevices(): List<com.navideck.universal_bluetooth_classic.BluetoothDevice> {
         return bluetoothAdapter?.bondedDevices?.filter { it.type != BluetoothDevice.DEVICE_TYPE_LE }
             ?.map { it.toFlutter(null) } ?: listOf()
     }

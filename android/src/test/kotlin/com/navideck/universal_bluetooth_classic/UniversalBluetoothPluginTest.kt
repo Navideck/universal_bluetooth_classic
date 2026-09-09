@@ -1,4 +1,4 @@
-package com.navideck.universal_bluetooth
+package com.navideck.universal_bluetooth_classic
 
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel

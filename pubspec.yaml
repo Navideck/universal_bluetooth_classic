@@ -1,4 +1,4 @@
-name: universal_bluetooth
+name: universal_bluetooth_classic
 description: Bluetooth Classic & External Accessory for Flutter
 version: 0.2.0
 homepage: https://navideck.com
@@ -42,7 +42,7 @@ flutter:
   plugin:
     platforms:
       android:
-        package: com.navideck.universal_bluetooth
+        package: com.navideck.universal_bluetooth_classic
         pluginClass: UniversalBluetoothPlugin
       ios:
         pluginClass: UniversalBluetoothPlugin

@@ -93,7 +93,7 @@
 		F74057C52D0BF9220063652A /* SerialPortDictionary.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = SerialPortDictionary.plist; sourceTree = "<group>"; };
 		78E0A7A72DC9AD7400C4905E /* FlutterGeneratedPluginSwiftPackage */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = FlutterGeneratedPluginSwiftPackage; path = ephemeral/Packages/FlutterGeneratedPluginSwiftPackage; sourceTree = "<group>"; };
 		784666492D4C4C64000A1A5F /* FlutterFramework */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = FlutterFramework; path = ephemeral/Packages/.packages/FlutterFramework; sourceTree = "<group>"; };
-		78DABEA22ED26510000E7860 /* universal_bluetooth */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = universal_bluetooth; path = ../../../macos/universal_bluetooth; sourceTree = "<group>"; };
+		78DABEA22ED26510000E7860 /* universal_bluetooth */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = universal_bluetooth_classic; path = ../../../macos/universal_bluetooth_classic; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */

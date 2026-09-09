@@ -1,8 +1,8 @@
 import 'dart:typed_data';
 
-import 'package:universal_bluetooth/src/universal_bluetooth_interface.dart';
-import 'package:universal_bluetooth/src/generated/bluetooth_hid_manager.g.dart';
-import 'package:universal_bluetooth/src/generated/universal_bluetooth.g.dart';
+import 'package:universal_bluetooth_classic/src/universal_bluetooth_interface.dart';
+import 'package:universal_bluetooth_classic/src/generated/bluetooth_hid_manager.g.dart';
+import 'package:universal_bluetooth_classic/src/generated/universal_bluetooth.g.dart';
 
 class AccessoryManager extends UniversalBluetoothInterface {
   static AccessoryManager? _instance;
@@ -70,12 +70,12 @@ String _requireIdentifier(String? identifier) =>
 class _AccessoryCallbackHandler extends FlutterAccessoryCallbackChannel {
   @override
   void onDeviceDiscover(BluetoothDevice device) {
-    UniversalBluetoothInterface.onBluetoothDeviceDiscover?.call(device);
+    UniversalBluetoothInterface.onDeviceDiscovered?.call(device);
   }
 
   @override
   void onDeviceRemoved(BluetoothDevice device) {
-    UniversalBluetoothInterface.onBluetoothDeviceRemoved?.call(device);
+    UniversalBluetoothInterface.onDeviceRemoved?.call(device);
   }
 }
 

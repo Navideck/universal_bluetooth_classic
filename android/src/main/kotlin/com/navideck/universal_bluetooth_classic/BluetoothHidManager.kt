@@ -1,4 +1,4 @@
-package com.navideck.universal_bluetooth
+package com.navideck.universal_bluetooth_classic
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice

@@ -1,266 +1,208 @@
-# Flutter Accessory Manager
+# Universal Bluetooth
 
-[![flutter_accessory_manager version](https://img.shields.io/pub/v/flutter_accessory_manager?label=flutter_accessory_manager)](https://pub.dev/packages/flutter_accessory_manager)
+<div align="center">
+  <img src="assets/universal_bluetooth_banner.png" alt="Universal Bluetooth — Bluetooth Classic and External Accessory for Flutter" width="100%">
+</div>
 
-A cross-platform (Android/iOS/macOS/Windows/Linux) plugin for managing Bluetooth accessories and HID devices in Flutter.
+[![pub package](https://img.shields.io/pub/v/universal_bluetooth_classic?label=universal_bluetooth_classic&color=blue)](https://pub.dev/packages/universal_bluetooth_classic)
+[![Platform](https://img.shields.io/badge/platform-Android%20%7C%20iOS%20%7C%20macOS%20%7C%20Windows%20%7C%20Linux-lightgrey)](https://github.com/Navideck/universal_bluetooth)
+[![GitHub stars](https://img.shields.io/github/stars/Navideck/universal_bluetooth?style=social)](https://github.com/Navideck/universal_bluetooth)
+[![pub points](https://img.shields.io/pub/points/universal_bluetooth_classic?color=2E7D32)](https://pub.dev/packages/universal_bluetooth_classic/score)
+[![Flutter](https://img.shields.io/badge/Flutter-%3E%3D3.3.0-blue.svg?logo=flutter)](https://flutter.dev)
+[![Dart](https://img.shields.io/badge/Dart-%3E%3D3.1.3-blue.svg?logo=dart)](https://dart.dev)
+
+A cross-platform Flutter plugin for discovering, pairing, and managing Bluetooth Classic accessories, Bluetooth HID devices, and Apple External Accessory sessions.
+
+> Looking for Bluetooth Low Energy and GATT? See [universal_ble](https://pub.dev/packages/universal_ble).
 
 ## Features
 
-- **Unified Cross-Platform API** - Write once, works everywhere. No platform checks needed!
-- [Scanning](#scanning) - Works on all platforms (iOS uses picker dialog)
-- [Pairing & Unpairing](#pairing--unpairing) - Works on all platforms
-- [Connecting](#connecting) - Unified connection API across all platforms
-- [HID Reports](#hid-reports) - Available on Android/macOS/Windows
-- [SDP Service Registration](#sdp-service-registration) - Available on Android/macOS/Windows
-- [iOS External Accessory](#ios-external-accessory) - Integrated into unified API
+- [**Device discovery**](#scanning) — scan for nearby Bluetooth devices and retrieve paired devices. Available on Android, macOS, Windows, and Linux.
+- [**Pairing**](#pairing) — pair and unpair accessories by address. Available on Android, macOS, Windows, and Linux.
+- [**Native accessory picker**](#native-accessory-picker) — open the platform picker, with optional device-name filtering. Available on Android, iOS, macOS, and Windows.
+- [**Connecting**](#connecting) — connect to and disconnect from Bluetooth HID devices, and receive connection state changes.
+- [**HID reports**](#hid-reports) — send reports and answer get-report requests. Available on Android, macOS, and Windows.
+- [**SDP registration**](#sdp-service-registration) — advertise a Bluetooth HID service. Available on Android, macOS, and Windows.
+- [**iOS External Accessory**](#ios-external-accessory) — receive connection events and manage External Accessory sessions on iOS.
+- [**Five desktop and mobile platforms**](#api-support) — Android, iOS, macOS, Windows, and Linux.
 
 ## API Support
 
-> **✨ Unified API Design:** Core APIs work across all platforms. Platform differences are handled transparently - you write the same code everywhere! APIs marked with ❌ are not supported on those platforms.
+All APIs are called through the same `UniversalBluetooth` class. Platform differences are handled by the plugin; APIs that are not implemented on a platform throw `UnimplementedError`.
 
-|                      | Android | iOS | macOS | Windows | Linux |
-| :------------------- | :-----: | :-: | :---: | :-----: | :---: |
-| showBluetoothAccessoryPicker |   ✔️    | ✔️  |  ✔️   |   ✔️    | ❌  |
-| startScan/stopScan   |   ✔️    | ❌  |  ✔️   |   ✔️    | ✔️  |
-| pair/unpair          |   ✔️    | ❌  |  ✔️   |   ✔️    | ✔️  |
-| getPairedDevices     |   ✔️    | ❌  |  ✔️   |   ✔️    | ✔️  |
-| connect              |   ✔️    | ❌  |  ✔️   |   ✔️    | ✔️* |
-| disconnect           |   ✔️    | ✔️* |  ✔️   |   ✔️    | ✔️* |
-| sendReport           |   ✔️    | ❌  |  ✔️   |   ✔️    | ❌  |
-| setupSdp/closeSdp    |   ✔️    | ❌  |  ✔️   |   ✔️    | ❌  |
-| onDeviceDiscovered   |   ✔️    | ❌  |  ✔️   |   ✔️    | ✔️  |
-| onDeviceRemoved      |   ✔️    | ❌  |  ✔️   |   ✔️    | ✔️  |
-| onConnectionStateChanged |   ✔️    | ❌  |  ✔️   |   ✔️    | ✔️  |
-| onGetReport          |   ✔️    | ❌  |  ✔️   |   ✔️    | ❌  |
-| onSdpServiceRegistrationUpdate |   ✔️    | ❌  |  ✔️   |   ✔️    | ❌  |
+| API | Android | iOS | macOS | Windows | Linux |
+| :-- | :--: | :--: | :--: | :--: | :--: |
+| `showBluetoothAccessoryPicker` | ✔️ | ✔️ | ✔️ | ✔️ | — |
+| `startScan` / `stopScan` / `isScanning` | ✔️ | — | ✔️ | ✔️ | ✔️ |
+| `getPairedDevices` | ✔️ | — | ✔️ | ✔️ | ✔️ |
+| `pair` / `unpair` | ✔️ | — | ✔️ | ✔️ | ✔️ |
+| `connect` (HID) | ✔️ | — | ✔️ | ✔️ | — |
+| `disconnect` | ✔️ | ✔️² | ✔️ | ✔️ | ✔️¹ |
+| `sendReport` | ✔️ | — | ✔️ | ✔️ | — |
+| `setupSdp` / `closeSdp` | ✔️ | — | ✔️ | ✔️ | — |
+| `onDeviceDiscovered` | ✔️ | — | ✔️ | ✔️ | ✔️ |
+| `onDeviceRemoved` | ✔️ | — | ✔️ | ✔️ | — |
+| `onConnectionStateChanged` | ✔️ | ✔️ | ✔️ | — | ✔️ |
+| `onGetReport` | ✔️ | — | ✔️ | ✔️ | — |
+| `onSdpServiceRegistrationUpdate` | ✔️ | — | ✔️ | ✔️ | — |
 
-**Platform Implementation Notes:**
-- *iOS: `disconnect()` calls `closeEASession()` internally
-- *Linux: Basic Bluetooth connection (not HID-specific)
+¹ Linux supports a basic Bluetooth disconnect, not an HID-specific disconnect.
+² On iOS, `disconnect` closes an External Accessory session.
 
 ## Getting Started
 
-Add flutter_accessory_manager in your pubspec.yaml:
+Add the package to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  flutter_accessory_manager:
+  universal_bluetooth_classic: ^0.2.0
 ```
 
-and import it wherever you want to use it:
+Import it where you need it:
 
 ```dart
-import 'package:flutter_accessory_manager/flutter_accessory_manager.dart';
+import 'package:universal_bluetooth_classic/universal_bluetooth_classic.dart';
 ```
+
+Complete the setup for each target in [Platform-specific setup](#platform-specific-setup) before using the APIs below.
 
 ## Scanning
 
-### Start Scanning
+### Start scanning
 
-Start scanning for Bluetooth devices:
-
-```dart
-await FlutterAccessoryManager.startScan();
-```
-
-> **Platform Support:** Available on Android, macOS, Windows, and Linux. Not available on iOS (throws `UnimplementedError`).
-
-### Stop Scanning
-
-Stop scanning for Bluetooth devices:
+Register discovery callbacks before starting a scan:
 
 ```dart
-await FlutterAccessoryManager.stopScan();
-```
-
-### Check Scanning Status
-
-Check if currently scanning:
-
-```dart
-bool isScanning = await FlutterAccessoryManager.isScanning();
-```
-
-> **Platform Support:** Available on Android, macOS, Windows, and Linux. Not available on iOS.
-
-### Device Discovery
-
-Listen to discovered devices:
-
-```dart
-FlutterAccessoryManager.onDeviceDiscovered = (BluetoothDevice device) {
-  print('Device discovered: ${device.name} (${device.address})');
-  print('RSSI: ${device.rssi}');
-  print('Paired: ${device.paired}');
-  print('Device Type: ${device.deviceType}');
-  print('Device Class: ${device.deviceClass}');
+UniversalBluetooth.onDeviceDiscovered = (device) {
+  print('${device.name ?? 'Unknown'} (${device.address}), RSSI ${device.rssi}');
 };
-```
 
-> **Platform Support:** Available on Android, macOS, Windows, and Linux. Not available on iOS.
-
-### Device Removed
-
-Listen to device removal events:
-
-```dart
-FlutterAccessoryManager.onDeviceRemoved = (BluetoothDevice device) {
-  print('Device removed: ${device.name} (${device.address})');
+UniversalBluetooth.onDeviceRemoved = (device) {
+  print('Removed: ${device.address}');
 };
+
+await UniversalBluetooth.startScan();
 ```
 
-> **Platform Support:** Available on Android, macOS, Windows, and Linux. Not available on iOS.
+### Stop scanning
 
-### Get Paired Devices
-
-Get a list of all paired devices:
+Check the current state and stop the scan when needed:
 
 ```dart
-List<BluetoothDevice> devices = await FlutterAccessoryManager.getPairedDevices();
+final isScanning = await UniversalBluetooth.isScanning();
 
-for (var device in devices) {
-  print('Device: ${device.name} - ${device.address}');
+if (isScanning) {
+  await UniversalBluetooth.stopScan();
 }
 ```
 
-> **Platform Support:** Available on Android, macOS, Windows, and Linux. Not available on iOS (throws `UnimplementedError`).
+> Scanning is available on Android, macOS, Windows, and Linux. On iOS, use the [native accessory picker](#native-accessory-picker) instead.
 
-### Show Bluetooth Accessory Picker
-
-Show the native Bluetooth accessory picker dialog. On iOS, this displays the External Accessory picker.
+### Paired devices
 
 ```dart
-await FlutterAccessoryManager.showBluetoothAccessoryPicker();
+final devices = await UniversalBluetooth.getPairedDevices();
+
+for (final device in devices) {
+  print('${device.name ?? 'Unknown'} — ${device.address}');
+}
 ```
 
-Optionally filter by device names:
+> Getting paired devices is available on Android, macOS, Windows, and Linux.
+
+### Native accessory picker
+
+Open the platform's Bluetooth accessory picker. On iOS, this uses the External Accessory picker.
 
 ```dart
-await FlutterAccessoryManager.showBluetoothAccessoryPicker(
+await UniversalBluetooth.showBluetoothAccessoryPicker();
+```
+
+Optionally filter by device name:
+
+```dart
+await UniversalBluetooth.showBluetoothAccessoryPicker(
   withNames: ['MyDevice', 'AnotherDevice'],
 );
 ```
 
-> **Platform Support:** Available on Android, iOS, macOS, and Windows. Not available on Linux.
+> The native picker is available on Android, iOS, macOS, and Windows. It is not available on Linux.
 
-## Pairing & Unpairing
+## Pairing
 
-### Pair
-
-Pair with a Bluetooth device by its address:
+Pair or unpair a device by its Bluetooth address:
 
 ```dart
-bool success = await FlutterAccessoryManager.pair('00:11:22:33:44:55');
+final paired = await UniversalBluetooth.pair(
+  '00:11:22:33:44:55',
+);
 
-if (success) {
-  print('Device paired successfully');
-} else {
-  print('Pairing failed');
+if (paired) {
+  print('Device paired');
 }
+
+await UniversalBluetooth.unpair('00:11:22:33:44:55');
 ```
 
-> **Platform Support:** Available on Android, macOS, Windows, and Linux. Not available on iOS (throws `UnimplementedError`).
-
-### Unpair
-
-Unpair a Bluetooth device:
-
-```dart
-await FlutterAccessoryManager.unpair('00:11:22:33:44:55');
-```
-
-> **Platform Support:** Available on Android, macOS, Windows, and Linux. Not available on iOS (throws `UnimplementedError`).
+> Pairing and unpairing are available on Android, macOS, Windows, and Linux.
 
 ## Connecting
 
-### Connect
-
-Connect to a Bluetooth device:
+Connect to and disconnect from a Bluetooth HID device:
 
 ```dart
-await FlutterAccessoryManager.connect('00:11:22:33:44:55');
-```
+const deviceId = '00:11:22:33:44:55';
 
-> **Platform Support:** Available on Android, macOS, Windows (HID connection), and Linux (basic Bluetooth connection). Not available on iOS (throws `UnimplementedError`).
-
-### Disconnect
-
-Disconnect from a Bluetooth device. Works on all platforms:
-
-```dart
-await FlutterAccessoryManager.disconnect('00:11:22:33:44:55');
-```
-
-> **Platform Behavior:**
-> - **Android/macOS/Windows:** Disconnects HID connection
-> - **iOS:** Closes External Accessory session (calls `closeEASession()` internally)
-> - **Linux:** Disconnects basic Bluetooth connection
-
-### Connection State Changes
-
-Listen to connection state changes:
-
-```dart
-FlutterAccessoryManager.onConnectionStateChanged = (String deviceId, bool connected) {
-  print('Device $deviceId: ${connected ? "connected" : "disconnected"}');
+UniversalBluetooth.onConnectionStateChanged = (event) {
+  print('${event.identifier}: ${event.state.name} (${event.source.name})');
 };
+
+await UniversalBluetooth.connect(deviceId);
+await UniversalBluetooth.disconnect(deviceId);
 ```
 
-> **Platform Support:** Available on Android, macOS, Windows, and Linux. Not available on iOS.
+> HID connections are available on Android, macOS, and Windows. iOS uses the External Accessory framework instead, where `disconnect` closes the session. Linux supports only the basic `disconnect` operation.
+
+> `onConnectionStateChanged` fires on Android, iOS, macOS, and Linux. On Windows the event is not emitted.
 
 ## HID Reports
 
-> **Platform Support:** HID operations are available on Android, macOS, and Windows. Not available on iOS or Linux.
-
-### Send Report
-
-Send a HID report to a connected device:
+Send a report to a connected HID device:
 
 ```dart
 import 'dart:typed_data';
 
-Uint8List reportData = Uint8List.fromList([0x01, 0x02, 0x03]);
-await FlutterAccessoryManager.sendReport('00:11:22:33:44:55', reportData);
+await UniversalBluetooth.sendReport(
+  '00:11:22:33:44:55',
+  Uint8List.fromList([0x01, 0x02, 0x03]),
+);
 ```
 
-> **Platform Support:** Available on Android, macOS, and Windows. Not available on iOS or Linux.
-
-### Get Report
-
-Handle HID get report requests:
+Respond to HID get-report requests:
 
 ```dart
-import 'dart:typed_data';
-
-FlutterAccessoryManager.onGetReport = (String deviceId, ReportType type, int bufferSize) {
-  print('Get report request from $deviceId, type: $type, size: $bufferSize');
-  
-  // Return a report reply
+UniversalBluetooth.onGetReport =
+    (deviceId, reportType, bufferSize) {
   return ReportReply(
     data: Uint8List.fromList([0x01, 0x02, 0x03]),
-    error: null,
   );
 };
 ```
 
-> **Platform Support:** Available on Android, macOS, and Windows. Not available on iOS or Linux.
+> HID reports are available on Android, macOS, and Windows.
 
 ## SDP Service Registration
 
-> **Platform Support:** SDP operations are available on Android, macOS, and Windows. Not available on iOS or Linux.
-
-### Setup SDP
-
-Set up the SDP service registration for Bluetooth HID:
+Register a Bluetooth HID service with platform-specific configuration:
 
 ```dart
 import 'dart:typed_data';
 
-SdpConfig config = SdpConfig(
+final config = SdpConfig(
   macSdpConfig: MacSdpConfig(
     data: {
       'ServiceName': 'My HID Service',
-      // ... other SDP data
+      // Add the remaining SDP properties.
     },
   ),
   androidSdpConfig: AndroidSdpConfig(
@@ -268,168 +210,76 @@ SdpConfig config = SdpConfig(
     description: 'HID Service Description',
     provider: 'My Company',
     subclass: 0x2540,
-    descriptors: Uint8List.fromList([/* HID descriptors */]),
+    descriptors: Uint8List.fromList([
+      // Add the HID report descriptor.
+    ]),
   ),
 );
 
-await FlutterAccessoryManager.setupSdp(config: config);
-```
-
-> **Platform Support:** Available on Android, macOS, and Windows. Not available on iOS or Linux.
-
-### Close SDP
-
-Close the SDP service registration:
-
-```dart
-await FlutterAccessoryManager.closeSdp();
-```
-
-> **Platform Support:** Available on Android, macOS, and Windows. Not available on iOS or Linux.
-
-### SDP Registration Updates
-
-Listen to SDP service registration status changes:
-
-```dart
-FlutterAccessoryManager.onSdpServiceRegistrationUpdate = (bool registered) {
-  print('SDP service ${registered ? "registered" : "unregistered"}');
+UniversalBluetooth.onSdpServiceRegistrationUpdate = (registered) {
+  print('SDP service registered: $registered');
 };
+
+await UniversalBluetooth.setupSdp(config: config);
 ```
 
-> **Platform Support:** Available on Android, macOS, and Windows. Not available on iOS or Linux.
+Close the registration when it is no longer needed:
+
+```dart
+await UniversalBluetooth.closeSdp();
+```
+
+> SDP service registration is available on Android, macOS, and Windows.
 
 ## iOS External Accessory
 
-> **ℹ️ Unified API:** iOS External Accessory functionality is integrated into the unified API.
-
-### Unified APIs
-
-The following APIs work on iOS through the unified interface:
-
-- `disconnect()` - Calls `closeEASession()` internally on iOS
-- `showBluetoothAccessoryPicker()` - Shows the External Accessory picker dialog
-
-### Deprecated APIs
-
-The following iOS-specific callbacks are deprecated. Use the unified callbacks instead:
-
-- `accessoryConnected` callback → Use `onConnectionStateChanged`
-- `accessoryDisconnected` callback → Use `onDeviceRemoved` or `onConnectionStateChanged`
-
-> **Note:** `closeEASession()` is still available for direct use if needed, but `disconnect()` is the recommended unified API.
-
-### Accessing iOS-Specific Information
-
-iOS External Accessories are automatically converted to `BluetoothDevice` objects. Access iOS-specific information through the device properties:
+External Accessory sessions are iOS-only, but their connection changes use the
+same callback as the other platforms.
 
 ```dart
-FlutterAccessoryManager.onDeviceDiscovered = (BluetoothDevice device) {
-  if (device.isExternalAccessory == true) {
-    print('iOS External Accessory: ${device.name}');
-    print('Manufacturer: ${device.manufacturer}');
-    print('Model: ${device.modelNumber}');
-    print('Serial: ${device.serialNumber}');
-    print('Protocols: ${device.protocolStrings}');
-  }
+UniversalBluetooth.onConnectionStateChanged = (event) {
+  final accessory = event.externalAccessory;
+  if (accessory == null) return;
+
+  print('${event.state.name}: ${accessory.name}');
+  print('Manufacturer: ${accessory.manufacturer}');
+  print('Protocols: ${accessory.protocolStrings}');
 };
 ```
 
+Close a session for a specific protocol:
+
+```dart
+await UniversalBluetooth.disconnect(
+  'com.mycompany.myprotocol',
+);
+```
+
+Omit the protocol string to close the session using the first available protocol:
+
+```dart
+await UniversalBluetooth.disconnect();
+```
+
+> The `externalAccessory` event payload is only available on iOS.
+
 ## Data Types
 
-### BluetoothDevice
+### `BluetoothDevice`
 
-Represents a Bluetooth device. Works on all platforms, including iOS External Accessories:
+Discovered and paired devices expose:
 
-```dart
-BluetoothDevice device = ...;
-
-// Common properties (all platforms)
-print('Address: ${device.address}');
-print('Name: ${device.name}');
-print('Paired: ${device.paired}');
-print('Connected with HID: ${device.isConnectedWithHid}');
-print('RSSI: ${device.rssi}');
-print('Device Type: ${device.deviceType}'); // classic, le, dual, unknown
-print('Device Class: ${device.deviceClass}'); // peripheral, audioVideo, etc.
-
-// iOS External Accessory properties (null on other platforms)
-if (device.isExternalAccessory == true) {
-  print('Manufacturer: ${device.manufacturer}');
-  print('Model: ${device.modelNumber}');
-  print('Serial: ${device.serialNumber}');
-  print('Protocols: ${device.protocolStrings}');
-}
-```
-
-**Properties:**
-- `address` - Device address/identifier (MAC address on most platforms, connection ID on iOS)
-- `name` - Device name
-- `paired` - Whether device is paired/connected
-- `isConnectedWithHid` - Whether connected via HID (null on iOS/Linux)
-- `rssi` - Signal strength (0 on iOS, not available for EA)
-- `deviceType` - Bluetooth device type (classic, le, dual, unknown)
-- `deviceClass` - Device class (peripheral, audioVideo, etc.)
-- `isExternalAccessory` - `true` if iOS External Accessory (null on other platforms)
-- `manufacturer` - iOS only: Manufacturer name
-- `modelNumber` - iOS only: Model number
-- `serialNumber` - iOS only: Serial number
-- `protocolStrings` - iOS only: List of supported EA protocol strings
-
-### EAAccessory (Deprecated)
-
-> **⚠️ Deprecated:** `EAAccessory` is deprecated. iOS External Accessories are now represented as `BluetoothDevice` objects with `isExternalAccessory == true`. Use the unified `BluetoothDevice` API instead.
-
-### SdpConfig
-
-Configuration for SDP service registration:
+- `address` — the device address on most platforms and the connection ID on iOS
+- `name`
+- `paired`
+- `isConnectedWithHid`
+- `rssi`
+- `deviceType` — one of `classic`, `le`, `dual`, or `unknown`
+- `deviceClass` — for example `peripheral`, `audioVideo`, or `computer`
 
 ```dart
-SdpConfig config = SdpConfig(
-  macSdpConfig: MacSdpConfig(
-    sdpPlistFile: 'path/to/plist', // optional
-    data: {
-      'ServiceName': 'My Service',
-      // ... other SDP data
-    },
-  ),
-  androidSdpConfig: AndroidSdpConfig(
-    name: 'My HID Service',
-    description: 'Service Description',
-    provider: 'My Company',
-    subclass: 0x2540,
-    descriptors: Uint8List.fromList([/* HID descriptors */]),
-  ),
-);
-```
+enum DeviceType { classic, le, dual, unknown }
 
-### ReportReply
-
-Reply to a HID get report request:
-
-```dart
-ReportReply reply = ReportReply(
-  data: Uint8List.fromList([0x01, 0x02, 0x03]),
-  error: null, // null if successful, error code otherwise
-);
-```
-
-### Enums
-
-#### DeviceType
-
-```dart
-enum DeviceType {
-  classic,  // Classic Bluetooth
-  le,       // Bluetooth Low Energy
-  dual,     // Dual mode (Classic + LE)
-  unknown,  // Unknown type
-}
-```
-
-#### DeviceClass
-
-```dart
 enum DeviceClass {
   audioVideo,
   computer,
@@ -445,21 +295,35 @@ enum DeviceClass {
 }
 ```
 
-#### ReportType
+### `EAAccessory`
+
+iOS External Accessory events provide the accessory name, manufacturer, model and serial numbers, firmware and hardware revisions, dock type, supported protocol strings, connection status, and connection ID.
+
+### `BluetoothConnectionEvent`
+
+Connection events provide an opaque identifier, a `connected` or `disconnected`
+state, and a source: `hid`, `externalAccessory`, or `system`. The External
+Accessory source also includes the full iOS `EAAccessory` value.
 
 ```dart
-enum ReportType {
-  input,    // Input report
-  output,   // Output report
-  feature,  // Feature report
-}
+enum BluetoothConnectionState { connected, disconnected }
+
+enum BluetoothConnectionSource { hid, externalAccessory, system }
 ```
 
-## Platform-Specific Setup
+### HID configuration
+
+- `SdpConfig` holds the optional `MacSdpConfig` and `AndroidSdpConfig` values used for service registration.
+  - `MacSdpConfig` takes an optional `sdpPlistFile` path and an optional `data` map of SDP properties.
+  - `AndroidSdpConfig` requires `name`, `description`, `provider`, `subclass`, and `descriptors`.
+- `ReportReply` returns optional report `data` or an optional HID `error` code from `onGetReport`.
+- `ReportType` identifies `input`, `output`, and `feature` reports.
+
+## Platform-specific setup
 
 ### Android
 
-Add the following permissions to your `AndroidManifest.xml`:
+Add the Bluetooth permissions to `android/app/src/main/AndroidManifest.xml`:
 
 ```xml
 <uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation" />
@@ -470,7 +334,7 @@ Add the following permissions to your `AndroidManifest.xml`:
 <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" android:maxSdkVersion="28" />
 ```
 
-Set minimum SDK to 23 in your `build.gradle`:
+Set the minimum Android SDK to 23:
 
 ```gradle
 android {
@@ -480,15 +344,11 @@ android {
 }
 ```
 
-You need to programmatically request permissions on runtime. You could use a package such as [permission_handler](https://pub.dev/packages/permission_handler).
+Request permissions at runtime. For Android 12 and newer, request Bluetooth scan and connect permissions. For Android 11 and older, request location permission. Packages such as [permission_handler](https://pub.dev/packages/permission_handler) can handle these requests.
 
-For Android 12+, request `Permission.bluetoothScan` and `Permission.bluetoothConnect`.
+### iOS
 
-For Android 11 and below, request `Permission.location`.
-
-### iOS / macOS
-
-Add Bluetooth accessory protocols to your `Info.plist`:
+Declare every External Accessory protocol supported by your accessory in `ios/Runner/Info.plist`:
 
 ```xml
 <key>UISupportedExternalAccessoryProtocols</key>
@@ -497,111 +357,65 @@ Add Bluetooth accessory protocols to your `Info.plist`:
 </array>
 ```
 
-For macOS, add the `Bluetooth` capability to your app from Xcode.
+### macOS
 
-### Windows / Linux
+Add the Bluetooth capability to your macOS target in Xcode.
 
-Your Bluetooth adapter needs to support at least Bluetooth 4.0. If you have more than 1 adapter, the first one returned from the system will be picked.
+### Windows
 
-When publishing on Windows, you need to declare the following [capabilities](https://learn.microsoft.com/en-us/windows/uwp/packaging/app-capability-declarations): `bluetooth, radios`.
+The Bluetooth adapter must support Bluetooth 4.0 or newer. If the system has multiple adapters, the plugin uses the first adapter returned by Windows.
 
-When publishing on Linux as a snap, you need to declare the `bluez` plug in `snapcraft.yaml`:
+When packaging the app, declare the [`bluetooth` and `radios` capabilities](https://learn.microsoft.com/en-us/windows/uwp/packaging/app-capability-declarations).
+
+### Linux
+
+The Bluetooth adapter must support Bluetooth 4.0 or newer. If the system has multiple adapters, the plugin uses the first adapter returned by BlueZ.
+
+When distributing the app as a snap, add the `bluez` plug to `snapcraft.yaml`:
 
 ```yaml
-...
-  plugs:
-    - bluez
+plugs:
+  - bluez
 ```
 
-## Cross-Platform Usage
-
-### Unified API Design
-
-All APIs work across all platforms. Platform differences are handled transparently:
-
-- **No platform checks needed** - Write the same code everywhere
-- **No capability detection** - APIs gracefully handle unsupported operations
-- **Unified callbacks** - Single callback for device discovery, connection state, etc.
-- **Consistent behavior** - Same API surface on all platforms
-
-### Platform Implementation Details
-
-While the API is unified, platform implementations differ:
-
-**Android/macOS/Windows:**
-- Full HID support (connect, sendReport, SDP)
-- Standard Bluetooth scanning and pairing
-- HID connection state callbacks
-
-**iOS:**
-- Uses External Accessory framework (MFi required)
-- Only `showBluetoothAccessoryPicker` is supported
-- All other APIs throw `UnimplementedError`
-
-**Linux:**
-- Basic Bluetooth operations (scan, pair, disconnect)
-- HID operations not supported
-- No native picker dialog
-
-### Example: Cross-Platform Code
-
-```dart
-// Works on Android/macOS/Windows/Linux - iOS only supports showBluetoothAccessoryPicker
-FlutterAccessoryManager.onDeviceDiscovered = (BluetoothDevice device) {
-  print('Found: ${device.name}');
-};
-
-FlutterAccessoryManager.onConnectionStateChanged = (String deviceId, bool connected) {
-  print('$deviceId: ${connected ? "connected" : "disconnected"}');
-};
-
-// Scan - works on Android/macOS/Windows/Linux
-await FlutterAccessoryManager.startScan();
-
-// Get devices - works on Android/macOS/Windows/Linux
-List<BluetoothDevice> devices = await FlutterAccessoryManager.getPairedDevices();
-
-// Pair - works on Android/macOS/Windows/Linux
-bool paired = await FlutterAccessoryManager.pair(device.address);
-
-// Connect - works on Android/macOS/Windows/Linux
-await FlutterAccessoryManager.connect(device.address);
-
-// Send data - available on Android/macOS/Windows only
-await FlutterAccessoryManager.sendReport(device.address, data);
-
-// Disconnect - works on all platforms (iOS calls closeEASession internally)
-await FlutterAccessoryManager.disconnect(device.address);
-```
-
-### Deprecated APIs
-
-The following platform-specific APIs are deprecated and will be removed in a future version:
-
-- `accessoryConnected` / `accessoryDisconnected` → Use `onConnectionStateChanged` or `onDeviceRemoved`
-- `onBluetoothDeviceDiscover` → Use `onDeviceDiscovered`
-- `onBluetoothDeviceRemoved` → Use `onDeviceRemoved`
-
-> **Note:** `closeEASession()` is still available on iOS for direct use, but `disconnect()` is the recommended unified API that works across all platforms.
+Linux supports scanning, paired-device lookup, pairing, unpairing, basic disconnects, discovery callbacks, and system connection-state events. The native picker, HID connections and reports, and SDP registration are not implemented.
 
 ## Customizing Platform Implementation
 
+Provide a custom implementation for testing or an unsupported platform by extending `UniversalBluetoothInterface`:
+
 ```dart
-// Create a class that extends FlutterAccessoryManagerInterface
-class FlutterAccessoryManagerMock extends FlutterAccessoryManagerInterface {
-  // Implement all methods
+class UniversalBluetoothMock
+    extends UniversalBluetoothInterface {
+  // Override the APIs used by your application.
 }
 
-// Set custom platform specific implementation (e.g. for testing)
-FlutterAccessoryManager.setInstance(FlutterAccessoryManagerMock());
+UniversalBluetooth.setInstance(
+  UniversalBluetoothMock(),
+);
 ```
 
-## 🧩 Apps using Flutter Accessory Manager
+Restore the default platform implementation with:
 
-Here are some of the apps leveraging the power of `flutter_accessory_manager` in production:
+```dart
+UniversalBluetooth.setInstance(null);
+```
 
-| <img src="assets/bt_cam_icon.svg" alt="BT Cam Icon" width="224" height="224"> | [**BT Cam**](https://btcam.app)<br>A Bluetooth remote app for DSLR and mirrorless cameras. Compatible with Canon, Nikon, Sony, Fujifilm, GoPro, Olympus, Panasonic, Pentax, and Blackmagic. Built using Flutter Accessory Manager to connect and control cameras across iOS, Android, macOS, Windows, Linux & Web. |
-|:--:|:--|
-> 💡 **Built something cool with Flutter Accessory Manager?**  
-> We'd love to showcase your app here!  
-> Open a pull request and add it to this section. Please include your app icon in svg!
+## Example app
+
+The [`example`](example) project demonstrates discovery, pairing, HID connections, reports, SDP registration, and platform permission handling.
+
+Run it on a connected device or desktop target:
+
+```sh
+cd example
+flutter run
+```
+
+## App showcase
+
+| | |
+| :--: | :-- |
+| <img src="assets/bt_cam_icon.svg" alt="BT Cam icon" width="160" height="160"> | [**BT Cam**](https://btcam.app)<br>A Bluetooth remote for Canon, Nikon, Sony, Fujifilm, GoPro, Olympus, Panasonic, Pentax, and Blackmagic cameras. |
+
+> Built something with Universal Bluetooth? Open a pull request to add it here, including an SVG app icon.

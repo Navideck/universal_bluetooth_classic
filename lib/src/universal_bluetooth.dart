@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
-import 'package:universal_bluetooth/universal_bluetooth.dart';
-import 'package:universal_bluetooth/src/platforms/accessory_manager.dart';
-import 'package:universal_bluetooth/src/platforms/accessory_manager_bluez.dart';
-import 'package:universal_bluetooth/src/platforms/external_accessory.dart';
+import 'package:universal_bluetooth_classic/universal_bluetooth_classic.dart';
+import 'package:universal_bluetooth_classic/src/platforms/accessory_manager.dart';
+import 'package:universal_bluetooth_classic/src/platforms/accessory_manager_bluez.dart';
+import 'package:universal_bluetooth_classic/src/platforms/external_accessory.dart';
 
 class UniversalBluetooth {
   /// Default platform accessor.
@@ -55,12 +55,12 @@ class UniversalBluetooth {
   static Future<List<BluetoothDevice>> getPairedDevices() =>
       _platform.getPairedDevices();
 
-  static set onBluetoothDeviceDiscover(BluetoothDeviceCallback? callback) {
-    UniversalBluetoothInterface.onBluetoothDeviceDiscover = callback;
+  static set onDeviceDiscovered(BluetoothDeviceCallback? callback) {
+    UniversalBluetoothInterface.onDeviceDiscovered = callback;
   }
 
-  static set onBluetoothDeviceRemoved(BluetoothDeviceCallback? callback) {
-    UniversalBluetoothInterface.onBluetoothDeviceRemoved = callback;
+  static set onDeviceRemoved(BluetoothDeviceCallback? callback) {
+    UniversalBluetoothInterface.onDeviceRemoved = callback;
   }
 
   static set onConnectionStateChanged(ConnectionChangeCallback? callback) {

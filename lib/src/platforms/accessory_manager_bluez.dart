@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:developer';
 
 import 'package:bluez/bluez.dart';
-import 'package:universal_bluetooth/src/universal_bluetooth_interface.dart';
-import 'package:universal_bluetooth/src/generated/universal_bluetooth.g.dart';
+import 'package:universal_bluetooth_classic/src/universal_bluetooth_interface.dart';
+import 'package:universal_bluetooth_classic/src/generated/universal_bluetooth.g.dart';
 
 class AccessoryManagerBluez extends UniversalBluetoothInterface {
   static AccessoryManagerBluez? _instance;
@@ -106,7 +106,7 @@ class AccessoryManagerBluez extends UniversalBluetoothInterface {
   void _onDeviceAdd(BlueZDevice device) {
     _devices[device.address] = device;
     _watchConnectionChanges(device);
-    UniversalBluetoothInterface.onBluetoothDeviceDiscover?.call(
+    UniversalBluetoothInterface.onDeviceDiscovered?.call(
       device.toBluetoothDevice(),
     );
   }
