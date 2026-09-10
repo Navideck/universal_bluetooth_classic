@@ -21,7 +21,21 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.14.4
   package_rename: ^1.10.1
 
 flutter:
   uses-material-design: true
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "../assets/universal_bluetooth_classic_maestro_icon.png"
+  remove_alpha_ios: true
+  windows:
+    generate: true
+    image_path: "../assets/universal_bluetooth_classic_maestro_icon.png"
+    icon_size: 256
+  macos:
+    generate: true
+    image_path: "../assets/universal_bluetooth_classic_maestro_icon.png"
