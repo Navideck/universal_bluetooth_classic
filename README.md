@@ -13,7 +13,7 @@
 
 A cross-platform Flutter plugin for discovering, pairing, and managing Bluetooth Classic accessories, Bluetooth HID devices, and Apple External Accessory sessions.
 
-> Looking for Bluetooth Low Energy and GATT? See [universal_ble](https://pub.dev/packages/universal_ble).
+Looking for Bluetooth Low Energy? Check [universal_ble](https://pub.dev/packages/universal_ble).
 
 ## Features
 
