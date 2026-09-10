@@ -36,7 +36,7 @@ All APIs are called through the same `UniversalBluetooth` class. Platform differ
 | `pair` / `unpair` | ✔️ | — | ✔️ | ✔️ | ✔️ |
 | `getPairedDevices` | ✔️ | — | ✔️ | ✔️ | ✔️ |
 | `connect` (HID) | ✔️ | — | ✔️ | ✔️ | — |
-| `disconnect` | ✔️ | ✔️² | ✔️ | ✔️ | ✔️¹ |
+| `disconnect` | ✔️ | ✔️¹ | ✔️ | ✔️ | ✔️² |
 | `sendReport` | ✔️ | — | ✔️ | ✔️ | — |
 | `setupSdp` / `closeSdp` | ✔️ | — | ✔️ | ✔️ | — |
 | `onDeviceDiscovered` | ✔️ | — | ✔️ | ✔️ | ✔️ |
@@ -45,8 +45,8 @@ All APIs are called through the same `UniversalBluetooth` class. Platform differ
 | `onGetReport` | ✔️ | — | ✔️ | ✔️ | — |
 | `onSdpServiceRegistrationUpdate` | ✔️ | — | ✔️ | ✔️ | — |
 
-¹ Linux supports a basic disconnect, not an HID-specific disconnect.
-² On iOS, `disconnect` closes an External Accessory session.
+¹ On iOS, `disconnect` closes an External Accessory session.
+² Linux supports a basic disconnect, not an HID-specific disconnect.
 
 ## Getting Started
 
