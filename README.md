@@ -45,7 +45,7 @@ All APIs are called through the same `UniversalBluetooth` class. Platform differ
 | `onGetReport` | ✔️ | — | ✔️ | ✔️ | — |
 | `onSdpServiceRegistrationUpdate` | ✔️ | — | ✔️ | ✔️ | — |
 
-**Legend:** ✔️ supported · — not supported.
+**Legend:** ✔️ supported, — not supported.
 
 ¹ On iOS, `disconnect` closes an External Accessory session.
 ² Linux supports a basic disconnect, not an HID-specific disconnect.
