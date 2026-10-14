@@ -29,8 +29,6 @@ Looking for Bluetooth Low Energy? Check [universal_ble](https://pub.dev/packages
 
 All APIs are called through the same `UniversalBluetooth` class. Platform differences are handled by the plugin; APIs that are not implemented on a platform throw `UnimplementedError`.
 
-**Legend:** ✔️ supported · — not supported.
-
 | API | Android | iOS | macOS | Windows | Linux |
 | :-- | :--: | :--: | :--: | :--: | :--: |
 | `showBluetoothAccessoryPicker` | ✔️ | ✔️ | ✔️ | ✔️ | — |
@@ -46,6 +44,8 @@ All APIs are called through the same `UniversalBluetooth` class. Platform differ
 | `onConnectionStateChanged` | ✔️ | ✔️ | ✔️ | — | ✔️ |
 | `onGetReport` | ✔️ | — | ✔️ | ✔️ | — |
 | `onSdpServiceRegistrationUpdate` | ✔️ | — | ✔️ | ✔️ | — |
+
+**Legend:** ✔️ supported · — not supported.
 
 ¹ On iOS, `disconnect` closes an External Accessory session.
 ² Linux supports a basic disconnect, not an HID-specific disconnect.
