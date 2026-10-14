@@ -14,3 +14,14 @@ A few resources to get you started if this is your first Flutter project:
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
+
+## App icon generation
+
+From this example directory, regenerate the approved launcher assets with:
+
+```sh
+dart pub global activate flutter_launcher_icons 0.14.4
+dart pub global run flutter_launcher_icons -f flutter_launcher_icons.yaml
+```
+
+The standalone generator avoids changing the example app's SDK or package dependencies.

@@ -26,16 +26,3 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-
-flutter_launcher_icons:
-  android: true
-  ios: true
-  image_path: "../assets/universal_bluetooth_classic_maestro_icon.png"
-  remove_alpha_ios: true
-  windows:
-    generate: true
-    image_path: "../assets/universal_bluetooth_classic_maestro_icon.png"
-    icon_size: 256
-  macos:
-    generate: true
-    image_path: "../assets/universal_bluetooth_classic_maestro_icon.png"
