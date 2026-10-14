@@ -32,9 +32,9 @@ public class UniversalBluetoothPlugin: NSObject, FlutterPlugin, ExternalAccessor
     }
     // The system picker does not present under the UIScene lifecycle. See
     // EABluetoothAccessoryPickerWorkaround for details.
-    EABluetoothAccessoryPickerWorkaround.begin()
+    let pickerSession = EABluetoothAccessoryPickerWorkaround.begin()
     manager.showBluetoothAccessoryPicker(withNameFilter: compoundPredicate) { error in
-      EABluetoothAccessoryPickerWorkaround.end()
+      EABluetoothAccessoryPickerWorkaround.end(pickerSession)
       if let error = error {
         // Error Codes:
         // alreadyConnected = 0
