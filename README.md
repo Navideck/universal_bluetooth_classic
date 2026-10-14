@@ -56,7 +56,7 @@ Add the package to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  universal_bluetooth_classic: ^0.2.0
+  universal_bluetooth_classic: ^1.0.0
 ```
 
 Import it where you need it:
@@ -122,6 +122,8 @@ await UniversalBluetooth.showBluetoothAccessoryPicker(
 ```
 
 The native picker is not available on Linux.
+
+On iOS the system picker is broken by Apple under the `UIScene` app lifecycle (iOS 13–26.4). The plugin works around this and presents the picker from the active scene, so no extra setup is required. Apple fixed the underlying issue natively in iOS 26.5.
 
 ## Pairing
 

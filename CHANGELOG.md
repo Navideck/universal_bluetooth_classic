@@ -1,3 +1,11 @@
+## 1.0.0
+
+* Fix `showBluetoothAccessoryPicker` not presenting on iOS apps that use the
+  `UIScene` lifecycle (iOS 13–26.4). The plugin now presents the External
+  Accessory picker from the active scene.
+* Fix the iOS example app's scene manifest key so it runs under the `UIScene`
+  lifecycle.
+
 ## 0.2.0
 
 * Replace the iOS-only `closeEASession` API with the unified `disconnect` API.
