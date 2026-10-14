@@ -30,7 +30,11 @@ public class UniversalBluetoothPlugin: NSObject, FlutterPlugin, ExternalAccessor
       let predicates = withNames.map { NSPredicate(format: "SELF BEGINSWITH[c] %@", $0) }  
       compoundPredicate = NSCompoundPredicate(orPredicateWithSubpredicates: predicates)
     }
+    // The system picker does not present under the UIScene lifecycle. See
+    // EABluetoothAccessoryPickerWorkaround for details.
+    let pickerSession = EABluetoothAccessoryPickerWorkaround.begin()
     manager.showBluetoothAccessoryPicker(withNameFilter: compoundPredicate) { error in
+      EABluetoothAccessoryPickerWorkaround.end(pickerSession)
       if let error = error {
         // Error Codes:
         // alreadyConnected = 0
