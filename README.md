@@ -123,8 +123,6 @@ await UniversalBluetooth.showBluetoothAccessoryPicker(
 
 The native picker is not available on Linux.
 
-On iOS the system picker is broken by Apple under the `UIScene` app lifecycle (iOS 13–26.4). The plugin works around this and presents the picker from the active scene, so no extra setup is required. Apple fixed the underlying issue natively in iOS 26.5.
-
 ## Pairing
 
 Pair or unpair a device by its Bluetooth address:
