@@ -5,8 +5,8 @@
 </div>
 
 [![pub package](https://img.shields.io/pub/v/universal_bluetooth_classic?label=universal_bluetooth_classic&color=blue)](https://pub.dev/packages/universal_bluetooth_classic)
-[![Platform](https://img.shields.io/badge/platform-Android%20%7C%20iOS%20%7C%20macOS%20%7C%20Windows%20%7C%20Linux-lightgrey)](https://github.com/Navideck/universal_bluetooth)
-[![GitHub stars](https://img.shields.io/github/stars/Navideck/universal_bluetooth?style=social)](https://github.com/Navideck/universal_bluetooth)
+[![Platform](https://img.shields.io/badge/platform-Android%20%7C%20iOS%20%7C%20macOS%20%7C%20Windows%20%7C%20Linux-lightgrey)](https://github.com/Navideck/universal_bluetooth_classic)
+[![GitHub stars](https://img.shields.io/github/stars/Navideck/universal_bluetooth_classic?style=social)](https://github.com/Navideck/universal_bluetooth_classic)
 [![pub points](https://img.shields.io/pub/points/universal_bluetooth_classic?color=2E7D32)](https://pub.dev/packages/universal_bluetooth_classic/score)
 [![Flutter](https://img.shields.io/badge/Flutter-%3E%3D3.3.0-blue.svg?logo=flutter)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/Dart-%3E%3D3.1.3-blue.svg?logo=dart)](https://dart.dev)
