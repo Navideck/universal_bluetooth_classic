@@ -40,7 +40,9 @@ final class EASessionController: NSObject, StreamDelegate {
     isOpen = true
     for stream in streams {
       stream.delegate = self
-      stream.schedule(in: .main, forMode: .default)
+      // Use `.common` so callbacks are also delivered while the main run loop
+      // is in tracking mode (for example during a scroll).
+      stream.schedule(in: .main, forMode: .common)
       stream.open()
     }
   }

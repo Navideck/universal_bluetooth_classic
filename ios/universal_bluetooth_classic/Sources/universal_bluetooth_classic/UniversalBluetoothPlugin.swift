@@ -6,6 +6,11 @@ public class UniversalBluetoothPlugin: NSObject, FlutterPlugin, ExternalAccessor
   var callbackChannel: ExternalAccessoryCallbackChannel
   private let manager = EAAccessoryManager.shared()
   private var sessionControllers = [String: EASessionController]()
+  /// Connection IDs for which a `disconnected` event has already been sent
+  /// since the last connect / session open. Prevents a session failure and the
+  /// accessory-level disconnect notification from both reporting the same
+  /// disconnect.
+  private var reportedDisconnected = Set<Int>()
 
   init(callbackChannel: ExternalAccessoryCallbackChannel) {
     self.callbackChannel = callbackChannel
@@ -66,6 +71,10 @@ public class UniversalBluetoothPlugin: NSObject, FlutterPlugin, ExternalAccessor
       return
     }
 
+    // Opening a session for the accessory starts a new connection episode, so
+    // a future disconnect must be reported again.
+    reportedDisconnected.remove(accessory.connectionID)
+
     guard let controller = EASessionController(accessory: accessory, protocolString: protocolString) else {
       completion(.failure(ExternalAccessorySessionError.sessionCreationFailed))
       return
@@ -112,7 +121,9 @@ public class UniversalBluetoothPlugin: NSObject, FlutterPlugin, ExternalAccessor
     // connected: that means the session failed on its own. When the accessory
     // itself disconnected, `accessoryDisconnected` already reported it and
     // `accessory.isConnected` is false.
-    guard accessory.isConnected else { return }
+    let connectionID = accessory.connectionID
+    guard accessory.isConnected, !reportedDisconnected.contains(connectionID) else { return }
+    reportedDisconnected.insert(connectionID)
     callbackChannel.onConnectionStateChanged(
       accessory: accessory.toEAAccessoryObject(),
       connected: false
@@ -121,6 +132,7 @@ public class UniversalBluetoothPlugin: NSObject, FlutterPlugin, ExternalAccessor
 
   @objc private func accessoryConnected(_ notification: NSNotification) {
     guard let connectedAccessory = notification.userInfo?[EAAccessoryKey] as? ExternalAccessory.EAAccessory else { return }
+    reportedDisconnected.remove(connectedAccessory.connectionID)
     callbackChannel.onConnectionStateChanged(
       accessory: connectedAccessory.toEAAccessoryObject(),
       connected: true
@@ -133,6 +145,11 @@ public class UniversalBluetoothPlugin: NSObject, FlutterPlugin, ExternalAccessor
     for protocolString in connectedAccessory.protocolStrings {
       sessionControllers.removeValue(forKey: protocolString)?.close()
     }
+    // A session failure may already have reported this disconnect; only emit
+    // once per connection episode.
+    let connectionID = connectedAccessory.connectionID
+    guard !reportedDisconnected.contains(connectionID) else { return }
+    reportedDisconnected.insert(connectionID)
     callbackChannel.onConnectionStateChanged(
       accessory: connectedAccessory.toEAAccessoryObject(),
       connected: false
