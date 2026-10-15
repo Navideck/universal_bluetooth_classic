@@ -1,5 +1,4 @@
-import 'dart:typed_data';
-
+import 'package:flutter/foundation.dart';
 import 'package:universal_bluetooth_classic/src/transport_router.dart';
 import 'package:universal_bluetooth_classic/src/universal_bluetooth_interface.dart';
 import 'package:universal_bluetooth_classic/src/generated/bluetooth_hid_manager.g.dart';
@@ -27,7 +26,12 @@ class AccessoryManager extends UniversalBluetoothInterface {
   /// [disconnect]. It deliberately survives a spontaneous disconnect so a later
   /// [disconnect] or [send] still resolves to the transport the device used
   /// rather than falling back to HID.
-  final TransportRouter _router = TransportRouter();
+  ///
+  /// The platform is read here, inside a platform class, so [TransportRouter]
+  /// itself stays free of platform checks.
+  final TransportRouter _router = TransportRouter(
+    platform: defaultTargetPlatform,
+  );
 
   @override
   Future<void> showBluetoothAccessoryPicker({

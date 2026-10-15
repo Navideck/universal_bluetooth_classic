@@ -7,10 +7,12 @@ import 'package:universal_bluetooth_classic/src/universal_bluetooth_interface.da
 /// This is kept separate from the platform implementation so the routing rules
 /// can be unit tested without the Pigeon channels.
 class TransportRouter {
-  /// Creates a router. [platform] defaults to [defaultTargetPlatform] and is
-  /// only overridden in tests.
-  TransportRouter({TargetPlatform? platform})
-      : _platform = platform ?? defaultTargetPlatform;
+  /// Creates a router for [platform].
+  ///
+  /// The platform is passed in rather than read from [defaultTargetPlatform]
+  /// here, so the only platform checks stay in `_defaultPlatform()` and the
+  /// platform classes; see AGENTS.md.
+  TransportRouter({required TargetPlatform platform}) : _platform = platform;
 
   final TargetPlatform _platform;
   final Map<String, BluetoothTransport> _active = {};

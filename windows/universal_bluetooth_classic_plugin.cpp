@@ -24,7 +24,9 @@ namespace universal_bluetooth_classic
   const auto signalStrengthKey = L"System.Devices.Aep.SignalStrength";
 
   std::unique_ptr<FlutterAccessoryCallbackChannel> callbackChannel;
-  std::unique_ptr<BluetoothSerialManager> serialManager;
+  // Shared: BluetoothSerialManager hands out references to itself to its
+  // in-flight coroutines and posted callbacks.
+  std::shared_ptr<BluetoothSerialManager> serialManager;
 
   void UniversalBluetoothPlugin::RegisterWithRegistrar(
       flutter::PluginRegistrarWindows *registrar)
@@ -33,7 +35,7 @@ namespace universal_bluetooth_classic
     FlutterAccessoryPlatformChannel::SetUp(registrar->messenger(), plugin.get());
     callbackChannel = std::make_unique<FlutterAccessoryCallbackChannel>(registrar->messenger());
 
-    serialManager = std::make_unique<BluetoothSerialManager>(registrar);
+    serialManager = std::make_shared<BluetoothSerialManager>(registrar);
     serial::BluetoothSerialPlatformChannel::SetUp(registrar->messenger(), serialManager.get());
 
     registrar->AddPlugin(std::move(plugin));

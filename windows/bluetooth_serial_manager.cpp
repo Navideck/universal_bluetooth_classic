@@ -80,7 +80,21 @@ namespace universal_bluetooth_classic
         const std::string &service_uuid,
         std::function<void(std::optional<serial::FlutterError> reply)> result)
     {
-        ConnectAsync(device_id, service_uuid, result);
+        bool already_connected = false;
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            already_connected = sockets_.find(device_id) != sockets_.end();
+        }
+        if (already_connected)
+        {
+            // Like the Android and macOS managers, report the existing connection
+            // instead of opening a second socket for the same device.
+            PostConnectionState(device_id, true);
+            result(std::nullopt);
+            return;
+        }
+
+        ConnectAsync(device_id, service_uuid, std::move(result));
     }
 
     void BluetoothSerialManager::Disconnect(
@@ -185,6 +199,16 @@ namespace universal_bluetooth_classic
         std::string service_uuid,
         std::function<void(std::optional<serial::FlutterError> reply)> result)
     {
+        // Keep the manager (and with it the sockets and the callback channel)
+        // alive for the whole coroutine, so it cannot be destroyed while this is
+        // in flight.
+        auto self = weak_from_this().lock();
+        if (self == nullptr)
+        {
+            result(serial::FlutterError("Failed", "Serial manager is shutting down"));
+            co_return;
+        }
+
         try
         {
             auto uuid = ParseUuid(service_uuid);
@@ -222,10 +246,29 @@ namespace universal_bluetooth_classic
             co_await socket.ConnectAsync(service.ConnectionHostName(), service.ConnectionServiceName());
 
             uint64_t generation = 0;
+            StreamSocket previous{nullptr};
             {
                 std::lock_guard<std::mutex> lock(mutex_);
                 generation = ++next_generation_;
+                auto it = sockets_.find(device_id);
+                if (it != sockets_.end())
+                {
+                    // A concurrent connect raced past the check in Connect().
+                    // Close the socket it left behind so it is not leaked; its
+                    // read loop ignores the close because the generation differs.
+                    previous = it->second.socket;
+                }
                 sockets_[device_id] = SocketEntry{socket, generation};
+            }
+            if (previous != nullptr)
+            {
+                try
+                {
+                    previous.Close();
+                }
+                catch (...)
+                {
+                }
             }
 
             PostConnectionState(device_id, true);
@@ -250,6 +293,13 @@ namespace universal_bluetooth_classic
 
     winrt::fire_and_forget BluetoothSerialManager::ReadLoop(StreamSocket socket, std::string device_id, uint64_t generation)
     {
+        // See ConnectAsync: the read loop can outlive the plugin's reference.
+        auto self = weak_from_this().lock();
+        if (self == nullptr)
+        {
+            co_return;
+        }
+
         try
         {
             DataReader reader(socket.InputStream());
@@ -295,16 +345,28 @@ namespace universal_bluetooth_classic
 
     void BluetoothSerialManager::PostConnectionState(const std::string &device_id, bool connected)
     {
-        uiThreadHandler_.Post([this, device_id, connected]()
-                              { callbackChannel_->OnConnectionStateChanged(
+        // Hold a reference until the posted callback has run, so the manager and
+        // its callback channel outlive the hop to the platform thread.
+        auto self = weak_from_this().lock();
+        if (self == nullptr)
+        {
+            return;
+        }
+        uiThreadHandler_.Post([self, device_id, connected]()
+                              { self->callbackChannel_->OnConnectionStateChanged(
                                     device_id, connected, []() {}, [](const serial::FlutterError &error)
                                     { std::cout << "onConnectionStateChanged error: " << error.message() << std::endl; }); });
     }
 
     void BluetoothSerialManager::PostData(const std::string &device_id, std::vector<uint8_t> data)
     {
-        uiThreadHandler_.Post([this, device_id, data = std::move(data)]()
-                              { callbackChannel_->OnData(
+        auto self = weak_from_this().lock();
+        if (self == nullptr)
+        {
+            return;
+        }
+        uiThreadHandler_.Post([self, device_id, data = std::move(data)]()
+                              { self->callbackChannel_->OnData(
                                     device_id, data, []() {}, [](const serial::FlutterError &error)
                                     { std::cout << "onData error: " << error.message() << std::endl; }); });
     }

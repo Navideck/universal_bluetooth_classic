@@ -25,8 +25,13 @@ namespace universal_bluetooth_classic
     /// Generic serial (SPP/RFCOMM) transport. Opens a StreamSocket to a
     /// RfcommDeviceService for the requested UUID and forwards the byte stream
     /// to Flutter.
+    ///
+    /// Must be owned by a `std::shared_ptr`. The connect and read coroutines and
+    /// the posted callbacks hold a reference to the manager, so a teardown that
+    /// drops the plugin's reference cannot destroy it mid-flight.
     class BluetoothSerialManager
-        : public universal_bluetooth_classic_serial::BluetoothSerialPlatformChannel
+        : public universal_bluetooth_classic_serial::BluetoothSerialPlatformChannel,
+          public std::enable_shared_from_this<BluetoothSerialManager>
     {
     public:
         explicit BluetoothSerialManager(flutter::PluginRegistrarWindows *registrar);

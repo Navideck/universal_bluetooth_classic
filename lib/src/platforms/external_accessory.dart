@@ -28,8 +28,10 @@ class ExternalAccessory extends UniversalBluetoothInterface {
   }) {
     if (transport == BluetoothTransport.spp) {
       throw UnsupportedError(
-        'Serial (SPP/RFCOMM) connections are not supported on iOS. '
-        'Use an External Accessory protocol string instead.',
+        'Serial (SPP/RFCOMM) connections are not supported on iOS: Apple '
+        'exposes no RFCOMM socket or SDP API. MFi/iAP2 accessories carry data '
+        'over RFCOMM, but are reached through their External Accessory protocol '
+        'string, which uses the same send/onData byte-stream API.',
       );
     }
     return _channel.openSession(deviceId);
