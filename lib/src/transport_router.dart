@@ -43,7 +43,8 @@ class TransportRouter {
   /// device is not being tracked.
   BluetoothTransport? transportFor(String deviceId) => _active[deviceId];
 
-  /// Forgets [deviceId], for example after it disconnects.
+  /// Forgets [deviceId], for example on an explicit disconnect or when a
+  /// connect attempt fails.
   void forget(String deviceId) {
     _active.remove(deviceId);
   }

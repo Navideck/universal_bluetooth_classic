@@ -56,8 +56,13 @@ interface BluetoothSerialPlatformChannel {
   fun connect(deviceId: String, serviceUuid: String, callback: (Result<Unit>) -> Unit)
   /** Closes the RFCOMM/SPP connection to [deviceId]. */
   fun disconnect(deviceId: String, callback: (Result<Unit>) -> Unit)
-  /** Writes [data] to the RFCOMM/SPP connection to [deviceId]. */
-  fun send(deviceId: String, data: ByteArray)
+  /**
+   * Writes [data] to the RFCOMM/SPP connection to [deviceId].
+   *
+   * Asynchronous so the host can perform the (potentially blocking) socket
+   * write off the platform thread.
+   */
+  fun send(deviceId: String, data: ByteArray, callback: (Result<Unit>) -> Unit)
 
   companion object {
     /** The codec used by BluetoothSerialPlatformChannel. */
@@ -114,13 +119,14 @@ interface BluetoothSerialPlatformChannel {
             val args = message as List<Any?>
             val deviceIdArg = args[0] as String
             val dataArg = args[1] as ByteArray
-            val wrapped: List<Any?> = try {
-              api.send(deviceIdArg, dataArg)
-              listOf(null)
-            } catch (exception: Throwable) {
-              wrapError(exception)
+            api.send(deviceIdArg, dataArg) { result: Result<Unit> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(wrapError(error))
+              } else {
+                reply.reply(wrapResult(null))
+              }
             }
-            reply.reply(wrapped)
           }
         } else {
           channel.setMessageHandler(null)

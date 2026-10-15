@@ -8,6 +8,7 @@
 #include <winrt/Windows.Networking.Sockets.h>
 #include <winrt/Windows.Storage.Streams.h>
 
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <mutex>
@@ -43,9 +44,10 @@ namespace universal_bluetooth_classic
             const std::string &device_id,
             std::function<void(std::optional<universal_bluetooth_classic_serial::FlutterError> reply)> result) override;
 
-        std::optional<universal_bluetooth_classic_serial::FlutterError> Send(
+        void Send(
             const std::string &device_id,
-            const std::vector<uint8_t> &data) override;
+            const std::vector<uint8_t> &data,
+            std::function<void(std::optional<universal_bluetooth_classic_serial::FlutterError> reply)> result) override;
 
         /// Closes every open connection, e.g. when the plugin is destroyed.
         void Dispose();
@@ -56,17 +58,32 @@ namespace universal_bluetooth_classic
             std::string service_uuid,
             std::function<void(std::optional<universal_bluetooth_classic_serial::FlutterError> reply)> result);
 
+        winrt::fire_and_forget SendAsync(
+            winrt::Windows::Networking::Sockets::StreamSocket socket,
+            std::vector<uint8_t> data,
+            std::function<void(std::optional<universal_bluetooth_classic_serial::FlutterError> reply)> result);
+
         winrt::fire_and_forget ReadLoop(
             winrt::Windows::Networking::Sockets::StreamSocket socket,
-            std::string device_id);
+            std::string device_id,
+            uint64_t generation);
 
         void PostConnectionState(const std::string &device_id, bool connected);
 
         void PostData(const std::string &device_id, std::vector<uint8_t> data);
 
+        /// A connected socket together with the id of the connect that opened
+        /// it, so a stale read loop cannot tear down a newer connection.
+        struct SocketEntry
+        {
+            winrt::Windows::Networking::Sockets::StreamSocket socket;
+            uint64_t generation;
+        };
+
         UiThreadHandler uiThreadHandler_;
         std::unique_ptr<universal_bluetooth_classic_serial::BluetoothSerialCallbackChannel> callbackChannel_;
-        std::unordered_map<std::string, winrt::Windows::Networking::Sockets::StreamSocket> sockets_;
+        std::unordered_map<std::string, SocketEntry> sockets_;
+        uint64_t next_generation_ = 0;
         std::mutex mutex_;
     };
 

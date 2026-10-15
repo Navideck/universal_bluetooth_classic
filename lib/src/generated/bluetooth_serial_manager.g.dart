@@ -114,6 +114,9 @@ class BluetoothSerialPlatformChannel {
   }
 
   /// Writes [data] to the RFCOMM/SPP connection to [deviceId].
+  ///
+  /// Asynchronous so the host can perform the (potentially blocking) socket
+  /// write off the platform thread.
   Future<void> send(String deviceId, Uint8List data) async {
     final String pigeonVar_channelName =
         'dev.flutter.pigeon.universal_bluetooth_classic.BluetoothSerialPlatformChannel.send$pigeonVar_messageChannelSuffix';

@@ -39,10 +39,28 @@ public class BluetoothSerialManager: NSObject, BluetoothSerialPlatformChannel {
             completion(.success(()))
             return
         }
+        // A second connect while the SDP query is still running would overwrite
+        // the pending completion and leave the first caller waiting forever.
+        if pendingConnects[deviceId] != nil {
+            completion(.failure(PigeonError(
+                code: "InProgress",
+                message: "A connection to \(deviceId) is already in progress",
+                details: nil
+            )))
+            return
+        }
+        // Reserve the slot before the async work so a concurrent connect is
+        // rejected rather than replacing this one.
+        pendingConnects[deviceId] = PendingConnect(
+            deviceId: deviceId,
+            serviceUuid: serviceUuid,
+            completion: completion
+        )
 
         DispatchQueue.global(qos: .userInitiated).async {
             guard let device = IOBluetoothDevice(addressString: deviceId) else {
                 DispatchQueue.main.async {
+                    self.pendingConnects.removeValue(forKey: deviceId)
                     completion(.failure(PigeonError(code: "Failed", message: "Device not found", details: nil)))
                 }
                 return
@@ -57,6 +75,7 @@ public class BluetoothSerialManager: NSObject, BluetoothSerialPlatformChannel {
                 if ioReturn != kIOReturnSuccess {
                     let errorString = String(cString: mach_error_string(Int32(ioReturn)))
                     DispatchQueue.main.async {
+                        self.pendingConnects.removeValue(forKey: deviceId)
                         completion(.failure(PigeonError(code: "Failed", message: errorString, details: nil)))
                     }
                     return
@@ -64,11 +83,6 @@ public class BluetoothSerialManager: NSObject, BluetoothSerialPlatformChannel {
             }
 
             DispatchQueue.main.async {
-                self.pendingConnects[deviceId] = PendingConnect(
-                    deviceId: deviceId,
-                    serviceUuid: serviceUuid,
-                    completion: completion
-                )
                 let status = device.performSDPQuery(self)
                 if status != kIOReturnSuccess {
                     self.pendingConnects.removeValue(forKey: deviceId)
@@ -92,22 +106,47 @@ public class BluetoothSerialManager: NSObject, BluetoothSerialPlatformChannel {
         completion(.success(()))
     }
 
-    func send(deviceId: String, data: FlutterStandardTypedData) throws {
+    func send(
+        deviceId: String,
+        data: FlutterStandardTypedData,
+        completion: @escaping (Result<Void, any Error>) -> Void
+    ) {
         guard let channel = rfcommChannels[deviceId] else {
-            throw PigeonError(code: "NotFound", message: "No serial connection for \(deviceId)", details: nil)
+            completion(.failure(PigeonError(code: "NotFound", message: "No serial connection for \(deviceId)", details: nil)))
+            return
         }
         let bytes = [UInt8](data.data)
-        try bytes.withUnsafeBytes { bufferPointer in
-            guard let baseAddress = bufferPointer.baseAddress else {
-                throw PigeonError(code: "Failed", message: "Buffer pointer is nil", details: nil)
+        // writeSync blocks until the peer accepts the bytes, so keep it off the
+        // platform thread.
+        DispatchQueue.global(qos: .userInitiated).async {
+            do {
+                try Self.write(bytes, to: channel)
+                DispatchQueue.main.async { completion(.success(())) }
+            } catch {
+                DispatchQueue.main.async { completion(.failure(error)) }
             }
-            let result = channel.writeSync(
-                UnsafeMutableRawPointer(mutating: baseAddress),
-                length: UInt16(bufferPointer.count)
-            )
+        }
+    }
+
+    /// Writes [bytes] to [channel] in `UInt16`-sized chunks, since `writeSync`
+    /// takes its length as a `UInt16` and a larger count would be truncated.
+    private static func write(_ bytes: [UInt8], to channel: IOBluetoothRFCOMMChannel) throws {
+        var offset = 0
+        while offset < bytes.count {
+            let chunkSize = min(bytes.count - offset, Int(UInt16.max))
+            let result: IOReturn = bytes.withUnsafeBytes { bufferPointer in
+                guard let baseAddress = bufferPointer.baseAddress else {
+                    return kIOReturnError
+                }
+                return channel.writeSync(
+                    UnsafeMutableRawPointer(mutating: baseAddress).advanced(by: offset),
+                    length: UInt16(chunkSize)
+                )
+            }
             if result != kIOReturnSuccess {
                 throw PigeonError(code: "Failed", message: "Failed to write to RFCOMM channel", details: nil)
             }
+            offset += chunkSize
         }
     }
 
@@ -241,7 +280,10 @@ extension BluetoothSerialManager: IOBluetoothRFCOMMChannelDelegate {
 
     public func rfcommChannelClosed(_ rfcommChannel: IOBluetoothRFCOMMChannel) {
         guard let deviceId = rfcommChannel.getDevice()?.addressString else { return }
-        guard rfcommChannels.removeValue(forKey: deviceId) != nil else { return }
+        // Ignore the close of a channel that a newer connection has replaced, so
+        // an old channel cannot tear down the current one.
+        guard let current = rfcommChannels[deviceId], current === rfcommChannel else { return }
+        rfcommChannels.removeValue(forKey: deviceId)
         onConnectionUpdate(deviceId: deviceId, connected: false)
     }
 }

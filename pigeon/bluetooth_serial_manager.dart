@@ -35,6 +35,10 @@ abstract class BluetoothSerialPlatformChannel {
   void disconnect(String deviceId);
 
   /// Writes [data] to the RFCOMM/SPP connection to [deviceId].
+  ///
+  /// Asynchronous so the host can perform the (potentially blocking) socket
+  /// write off the platform thread.
+  @async
   void send(String deviceId, Uint8List data);
 }
 

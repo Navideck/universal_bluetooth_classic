@@ -6,6 +6,8 @@ import android.bluetooth.BluetoothSocket
 import android.util.Log
 import java.io.IOException
 import java.util.UUID
+import java.util.concurrent.Executors
+import java.util.concurrent.RejectedExecutionException
 
 private const val SERIAL_TAG = "BluetoothSerialManager"
 
@@ -24,6 +26,13 @@ class BluetoothSerialManager(
     )
 
     private val connections = mutableMapOf<String, Connection>()
+
+    /**
+     * Socket writes block until the peer accepts the bytes, so they are kept off
+     * the platform thread. A single worker also keeps the bytes of concurrent
+     * sends in order.
+     */
+    private val writeExecutor = Executors.newSingleThreadExecutor()
 
     override fun connect(
         deviceId: String,
@@ -82,19 +91,33 @@ class BluetoothSerialManager(
         callback(Result.success(Unit))
     }
 
-    override fun send(deviceId: String, data: ByteArray) {
+    override fun send(deviceId: String, data: ByteArray, callback: (Result<Unit>) -> Unit) {
         val connection = synchronized(connections) { connections[deviceId] }
-            ?: throw FlutterError("NotFound", "Device not connected")
+        if (connection == null) {
+            callback(Result.failure(FlutterError("NotFound", "Device not connected")))
+            return
+        }
         try {
-            connection.socket.outputStream.write(data)
-            connection.socket.outputStream.flush()
-        } catch (e: IOException) {
-            throw FlutterError("Failed", "Failed to send data: ${e.message}")
+            writeExecutor.execute {
+                try {
+                    connection.socket.outputStream.write(data)
+                    connection.socket.outputStream.flush()
+                    postResult(callback, Result.success(Unit))
+                } catch (e: IOException) {
+                    postResult(
+                        callback,
+                        Result.failure(FlutterError("Failed", "Failed to send data: ${e.message}")),
+                    )
+                }
+            }
+        } catch (e: RejectedExecutionException) {
+            callback(Result.failure(FlutterError("Failed", "Serial manager disposed")))
         }
     }
 
     /** Closes every open connection, e.g. when the engine detaches. */
     fun dispose() {
+        writeExecutor.shutdown()
         val deviceIds = synchronized(connections) { connections.keys.toList() }
         for (deviceId in deviceIds) {
             closeConnection(deviceId, notify = false)
@@ -144,14 +167,29 @@ class BluetoothSerialManager(
         } catch (e: IOException) {
             Log.d(SERIAL_TAG, "Read loop ended for $deviceId: ${e.message}")
         } finally {
-            closeConnection(deviceId, notify = true)
+            // Only tear down the connection this read loop belongs to. A fast
+            // disconnect-then-reconnect could otherwise close the new socket.
+            closeConnection(deviceId, notify = true, socket = socket)
         }
     }
 
-    /** Returns whether a connection was open. */
-    private fun closeConnection(deviceId: String, notify: Boolean): Boolean {
-        val connection = synchronized(connections) { connections.remove(deviceId) }
-            ?: return false
+    /**
+     * Closes the connection for [deviceId] and returns whether one was open.
+     *
+     * When [socket] is given the connection is only closed if it is still backed
+     * by that socket, so a stale read loop cannot tear down a newer connection.
+     */
+    private fun closeConnection(
+        deviceId: String,
+        notify: Boolean,
+        socket: BluetoothSocket? = null,
+    ): Boolean {
+        val connection = synchronized(connections) {
+            val current = connections[deviceId] ?: return false
+            if (socket != null && current.socket !== socket) return false
+            connections.remove(deviceId)
+            current
+        }
         try {
             connection.socket.close()
         } catch (e: IOException) {

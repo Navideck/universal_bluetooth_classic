@@ -93,7 +93,7 @@ namespace universal_bluetooth_classic
             auto it = sockets_.find(device_id);
             if (it != sockets_.end())
             {
-                socket = it->second;
+                socket = it->second.socket;
                 sockets_.erase(it);
             }
         }
@@ -112,9 +112,10 @@ namespace universal_bluetooth_classic
         result(std::nullopt);
     }
 
-    std::optional<serial::FlutterError> BluetoothSerialManager::Send(
+    void BluetoothSerialManager::Send(
         const std::string &device_id,
-        const std::vector<uint8_t> &data)
+        const std::vector<uint8_t> &data,
+        std::function<void(std::optional<serial::FlutterError> reply)> result)
     {
         StreamSocket socket{nullptr};
         {
@@ -122,37 +123,47 @@ namespace universal_bluetooth_classic
             auto it = sockets_.find(device_id);
             if (it != sockets_.end())
             {
-                socket = it->second;
+                socket = it->second.socket;
             }
         }
 
         if (socket == nullptr)
         {
-            return serial::FlutterError("NotFound", "Device not connected");
+            result(serial::FlutterError("NotFound", "Device not connected"));
+            return;
         }
 
+        // The write can block, so it is performed off the platform thread.
+        SendAsync(socket, std::vector<uint8_t>(data), std::move(result));
+    }
+
+    winrt::fire_and_forget BluetoothSerialManager::SendAsync(
+        StreamSocket socket,
+        std::vector<uint8_t> data,
+        std::function<void(std::optional<serial::FlutterError> reply)> result)
+    {
         try
         {
             DataWriter writer(socket.OutputStream());
             writer.WriteBytes(data);
-            writer.StoreAsync().get();
+            co_await writer.StoreAsync();
             writer.DetachStream();
+            result(std::nullopt);
         }
         catch (const hresult_error &err)
         {
             std::cout << "Send failed: " << to_string(err.message()) << std::endl;
-            return serial::FlutterError("Failed", "Failed to send data");
+            result(serial::FlutterError("Failed", "Failed to send data"));
         }
         catch (...)
         {
-            return serial::FlutterError("Failed", "Failed to send data");
+            result(serial::FlutterError("Failed", "Failed to send data"));
         }
-        return std::nullopt;
     }
 
     void BluetoothSerialManager::Dispose()
     {
-        std::unordered_map<std::string, StreamSocket> sockets;
+        std::unordered_map<std::string, SocketEntry> sockets;
         {
             std::lock_guard<std::mutex> lock(mutex_);
             sockets.swap(sockets_);
@@ -161,7 +172,7 @@ namespace universal_bluetooth_classic
         {
             try
             {
-                entry.second.Close();
+                entry.second.socket.Close();
             }
             catch (...)
             {
@@ -210,15 +221,17 @@ namespace universal_bluetooth_classic
             StreamSocket socket;
             co_await socket.ConnectAsync(service.ConnectionHostName(), service.ConnectionServiceName());
 
+            uint64_t generation = 0;
             {
                 std::lock_guard<std::mutex> lock(mutex_);
-                sockets_[device_id] = socket;
+                generation = ++next_generation_;
+                sockets_[device_id] = SocketEntry{socket, generation};
             }
 
             PostConnectionState(device_id, true);
             result(std::nullopt);
 
-            ReadLoop(socket, device_id);
+            ReadLoop(socket, device_id, generation);
         }
         catch (const winrt::hresult_error &err)
         {
@@ -235,7 +248,7 @@ namespace universal_bluetooth_classic
         }
     }
 
-    winrt::fire_and_forget BluetoothSerialManager::ReadLoop(StreamSocket socket, std::string device_id)
+    winrt::fire_and_forget BluetoothSerialManager::ReadLoop(StreamSocket socket, std::string device_id, uint64_t generation)
     {
         try
         {
@@ -265,7 +278,14 @@ namespace universal_bluetooth_classic
         bool removed = false;
         {
             std::lock_guard<std::mutex> lock(mutex_);
-            removed = sockets_.erase(device_id) > 0;
+            // Only tear down the connection this read loop opened. A fast
+            // disconnect-then-reconnect could otherwise remove the newer socket.
+            auto it = sockets_.find(device_id);
+            if (it != sockets_.end() && it->second.generation == generation)
+            {
+                sockets_.erase(it);
+                removed = true;
+            }
         }
         if (removed)
         {

@@ -80,7 +80,10 @@ protocol BluetoothSerialPlatformChannel {
   /// Closes the RFCOMM/SPP connection to [deviceId].
   func disconnect(deviceId: String, completion: @escaping (Result<Void, Error>) -> Void)
   /// Writes [data] to the RFCOMM/SPP connection to [deviceId].
-  func send(deviceId: String, data: FlutterStandardTypedData) throws
+  ///
+  /// Asynchronous so the host can perform the (potentially blocking) socket
+  /// write off the platform thread.
+  func send(deviceId: String, data: FlutterStandardTypedData, completion: @escaping (Result<Void, Error>) -> Void)
 }
 
 /// Generated setup class from Pigeon to handle messages through the `binaryMessenger`.
@@ -127,17 +130,22 @@ class BluetoothSerialPlatformChannelSetup {
       disconnectChannel.setMessageHandler(nil)
     }
     /// Writes [data] to the RFCOMM/SPP connection to [deviceId].
+    ///
+    /// Asynchronous so the host can perform the (potentially blocking) socket
+    /// write off the platform thread.
     let sendChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.universal_bluetooth_classic.BluetoothSerialPlatformChannel.send\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
     if let api = api {
       sendChannel.setMessageHandler { message, reply in
         let args = message as! [Any?]
         let deviceIdArg = args[0] as! String
         let dataArg = args[1] as! FlutterStandardTypedData
-        do {
-          try api.send(deviceId: deviceIdArg, data: dataArg)
-          reply(wrapResult(nil))
-        } catch {
-          reply(wrapError(error))
+        api.send(deviceId: deviceIdArg, data: dataArg) { result in
+          switch result {
+          case .success:
+            reply(wrapResult(nil))
+          case .failure(let error):
+            reply(wrapError(error))
+          }
         }
       }
     } else {

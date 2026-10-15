@@ -142,14 +142,15 @@ void BluetoothSerialPlatformChannel::SetUp(
             return;
           }
           const auto& data_arg = std::get<std::vector<uint8_t>>(encodable_data_arg);
-          std::optional<FlutterError> output = api->Send(device_id_arg, data_arg);
-          if (output.has_value()) {
-            reply(WrapError(output.value()));
-            return;
-          }
-          EncodableList wrapped;
-          wrapped.push_back(EncodableValue());
-          reply(EncodableValue(std::move(wrapped)));
+          api->Send(device_id_arg, data_arg, [reply](std::optional<FlutterError>&& output) {
+            if (output.has_value()) {
+              reply(WrapError(output.value()));
+              return;
+            }
+            EncodableList wrapped;
+            wrapped.push_back(EncodableValue());
+            reply(EncodableValue(std::move(wrapped)));
+          });
         } catch (const std::exception& exception) {
           reply(WrapError(exception.what()));
         }

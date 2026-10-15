@@ -95,9 +95,13 @@ class BluetoothSerialPlatformChannel {
     const std::string& device_id,
     std::function<void(std::optional<FlutterError> reply)> result) = 0;
   // Writes [data] to the RFCOMM/SPP connection to [deviceId].
-  virtual std::optional<FlutterError> Send(
+  //
+  // Asynchronous so the host can perform the (potentially blocking) socket
+  // write off the platform thread.
+  virtual void Send(
     const std::string& device_id,
-    const std::vector<uint8_t>& data) = 0;
+    const std::vector<uint8_t>& data,
+    std::function<void(std::optional<FlutterError> reply)> result) = 0;
 
   // The codec used by BluetoothSerialPlatformChannel.
   static const flutter::StandardMessageCodec& GetCodec();

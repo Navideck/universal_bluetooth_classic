@@ -12,16 +12,21 @@ class AccessoryManager extends UniversalBluetoothInterface {
 
   AccessoryManager._() {
     FlutterAccessoryCallbackChannel.setUp(_AccessoryCallbackHandler());
-    BluetoothHidManagerCallbackChannel.setUp(_HidCallbackHandler(_router));
-    BluetoothSerialCallbackChannel.setUp(_SerialCallbackHandler(_router));
+    BluetoothHidManagerCallbackChannel.setUp(_HidCallbackHandler());
+    BluetoothSerialCallbackChannel.setUp(_SerialCallbackHandler());
   }
 
   static final _accessoryManagerChannel = FlutterAccessoryPlatformChannel();
   static final _hidManagerChannel = BluetoothHidManagerPlatformChannel();
   static final _serialChannel = BluetoothSerialPlatformChannel();
 
-  /// Tracks the transport each device is connected with, so [send] and
+  /// Tracks the last transport each device was connected with, so [send] and
   /// [disconnect] can be routed to the matching native channel.
+  ///
+  /// The entry is overwritten on the next [connect] and removed by an explicit
+  /// [disconnect]. It deliberately survives a spontaneous disconnect so a later
+  /// [disconnect] or [send] still resolves to the transport the device used
+  /// rather than falling back to HID.
   final TransportRouter _router = TransportRouter();
 
   @override
@@ -68,13 +73,21 @@ class AccessoryManager extends UniversalBluetoothInterface {
     String deviceId, {
     BluetoothTransport transport = BluetoothTransport.auto,
     String? serviceUuid,
-  }) {
+  }) async {
     final resolved = _router.resolveConnect(transport);
     _router.record(deviceId, resolved);
-    if (resolved == BluetoothTransport.spp) {
-      return _serialChannel.connect(deviceId, serviceUuid ?? sppServiceUuid);
+    try {
+      if (resolved == BluetoothTransport.spp) {
+        await _serialChannel.connect(deviceId, serviceUuid ?? sppServiceUuid);
+      } else {
+        await _hidManagerChannel.connect(deviceId);
+      }
+    } catch (_) {
+      // A failed connect must not leave a transport behind, otherwise a later
+      // send/disconnect for this device would be routed to the wrong channel.
+      _router.forget(deviceId);
+      rethrow;
     }
-    return _hidManagerChannel.connect(deviceId);
   }
 
   @override
@@ -110,13 +123,8 @@ class _AccessoryCallbackHandler extends FlutterAccessoryCallbackChannel {
 }
 
 class _HidCallbackHandler extends BluetoothHidManagerCallbackChannel {
-  _HidCallbackHandler(this._router);
-
-  final TransportRouter _router;
-
   @override
   void onConnectionStateChanged(String deviceId, bool connected) {
-    if (!connected) _router.forget(deviceId);
     UniversalBluetoothInterface.onConnectionStateChanged?.call(
       BluetoothConnectionEvent(
         identifier: deviceId,
@@ -151,13 +159,8 @@ class _HidCallbackHandler extends BluetoothHidManagerCallbackChannel {
 }
 
 class _SerialCallbackHandler extends BluetoothSerialCallbackChannel {
-  _SerialCallbackHandler(this._router);
-
-  final TransportRouter _router;
-
   @override
   void onConnectionStateChanged(String deviceId, bool connected) {
-    if (!connected) _router.forget(deviceId);
     UniversalBluetoothInterface.onConnectionStateChanged?.call(
       BluetoothConnectionEvent(
         identifier: deviceId,
