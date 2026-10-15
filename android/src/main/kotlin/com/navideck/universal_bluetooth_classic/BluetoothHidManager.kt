@@ -249,6 +249,13 @@ class BluetoothHidManager(
 
     override fun onSetReport(device: BluetoothDevice?, type: Byte, id: Byte, data: ByteArray?) {
         Log.d(TAG, "onSetReport $device $type $id $data")
+        // The host sent us a report. Forward the payload; the HID type/id are
+        // not part of the unified data API.
+        if (device != null && data != null) {
+            accessoryManagerThreadHandler?.post {
+                callbackChannel.onData(device.address, data) {}
+            }
+        }
         btHidProxy?.reportError(device, BluetoothHidDevice.ERROR_RSP_SUCCESS);
     }
 
@@ -263,6 +270,11 @@ class BluetoothHidManager(
 
     override fun onInterruptData(device: BluetoothDevice?, reportId: Byte, data: ByteArray?) {
         Log.d(TAG, "onInterruptData $device $reportId $data")
+        if (device != null && data != null) {
+            accessoryManagerThreadHandler?.post {
+                callbackChannel.onData(device.address, data) {}
+            }
+        }
     }
 
     override fun onVirtualCableUnplug(device: BluetoothDevice?) {

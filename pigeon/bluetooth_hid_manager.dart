@@ -47,6 +47,8 @@ abstract class BluetoothHidManagerCallbackChannel {
   void onSdpServiceRegistrationUpdate(bool registered);
 
   ReportReply? onGetReport(String deviceId, ReportType type, int bufferSize);
+
+  void onData(String deviceId, Uint8List data);
 }
 
 class ReportReply {

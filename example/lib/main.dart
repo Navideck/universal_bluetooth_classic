@@ -191,7 +191,7 @@ class _MyAppState extends State<MyApp> {
     try {
       await UniversalBluetooth.send(
         protocol,
-        Uint8List.fromList('ATZ\r'.codeUnits),
+        Uint8List.fromList('PING\r'.codeUnits),
       );
     } catch (e) {
       print(e);

@@ -35,23 +35,24 @@ All APIs are called through the same `UniversalBluetooth` class. Platform differ
 | `startScan` / `stopScan` / `isScanning` | ✔️ | — | ✔️ | ✔️ | ✔️ |
 | `pair` / `unpair` | ✔️ | — | ✔️ | ✔️ | ✔️ |
 | `getPairedDevices` | ✔️ | — | ✔️ | ✔️ | ✔️ |
-| `connect` | ✔️ | ✔️³ | ✔️ | ✔️ | — |
-| `disconnect` | ✔️ | ✔️¹ | ✔️ | ✔️ | ✔️² |
-| `send` | ✔️ | ✔️³ | ✔️ | ✔️ | — |
-| `setupSdp` / `closeSdp` | ✔️ | — | ✔️ | ✔️ | — |
+| `connect` | ✔️ | ✔️³ | ✔️ | — | — |
+| `disconnect` | ✔️ | ✔️¹ | ✔️ | — | ✔️² |
+| `send` | ✔️ | ✔️³ | ✔️ | — | — |
+| `setupSdp` / `closeSdp` | ✔️ | — | ✔️ | — | — |
 | `onDeviceDiscovered` | ✔️ | — | ✔️ | ✔️ | ✔️ |
 | `onDeviceRemoved` | ✔️ | — | ✔️ | ✔️ | — |
 | `onConnectionStateChanged` | ✔️ | ✔️ | ✔️ | — | ✔️ |
-| `onData` | — | ✔️³ | — | — | — |
-| `onGetReport` | ✔️ | — | ✔️ | ✔️ | — |
-| `onSdpServiceRegistrationUpdate` | ✔️ | — | ✔️ | ✔️ | — |
+| `onData` | ✔️ | ✔️³ | ✔️ | — | — |
+| `onGetReport` | ✔️ | — | ✔️ | — | — |
+| `onSdpServiceRegistrationUpdate` | ✔️ | — | ✔️ | — | — |
 
 **Legend:** ✔️ supported, — not supported.
 
 ¹ On iOS, `disconnect` closes an External Accessory session.
 ² Linux supports a basic disconnect, not an HID-specific disconnect.
 ³ On iOS, `connect` opens an External Accessory session for a protocol string
-and `send` / `onData` exchange bytes over it. `onData` is iOS-only.
+and `send` / `onData` exchange bytes over it. On the HID platforms `onData`
+delivers bytes received from the connected device.
 
 ## Getting Started
 
@@ -186,9 +187,9 @@ UniversalBluetooth.onData = (identifier, data) {
 };
 ```
 
-On the HID platforms `send` writes an output report and `onData` is not yet
-delivered. On iOS both operate on the open External Accessory session. The
-deprecated `sendReport` alias forwards to `send`.
+On the HID platforms `send` writes an output report and `onData` delivers the
+bytes the connected device sends. On iOS both operate on the open External
+Accessory session. The deprecated `sendReport` alias forwards to `send`.
 
 Respond to HID get-report requests:
 
@@ -282,8 +283,7 @@ The `externalAccessory` event payload is only available on iOS.
 ### Exchanging bytes
 
 Open a session for the accessory's protocol string, then send and receive bytes
-over it. For a serial accessory such as an OBD-II scanner this is the raw
-command channel:
+over it. For a serial accessory this is the raw byte channel:
 
 ```dart
 import 'dart:typed_data';
@@ -298,9 +298,9 @@ UniversalBluetooth.onData = (identifier, data) {
 // must advertise the protocol in its protocolStrings.
 await UniversalBluetooth.connect(protocol);
 
-// Send a command. e.g. the ELM327 reset / OBD-II "engine RPM" PIDs.
-await UniversalBluetooth.send(protocol, Uint8List.fromList('ATZ\r'.codeUnits));
-await UniversalBluetooth.send(protocol, Uint8List.fromList('010C\r'.codeUnits));
+// Send bytes. Frame them however the accessory expects.
+await UniversalBluetooth.send(protocol, Uint8List.fromList('PING\r'.codeUnits));
+await UniversalBluetooth.send(protocol, Uint8List.fromList([0x01, 0x02, 0x03]));
 
 // Responses arrive through onData.
 
@@ -443,9 +443,5 @@ flutter run
 ```
 
 ## App showcase
-
-| | |
-| :--: | :-- |
-| <img src="assets/bt_cam_icon.svg" alt="BT Cam icon" width="160" height="160"> | [**BT Cam**](https://btcam.app)<br>A Bluetooth remote for Canon, Nikon, Sony, Fujifilm, GoPro, Olympus, Panasonic, Pentax, and Blackmagic cameras. |
 
 > Built something with Universal Bluetooth? Open a pull request to add it here, including an SVG app icon.

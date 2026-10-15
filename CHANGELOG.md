@@ -6,6 +6,8 @@
 * Add iOS External Accessory data support. `connect(protocolString)` opens an
   `EASession`, `send` writes to its output stream, and `onData` receives bytes
   from its input stream.
+* Deliver `onData` on Android and macOS by forwarding the bytes the connected
+  HID device already sends.
 * Fix iOS `disconnect` hanging until the accessory physically disconnected. It
   now closes the session and completes immediately, and closes every open
   session when the protocol string is omitted.

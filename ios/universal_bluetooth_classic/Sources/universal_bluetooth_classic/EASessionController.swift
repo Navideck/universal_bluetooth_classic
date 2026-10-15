@@ -6,8 +6,8 @@ import Foundation
 ///
 /// The session's streams are scheduled on the main run loop, so delegate
 /// callbacks are delivered on the main thread and can be forwarded to Flutter
-/// directly. External Accessory accessories (serial, OBD-II, ...) are
-/// low-bandwidth, so the main thread is sufficient.
+/// directly. External Accessory accessories (serial devices) are low-bandwidth,
+/// so the main thread is sufficient.
 final class EASessionController: NSObject, StreamDelegate {
   /// The protocol string this session was opened for.
   let protocolString: String

@@ -94,6 +94,11 @@ class _HidCallbackHandler extends BluetoothHidManagerCallbackChannel {
   }
 
   @override
+  void onData(String deviceId, Uint8List data) {
+    UniversalBluetoothInterface.onData?.call(deviceId, data);
+  }
+
+  @override
   ReportReply? onGetReport(String deviceId, ReportType type, int bufferSize) {
     return UniversalBluetoothInterface.onGetReport?.call(
       deviceId,
