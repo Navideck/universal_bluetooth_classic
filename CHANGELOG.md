@@ -1,4 +1,4 @@
-## Unreleased
+## 1.2.0
 
 * Add a generic serial (SPP/RFCOMM) transport on Android, macOS, and Windows.
   `connect` takes a `BluetoothTransport` and an optional `serviceUuid`; bytes
