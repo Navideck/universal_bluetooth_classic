@@ -15,12 +15,8 @@ PlatformException _createConnectionError(String channelName) {
   );
 }
 
-/// @nodoc
-List<Object?> wrapResponse({
-  Object? result,
-  PlatformException? error,
-  bool empty = false,
-}) {
+List<Object?> wrapResponse(
+    {Object? result, PlatformException? error, bool empty = false}) {
   if (empty) {
     return <Object?>[];
   }
@@ -30,58 +26,55 @@ List<Object?> wrapResponse({
   return <Object?>[error.code, error.message, error.details];
 }
 
-/// The direction of a HID report.
 enum ReportType {
-  /// Input report.
   input,
-
-  /// Output report.
   output,
-
-  /// Feature report.
   feature,
 }
 
-/// The reply to a HID get-report request.
 class ReportReply {
-  /// Creates a report reply, optionally with report [data] or an [error] code.
-  ReportReply({this.error, this.data});
+  ReportReply({
+    this.error,
+    this.data,
+  });
 
-  /// Optional HID error code.
   int? error;
 
-  /// Optional report data.
   Uint8List? data;
 
-  /// @nodoc
   Object encode() {
-    return <Object?>[error, data];
+    return <Object?>[
+      error,
+      data,
+    ];
   }
 
-  /// @nodoc
   static ReportReply decode(Object result) {
     result as List<Object?>;
-    return ReportReply(error: result[0] as int?, data: result[1] as Uint8List?);
+    return ReportReply(
+      error: result[0] as int?,
+      data: result[1] as Uint8List?,
+    );
   }
 }
 
-/// Configuration for registering a Bluetooth HID service.
 class SdpConfig {
-  /// Creates an SDP configuration with optional platform-specific values.
-  SdpConfig({this.macSdpConfig, this.androidSdpConfig});
+  SdpConfig({
+    this.macSdpConfig,
+    this.androidSdpConfig,
+  });
 
-  /// Configuration for the macOS platform.
   MacSdpConfig? macSdpConfig;
 
-  /// Configuration for the Android platform.
   AndroidSdpConfig? androidSdpConfig;
 
-  /// @nodoc
   Object encode() {
-    return <Object?>[macSdpConfig, androidSdpConfig];
+    return <Object?>[
+      macSdpConfig,
+      androidSdpConfig,
+    ];
   }
 
-  /// @nodoc
   static SdpConfig decode(Object result) {
     result as List<Object?>;
     return SdpConfig(
@@ -91,23 +84,23 @@ class SdpConfig {
   }
 }
 
-/// macOS-specific configuration for SDP service registration.
 class MacSdpConfig {
-  /// Creates a macOS SDP configuration.
-  MacSdpConfig({this.sdpPlistFile, this.data});
+  MacSdpConfig({
+    this.sdpPlistFile,
+    this.data,
+  });
 
-  /// Optional path to an SDP plist file.
   String? sdpPlistFile;
 
-  /// Map of SDP properties.
   Map<String, Object>? data;
 
-  /// @nodoc
   Object encode() {
-    return <Object?>[sdpPlistFile, data];
+    return <Object?>[
+      sdpPlistFile,
+      data,
+    ];
   }
 
-  /// @nodoc
   static MacSdpConfig decode(Object result) {
     result as List<Object?>;
     return MacSdpConfig(
@@ -117,9 +110,7 @@ class MacSdpConfig {
   }
 }
 
-/// Android-specific configuration for SDP service registration.
 class AndroidSdpConfig {
-  /// Creates an Android SDP configuration.
   AndroidSdpConfig({
     required this.name,
     required this.description,
@@ -128,27 +119,26 @@ class AndroidSdpConfig {
     required this.descriptors,
   });
 
-  /// The service name.
   String name;
 
-  /// The service description.
   String description;
 
-  /// The service provider.
   String provider;
 
-  /// The HID device subclass.
   int subclass;
 
-  /// The HID report descriptor.
   Uint8List descriptors;
 
-  /// @nodoc
   Object encode() {
-    return <Object?>[name, description, provider, subclass, descriptors];
+    return <Object?>[
+      name,
+      description,
+      provider,
+      subclass,
+      descriptors,
+    ];
   }
 
-  /// @nodoc
   static AndroidSdpConfig decode(Object result) {
     result as List<Object?>;
     return AndroidSdpConfig(
@@ -208,15 +198,14 @@ class _PigeonCodec extends StandardMessageCodec {
   }
 }
 
-/// @nodoc
+/// Flutter -> Native
 class BluetoothHidManagerPlatformChannel {
   /// Constructor for [BluetoothHidManagerPlatformChannel].  The [binaryMessenger] named argument is
   /// available for dependency injection.  If it is left null, the default
   /// BinaryMessenger will be used which routes to the host platform.
-  BluetoothHidManagerPlatformChannel({
-    BinaryMessenger? binaryMessenger,
-    String messageChannelSuffix = '',
-  })  : pigeonVar_binaryMessenger = binaryMessenger,
+  BluetoothHidManagerPlatformChannel(
+      {BinaryMessenger? binaryMessenger, String messageChannelSuffix = ''})
+      : pigeonVar_binaryMessenger = binaryMessenger,
         pigeonVar_messageChannelSuffix =
             messageChannelSuffix.isNotEmpty ? '.$messageChannelSuffix' : '';
   final BinaryMessenger? pigeonVar_binaryMessenger;
@@ -321,18 +310,17 @@ class BluetoothHidManagerPlatformChannel {
     }
   }
 
-  Future<void> sendReport(String deviceId, Uint8List data) async {
+  Future<void> send(String deviceId, Uint8List data) async {
     final String pigeonVar_channelName =
-        'dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerPlatformChannel.sendReport$pigeonVar_messageChannelSuffix';
+        'dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerPlatformChannel.send$pigeonVar_messageChannelSuffix';
     final BasicMessageChannel<Object?> pigeonVar_channel =
         BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
       binaryMessenger: pigeonVar_binaryMessenger,
     );
-    final List<Object?>? pigeonVar_replyList = await pigeonVar_channel.send(
-      <Object?>[deviceId, data],
-    ) as List<Object?>?;
+    final List<Object?>? pigeonVar_replyList = await pigeonVar_channel
+        .send(<Object?>[deviceId, data]) as List<Object?>?;
     if (pigeonVar_replyList == null) {
       throw _createConnectionError(pigeonVar_channelName);
     } else if (pigeonVar_replyList.length > 1) {
@@ -347,7 +335,7 @@ class BluetoothHidManagerPlatformChannel {
   }
 }
 
-/// @nodoc
+/// Native -> Flutter
 abstract class BluetoothHidManagerCallbackChannel {
   static const MessageCodec<Object?> pigeonChannelCodec = _PigeonCodec();
 
@@ -357,6 +345,8 @@ abstract class BluetoothHidManagerCallbackChannel {
 
   ReportReply? onGetReport(String deviceId, ReportType type, int bufferSize);
 
+  void onData(String deviceId, Uint8List data);
+
   static void setUp(
     BluetoothHidManagerCallbackChannel? api, {
     BinaryMessenger? binaryMessenger,
@@ -365,31 +355,25 @@ abstract class BluetoothHidManagerCallbackChannel {
     messageChannelSuffix =
         messageChannelSuffix.isNotEmpty ? '.$messageChannelSuffix' : '';
     {
-      final BasicMessageChannel<Object?> pigeonVar_channel =
-          BasicMessageChannel<Object?>(
-        'dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerCallbackChannel.onConnectionStateChanged$messageChannelSuffix',
-        pigeonChannelCodec,
-        binaryMessenger: binaryMessenger,
-      );
+      final BasicMessageChannel<
+          Object?> pigeonVar_channel = BasicMessageChannel<
+              Object?>(
+          'dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerCallbackChannel.onConnectionStateChanged$messageChannelSuffix',
+          pigeonChannelCodec,
+          binaryMessenger: binaryMessenger);
       if (api == null) {
         pigeonVar_channel.setMessageHandler(null);
       } else {
         pigeonVar_channel.setMessageHandler((Object? message) async {
-          assert(
-            message != null,
-            'Argument for dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerCallbackChannel.onConnectionStateChanged was null.',
-          );
+          assert(message != null,
+              'Argument for dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerCallbackChannel.onConnectionStateChanged was null.');
           final List<Object?> args = (message as List<Object?>?)!;
           final String? arg_deviceId = (args[0] as String?);
-          assert(
-            arg_deviceId != null,
-            'Argument for dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerCallbackChannel.onConnectionStateChanged was null, expected non-null String.',
-          );
+          assert(arg_deviceId != null,
+              'Argument for dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerCallbackChannel.onConnectionStateChanged was null, expected non-null String.');
           final bool? arg_connected = (args[1] as bool?);
-          assert(
-            arg_connected != null,
-            'Argument for dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerCallbackChannel.onConnectionStateChanged was null, expected non-null bool.',
-          );
+          assert(arg_connected != null,
+              'Argument for dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerCallbackChannel.onConnectionStateChanged was null, expected non-null bool.');
           try {
             api.onConnectionStateChanged(arg_deviceId!, arg_connected!);
             return wrapResponse(empty: true);
@@ -397,33 +381,28 @@ abstract class BluetoothHidManagerCallbackChannel {
             return wrapResponse(error: e);
           } catch (e) {
             return wrapResponse(
-              error: PlatformException(code: 'error', message: e.toString()),
-            );
+                error: PlatformException(code: 'error', message: e.toString()));
           }
         });
       }
     }
     {
-      final BasicMessageChannel<Object?> pigeonVar_channel =
-          BasicMessageChannel<Object?>(
-        'dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerCallbackChannel.onSdpServiceRegistrationUpdate$messageChannelSuffix',
-        pigeonChannelCodec,
-        binaryMessenger: binaryMessenger,
-      );
+      final BasicMessageChannel<
+          Object?> pigeonVar_channel = BasicMessageChannel<
+              Object?>(
+          'dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerCallbackChannel.onSdpServiceRegistrationUpdate$messageChannelSuffix',
+          pigeonChannelCodec,
+          binaryMessenger: binaryMessenger);
       if (api == null) {
         pigeonVar_channel.setMessageHandler(null);
       } else {
         pigeonVar_channel.setMessageHandler((Object? message) async {
-          assert(
-            message != null,
-            'Argument for dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerCallbackChannel.onSdpServiceRegistrationUpdate was null.',
-          );
+          assert(message != null,
+              'Argument for dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerCallbackChannel.onSdpServiceRegistrationUpdate was null.');
           final List<Object?> args = (message as List<Object?>?)!;
           final bool? arg_registered = (args[0] as bool?);
-          assert(
-            arg_registered != null,
-            'Argument for dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerCallbackChannel.onSdpServiceRegistrationUpdate was null, expected non-null bool.',
-          );
+          assert(arg_registered != null,
+              'Argument for dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerCallbackChannel.onSdpServiceRegistrationUpdate was null, expected non-null bool.');
           try {
             api.onSdpServiceRegistrationUpdate(arg_registered!);
             return wrapResponse(empty: true);
@@ -431,56 +410,75 @@ abstract class BluetoothHidManagerCallbackChannel {
             return wrapResponse(error: e);
           } catch (e) {
             return wrapResponse(
-              error: PlatformException(code: 'error', message: e.toString()),
-            );
+                error: PlatformException(code: 'error', message: e.toString()));
           }
         });
       }
     }
     {
-      final BasicMessageChannel<Object?> pigeonVar_channel =
-          BasicMessageChannel<Object?>(
-        'dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerCallbackChannel.onGetReport$messageChannelSuffix',
-        pigeonChannelCodec,
-        binaryMessenger: binaryMessenger,
-      );
+      final BasicMessageChannel<
+          Object?> pigeonVar_channel = BasicMessageChannel<
+              Object?>(
+          'dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerCallbackChannel.onGetReport$messageChannelSuffix',
+          pigeonChannelCodec,
+          binaryMessenger: binaryMessenger);
       if (api == null) {
         pigeonVar_channel.setMessageHandler(null);
       } else {
         pigeonVar_channel.setMessageHandler((Object? message) async {
-          assert(
-            message != null,
-            'Argument for dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerCallbackChannel.onGetReport was null.',
-          );
+          assert(message != null,
+              'Argument for dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerCallbackChannel.onGetReport was null.');
           final List<Object?> args = (message as List<Object?>?)!;
           final String? arg_deviceId = (args[0] as String?);
-          assert(
-            arg_deviceId != null,
-            'Argument for dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerCallbackChannel.onGetReport was null, expected non-null String.',
-          );
+          assert(arg_deviceId != null,
+              'Argument for dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerCallbackChannel.onGetReport was null, expected non-null String.');
           final ReportType? arg_type = (args[1] as ReportType?);
-          assert(
-            arg_type != null,
-            'Argument for dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerCallbackChannel.onGetReport was null, expected non-null ReportType.',
-          );
+          assert(arg_type != null,
+              'Argument for dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerCallbackChannel.onGetReport was null, expected non-null ReportType.');
           final int? arg_bufferSize = (args[2] as int?);
-          assert(
-            arg_bufferSize != null,
-            'Argument for dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerCallbackChannel.onGetReport was null, expected non-null int.',
-          );
+          assert(arg_bufferSize != null,
+              'Argument for dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerCallbackChannel.onGetReport was null, expected non-null int.');
           try {
-            final ReportReply? output = api.onGetReport(
-              arg_deviceId!,
-              arg_type!,
-              arg_bufferSize!,
-            );
+            final ReportReply? output =
+                api.onGetReport(arg_deviceId!, arg_type!, arg_bufferSize!);
             return wrapResponse(result: output);
           } on PlatformException catch (e) {
             return wrapResponse(error: e);
           } catch (e) {
             return wrapResponse(
-              error: PlatformException(code: 'error', message: e.toString()),
-            );
+                error: PlatformException(code: 'error', message: e.toString()));
+          }
+        });
+      }
+    }
+    {
+      final BasicMessageChannel<
+          Object?> pigeonVar_channel = BasicMessageChannel<
+              Object?>(
+          'dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerCallbackChannel.onData$messageChannelSuffix',
+          pigeonChannelCodec,
+          binaryMessenger: binaryMessenger);
+      if (api == null) {
+        pigeonVar_channel.setMessageHandler(null);
+      } else {
+        pigeonVar_channel.setMessageHandler((Object? message) async {
+          assert(message != null,
+              'Argument for dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerCallbackChannel.onData was null.');
+          final List<Object?> args = (message as List<Object?>?)!;
+          final String? arg_deviceId = (args[0] as String?);
+          assert(arg_deviceId != null,
+              'Argument for dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerCallbackChannel.onData was null, expected non-null String.');
+          final Uint8List? arg_data = (args[1] as Uint8List?);
+          assert(arg_data != null,
+              'Argument for dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerCallbackChannel.onData was null, expected non-null Uint8List.');
+          try {
+            api.onData(arg_deviceId!, arg_data!);
+            return wrapResponse(empty: true);
+          } on PlatformException catch (e) {
+            return wrapResponse(error: e);
+          } catch (e) {
+            return wrapResponse(
+                error: PlatformException(code: 'error', message: e.toString()));
           }
         });
       }

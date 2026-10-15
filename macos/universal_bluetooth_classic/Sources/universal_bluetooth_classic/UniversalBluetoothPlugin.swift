@@ -154,7 +154,7 @@ extension UniversalBluetoothPlugin: BluetoothHidManagerPlatformChannel {
         completion(.success(()))
     }
 
-    func sendReport(deviceId: String, data: FlutterStandardTypedData) throws {
+    func send(deviceId: String, data: FlutterStandardTypedData) throws {
         let byteArray = [UInt8](data.data)
         if let interruptChannel = delegateMap[deviceId]?.interruptChannel {
             try sendBytes(channel: interruptChannel, byteArray)
@@ -418,6 +418,15 @@ extension UniversalBluetoothPlugin: IOBluetoothL2CAPChannelDelegate {
 
     @objc private func l2capChannelData(channel: IOBluetoothL2CAPChannel, data dataPointer: UnsafePointer<UInt8>, length dataLength: Int) {
         let data = UnsafeBufferPointer<UInt8>(start: UnsafePointer<UInt8>?(dataPointer), count: dataLength)
+        if channel.psm == BTChannels.Interrupt {
+            // Data arriving on the interrupt channel is forwarded as-is.
+            guard dataLength > 0, let deviceId = channel.device?.addressString else { return }
+            hidCallbackChannel.onData(
+                deviceId: deviceId,
+                data: FlutterStandardTypedData(bytes: Data(buffer: data))
+            ) { _ in }
+            return
+        }
         if channel.psm == BTChannels.Control {
             guard data.count > 0 else { return }
             guard let messageType = BTMessageType(rawValue: data[0] >> 4)

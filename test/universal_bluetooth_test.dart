@@ -18,6 +18,7 @@ void main() {
     UniversalBluetooth.onConnectionStateChanged = null;
     UniversalBluetooth.onGetReport = null;
     UniversalBluetooth.onSdpServiceRegistrationUpdate = null;
+    UniversalBluetooth.onData = null;
   });
 
   test('delegates commands and arguments to the platform implementation',
@@ -30,7 +31,7 @@ void main() {
     );
     await UniversalBluetooth.connect('device-id');
     await UniversalBluetooth.disconnect();
-    await UniversalBluetooth.sendReport('device-id', report);
+    await UniversalBluetooth.send('device-id', report);
     await UniversalBluetooth.setupSdp(config: config);
     await UniversalBluetooth.closeSdp();
     await UniversalBluetooth.startScan();
@@ -75,6 +76,22 @@ void main() {
 
     expect(receivedEvent, same(event));
   });
+
+  test('forwards received data to the public callback', () {
+    String? receivedIdentifier;
+    Uint8List? receivedData;
+
+    UniversalBluetooth.onData = (identifier, data) {
+      receivedIdentifier = identifier;
+      receivedData = data;
+    };
+
+    final data = Uint8List.fromList([0x41, 0x54, 0x5A, 0x0D]);
+    UniversalBluetoothInterface.onData?.call('com.example.protocol', data);
+
+    expect(receivedIdentifier, 'com.example.protocol');
+    expect(receivedData, same(data));
+  });
 }
 
 class _FakeUniversalBluetooth extends UniversalBluetoothInterface {
@@ -117,7 +134,7 @@ class _FakeUniversalBluetooth extends UniversalBluetoothInterface {
   }
 
   @override
-  Future<void> sendReport(String deviceId, Uint8List data) async {
+  Future<void> send(String deviceId, Uint8List data) async {
     reportDeviceId = deviceId;
     report = data;
   }

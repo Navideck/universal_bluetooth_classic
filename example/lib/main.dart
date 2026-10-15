@@ -28,6 +28,7 @@ class _MyAppState extends State<MyApp> {
   List<BluetoothDevice> devices = [];
   bool isScanning = false;
   bool showDevicesWithoutName = false;
+  String? externalAccessoryProtocol;
 
   @override
   void initState() {
@@ -43,9 +44,17 @@ class _MyAppState extends State<MyApp> {
 
     UniversalBluetooth.onConnectionStateChanged = (event) {
       final connected = event.state == BluetoothConnectionState.connected;
-      final label = event.externalAccessory?.name ?? event.identifier;
+      final accessory = event.externalAccessory;
+      final label = accessory?.name ?? event.identifier;
+      externalAccessoryProtocol = accessory?.protocolStrings.first;
       print("Connection State Changed $label ${event.state}");
       showSnackbar("$label : ${connected ? 'Connected' : 'Disconnected'}");
+    };
+
+    UniversalBluetooth.onData = (identifier, data) {
+      final text = String.fromCharCodes(data);
+      print("Data $identifier $text");
+      showSnackbar("$identifier: $text");
     };
 
     UniversalBluetooth.onGetReport = (String deviceId, reportType, reportId) {
@@ -158,6 +167,38 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
+  Future<void> connectEASession() async {
+    final protocol = externalAccessoryProtocol;
+    if (protocol == null) {
+      showSnackbar("No External Accessory protocol available");
+      return;
+    }
+    try {
+      await UniversalBluetooth.connect(protocol);
+      showSnackbar("Opened session for $protocol");
+    } catch (e) {
+      print(e);
+      showSnackbar(e);
+    }
+  }
+
+  Future<void> sendEASessionData() async {
+    final protocol = externalAccessoryProtocol;
+    if (protocol == null) {
+      showSnackbar("No External Accessory protocol available");
+      return;
+    }
+    try {
+      await UniversalBluetooth.send(
+        protocol,
+        Uint8List.fromList('PING\r'.codeUnits),
+      );
+    } catch (e) {
+      print(e);
+      showSnackbar(e);
+    }
+  }
+
   final List<int> androidDescriptor = [
     0x05, 0x01, // USAGE_PAGE (Generic Desktop)
     0x09, 0x06, // USAGE (Keyboard)
@@ -238,6 +279,14 @@ class _MyAppState extends State<MyApp> {
                   print("Closed EASession");
                 },
                 text: "Close EASession",
+              ),
+              PlatformButton(
+                onPressed: connectEASession,
+                text: "Connect EASession",
+              ),
+              PlatformButton(
+                onPressed: sendEASessionData,
+                text: "Send EASession Data",
               ),
               PlatformButton(
                 text: "Check Permissions",

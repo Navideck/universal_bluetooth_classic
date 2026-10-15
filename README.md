@@ -35,20 +35,24 @@ All APIs are called through the same `UniversalBluetooth` class. Platform differ
 | `startScan` / `stopScan` / `isScanning` | ✔️ | — | ✔️ | ✔️ | ✔️ |
 | `pair` / `unpair` | ✔️ | — | ✔️ | ✔️ | ✔️ |
 | `getPairedDevices` | ✔️ | — | ✔️ | ✔️ | ✔️ |
-| `connect` (HID) | ✔️ | — | ✔️ | ✔️ | — |
-| `disconnect` | ✔️ | ✔️¹ | ✔️ | ✔️ | ✔️² |
-| `sendReport` | ✔️ | — | ✔️ | ✔️ | — |
-| `setupSdp` / `closeSdp` | ✔️ | — | ✔️ | ✔️ | — |
+| `connect` | ✔️ | ✔️³ | ✔️ | — | — |
+| `disconnect` | ✔️ | ✔️¹ | ✔️ | — | ✔️² |
+| `send` | ✔️ | ✔️³ | ✔️ | — | — |
+| `setupSdp` / `closeSdp` | ✔️ | — | ✔️ | — | — |
 | `onDeviceDiscovered` | ✔️ | — | ✔️ | ✔️ | ✔️ |
 | `onDeviceRemoved` | ✔️ | — | ✔️ | ✔️ | — |
 | `onConnectionStateChanged` | ✔️ | ✔️ | ✔️ | — | ✔️ |
-| `onGetReport` | ✔️ | — | ✔️ | ✔️ | — |
-| `onSdpServiceRegistrationUpdate` | ✔️ | — | ✔️ | ✔️ | — |
+| `onData` | ✔️ | ✔️³ | ✔️ | — | — |
+| `onGetReport` | ✔️ | — | ✔️ | — | — |
+| `onSdpServiceRegistrationUpdate` | ✔️ | — | ✔️ | — | — |
 
 **Legend:** ✔️ supported, — not supported.
 
 ¹ On iOS, `disconnect` closes an External Accessory session.
 ² Linux supports a basic disconnect, not an HID-specific disconnect.
+³ On iOS, `connect` opens an External Accessory session for a protocol string
+and `send` / `onData` exchange bytes over it. On the HID platforms `onData`
+delivers bytes received from the connected device.
 
 ## Getting Started
 
@@ -56,7 +60,7 @@ Add the package to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  universal_bluetooth_classic: ^1.0.0
+  universal_bluetooth_classic: ^1.1.0
 ```
 
 Import it where you need it:
@@ -143,7 +147,7 @@ Pairing APIs are available on Android, macOS, Windows, and Linux.
 
 ## Connecting
 
-Connect to and disconnect from a Bluetooth HID device:
+Connect to and disconnect from a device:
 
 ```dart
 const deviceId = '00:11:22:33:44:55';
@@ -156,20 +160,36 @@ await UniversalBluetooth.connect(deviceId);
 await UniversalBluetooth.disconnect(deviceId);
 ```
 
-HID connections are available on Android, macOS, and Windows. iOS uses the External Accessory framework instead. Linux supports only the basic `disconnect` operation.
+HID connections are available on Android, macOS, and Windows. On iOS,
+`connect` takes an External Accessory protocol string and opens an `EASession`,
+which lets you exchange bytes with the accessory (see
+[iOS External Accessory](#ios-external-accessory)). Linux supports only the
+basic `disconnect` operation.
 
-## HID Reports
+## Sending and receiving data
 
-Send a report to a connected HID device:
+Send raw bytes to a connected device:
 
 ```dart
 import 'dart:typed_data';
 
-await UniversalBluetooth.sendReport(
+await UniversalBluetooth.send(
   '00:11:22:33:44:55',
   Uint8List.fromList([0x01, 0x02, 0x03]),
 );
 ```
+
+Receive bytes from a connected device:
+
+```dart
+UniversalBluetooth.onData = (identifier, data) {
+  print('$identifier: $data');
+};
+```
+
+On the HID platforms `send` writes an output report and `onData` delivers the
+bytes the connected device sends. On iOS both operate on the open External
+Accessory session. `sendReport` has been replaced by `send`.
 
 Respond to HID get-report requests:
 
@@ -252,13 +272,45 @@ await UniversalBluetooth.disconnect(
 );
 ```
 
-Omit the protocol string to close the session using the first available protocol:
+Omit the protocol string to close every open session:
 
 ```dart
 await UniversalBluetooth.disconnect();
 ```
 
 The `externalAccessory` event payload is only available on iOS.
+
+### Exchanging bytes
+
+Open a session for the accessory's protocol string, then send and receive bytes
+over it. For a serial accessory this is the raw byte channel:
+
+```dart
+import 'dart:typed_data';
+
+const protocol = 'com.mycompany.myprotocol';
+
+UniversalBluetooth.onData = (identifier, data) {
+  print('$identifier received: $data');
+};
+
+// Opens an EASession for the protocol. The accessory must be connected and
+// must advertise the protocol in its protocolStrings.
+await UniversalBluetooth.connect(protocol);
+
+// Send bytes. Frame them however the accessory expects.
+await UniversalBluetooth.send(protocol, Uint8List.fromList('PING\r'.codeUnits));
+await UniversalBluetooth.send(protocol, Uint8List.fromList([0x01, 0x02, 0x03]));
+
+// Responses arrive through onData.
+
+await UniversalBluetooth.disconnect(protocol);
+```
+
+The session uses the protocol string as its identifier, while
+`onConnectionStateChanged` reports the accessory-level connection (keyed by
+connection ID). A session that fails on its own surfaces as a `disconnected`
+event.
 
 ## Data Types
 
@@ -283,6 +335,11 @@ iOS External Accessory events provide the accessory name, manufacturer, model an
 Connection events provide an opaque identifier, a `connected` or `disconnected`
 state, and a source: `hid`, `externalAccessory`, or `system`. The External
 Accessory source also includes the full iOS `EAAccessory` value.
+
+### `DataCallback`
+
+`onData` delivers bytes as `(String identifier, Uint8List data)`. The identifier
+is the External Accessory protocol string on iOS and the device ID elsewhere.
 
 ### HID configuration
 
@@ -386,9 +443,5 @@ flutter run
 ```
 
 ## App showcase
-
-| | |
-| :--: | :-- |
-| <img src="assets/bt_cam_icon.svg" alt="BT Cam icon" width="160" height="160"> | [**BT Cam**](https://btcam.app)<br>A Bluetooth remote for Canon, Nikon, Sony, Fujifilm, GoPro, Olympus, Panasonic, Pentax, and Blackmagic cameras. |
 
 > Built something with Universal Bluetooth? Open a pull request to add it here, including an SVG app icon.

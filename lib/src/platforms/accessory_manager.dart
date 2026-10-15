@@ -52,8 +52,8 @@ class AccessoryManager extends UniversalBluetoothInterface {
   Future<void> connect(String deviceId) => _hidManagerChannel.connect(deviceId);
 
   @override
-  Future<void> sendReport(String deviceId, Uint8List data) =>
-      _hidManagerChannel.sendReport(deviceId, data);
+  Future<void> send(String deviceId, Uint8List data) =>
+      _hidManagerChannel.send(deviceId, data);
 
   @override
   Future<void> setupSdp(SdpConfig config) =>
@@ -91,6 +91,11 @@ class _HidCallbackHandler extends BluetoothHidManagerCallbackChannel {
         source: BluetoothConnectionSource.hid,
       ),
     );
+  }
+
+  @override
+  void onData(String deviceId, Uint8List data) {
+    UniversalBluetoothInterface.onData?.call(deviceId, data);
   }
 
   @override

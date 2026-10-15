@@ -1,3 +1,20 @@
+## 1.1.0
+
+* Add a unified byte-stream API. `connect`, `send`, and the new `onData`
+  callback exchange bytes with a connected device. The HID `sendReport` method
+  is replaced by `send`.
+* Add iOS External Accessory data support. `connect(protocolString)` opens an
+  `EASession`, `send` writes to its output stream, and `onData` receives bytes
+  from its input stream.
+* Deliver `onData` on Android and macOS by forwarding the bytes the connected
+  HID device already sends.
+* Fix iOS `disconnect` hanging until the accessory physically disconnected. It
+  now closes the session and completes immediately, and closes every open
+  session when the protocol string is omitted.
+* Fix iOS External Accessory connect/disconnect events never firing. The Pigeon
+  `EAAccessory` struct shadowed the framework class, so the notification
+  handlers always failed to cast and returned early.
+
 ## 1.0.0
 
 * Fix `showBluetoothAccessoryPicker` not presenting on iOS apps that use the

@@ -23,13 +23,21 @@ abstract class ExternalAccessoryChannel {
   );
 
   @async
-  void closeEASession(String? protocolString);
+  void openSession(String protocolString);
+
+  @async
+  void send(String protocolString, Uint8List data);
+
+  @async
+  void closeSession(String? protocolString);
 }
 
 /// Native -> Flutter
 @FlutterApi()
 abstract class ExternalAccessoryCallbackChannel {
   void onConnectionStateChanged(EAAccessory accessory, bool connected);
+
+  void onData(String protocolString, Uint8List data);
 }
 
 class EAAccessory {

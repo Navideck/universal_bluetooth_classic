@@ -41,7 +41,7 @@ enum DeviceClass {
   /// Health device, for example a heart-rate monitor.
   health,
 
-  /// Imaging device, for example a printer or camera.
+  /// Imaging device, for example a printer.
   imaging,
 
   /// Miscellaneous device.

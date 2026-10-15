@@ -1,5 +1,7 @@
-import 'package:universal_bluetooth_classic/src/universal_bluetooth_interface.dart';
+import 'dart:typed_data';
+
 import 'package:universal_bluetooth_classic/src/generated/external_accessory.g.dart';
+import 'package:universal_bluetooth_classic/src/universal_bluetooth_interface.dart';
 
 class ExternalAccessory extends UniversalBluetoothInterface {
   static ExternalAccessory? _instance;
@@ -19,8 +21,15 @@ class ExternalAccessory extends UniversalBluetoothInterface {
   }
 
   @override
+  Future<void> connect(String deviceId) => _channel.openSession(deviceId);
+
+  @override
+  Future<void> send(String deviceId, Uint8List data) =>
+      _channel.send(deviceId, data);
+
+  @override
   Future<void> disconnect([String? identifier]) =>
-      _channel.closeEASession(identifier);
+      _channel.closeSession(identifier);
 }
 
 // Handle callbacks from Native to Flutter
@@ -37,5 +46,10 @@ class _CallbackHandler extends ExternalAccessoryCallbackChannel {
         externalAccessory: accessory,
       ),
     );
+  }
+
+  @override
+  void onData(String protocolString, Uint8List data) {
+    UniversalBluetoothInterface.onData?.call(protocolString, data);
   }
 }

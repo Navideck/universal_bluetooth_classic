@@ -45,7 +45,7 @@ class BluetoothDeviceItem extends StatelessWidget {
     }
   }
 
-  Future<void> sendReport() async {
+  Future<void> send() async {
     try {
       if (Platform.isAndroid) {
         await sendAndroidKeyboardKey();
@@ -58,14 +58,14 @@ class BluetoothDeviceItem extends StatelessWidget {
   }
 
   Future<void> sendAndroidKeyboardKey() async {
-    await UniversalBluetooth.sendReport(
+    await UniversalBluetooth.send(
       device.address,
       Uint8List.fromList(
         [0x01, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00],
       ), // Key A Down
     );
     await Future.delayed(const Duration(milliseconds: 200));
-    await UniversalBluetooth.sendReport(
+    await UniversalBluetooth.send(
       device.address,
       Uint8List.fromList(
         [0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
@@ -74,12 +74,12 @@ class BluetoothDeviceItem extends StatelessWidget {
   }
 
   Future<void> sendMacKeyboardKey() async {
-    await UniversalBluetooth.sendReport(
+    await UniversalBluetooth.send(
       device.address,
       Uint8List.fromList(macHidReport(0x04, 0)), //  Key A Down
     );
     await Future.delayed(const Duration(milliseconds: 200));
-    await UniversalBluetooth.sendReport(
+    await UniversalBluetooth.send(
       device.address,
       Uint8List.fromList(macHidReport(0, 0)), // Key A Up
     );
@@ -140,7 +140,7 @@ class BluetoothDeviceItem extends StatelessWidget {
               text: "Disconnect",
             ),
             PlatformButton(
-              onPressed: sendReport,
+              onPressed: send,
               text: "Send Report",
             ),
           ],

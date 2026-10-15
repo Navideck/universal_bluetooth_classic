@@ -36,7 +36,7 @@ abstract class BluetoothHidManagerPlatformChannel {
   @async
   void disconnect(String deviceId);
 
-  void sendReport(String deviceId, Uint8List data);
+  void send(String deviceId, Uint8List data);
 }
 
 /// Native -> Flutter
@@ -47,6 +47,8 @@ abstract class BluetoothHidManagerCallbackChannel {
   void onSdpServiceRegistrationUpdate(bool registered);
 
   ReportReply? onGetReport(String deviceId, ReportType type, int bufferSize);
+
+  void onData(String deviceId, Uint8List data);
 }
 
 class ReportReply {
