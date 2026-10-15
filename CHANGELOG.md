@@ -1,4 +1,4 @@
-## Unreleased
+## 1.1.0
 
 * Add a unified byte-stream API. `connect`, `send`, and the new `onData`
   callback exchange bytes with a connected device; `sendReport` is deprecated in

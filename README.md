@@ -59,7 +59,7 @@ Add the package to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  universal_bluetooth_classic: ^1.0.0
+  universal_bluetooth_classic: ^1.1.0
 ```
 
 Import it where you need it:
