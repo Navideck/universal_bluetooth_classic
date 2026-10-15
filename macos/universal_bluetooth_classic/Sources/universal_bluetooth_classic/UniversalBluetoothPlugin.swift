@@ -154,7 +154,7 @@ extension UniversalBluetoothPlugin: BluetoothHidManagerPlatformChannel {
         completion(.success(()))
     }
 
-    func sendReport(deviceId: String, data: FlutterStandardTypedData) throws {
+    func send(deviceId: String, data: FlutterStandardTypedData) throws {
         let byteArray = [UInt8](data.data)
         if let interruptChannel = delegateMap[deviceId]?.interruptChannel {
             try sendBytes(channel: interruptChannel, byteArray)

@@ -210,7 +210,7 @@ interface BluetoothHidManagerPlatformChannel {
   fun closeSdp()
   fun connect(deviceId: String, callback: (Result<Unit>) -> Unit)
   fun disconnect(deviceId: String, callback: (Result<Unit>) -> Unit)
-  fun sendReport(deviceId: String, data: ByteArray)
+  fun send(deviceId: String, data: ByteArray)
 
   companion object {
     /** The codec used by BluetoothHidManagerPlatformChannel. */
@@ -294,14 +294,14 @@ interface BluetoothHidManagerPlatformChannel {
         }
       }
       run {
-        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerPlatformChannel.sendReport$separatedMessageChannelSuffix", codec)
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerPlatformChannel.send$separatedMessageChannelSuffix", codec)
         if (api != null) {
           channel.setMessageHandler { message, reply ->
             val args = message as List<Any?>
             val deviceIdArg = args[0] as String
             val dataArg = args[1] as ByteArray
             val wrapped: List<Any?> = try {
-              api.sendReport(deviceIdArg, dataArg)
+              api.send(deviceIdArg, dataArg)
               listOf(null)
             } catch (exception: Throwable) {
               wrapError(exception)

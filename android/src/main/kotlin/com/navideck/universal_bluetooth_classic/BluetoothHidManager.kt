@@ -174,7 +174,7 @@ class BluetoothHidManager(
         }
     }
 
-    override fun sendReport(deviceId: String, data: ByteArray) {
+    override fun send(deviceId: String, data: ByteArray) {
         val device = btHidProxy?.connectedDevices?.firstOrNull { it.address == deviceId }
             ?: throw FlutterError("NotFound", "Device not connected")
         val result = btHidProxy?.sendReport(device, 0, data) ?: false

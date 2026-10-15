@@ -233,7 +233,7 @@ protocol BluetoothHidManagerPlatformChannel {
   func closeSdp() throws
   func connect(deviceId: String, completion: @escaping (Result<Void, Error>) -> Void)
   func disconnect(deviceId: String, completion: @escaping (Result<Void, Error>) -> Void)
-  func sendReport(deviceId: String, data: FlutterStandardTypedData) throws
+  func send(deviceId: String, data: FlutterStandardTypedData) throws
 }
 
 /// Generated setup class from Pigeon to handle messages through the `binaryMessenger`.
@@ -304,21 +304,21 @@ class BluetoothHidManagerPlatformChannelSetup {
     } else {
       disconnectChannel.setMessageHandler(nil)
     }
-    let sendReportChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerPlatformChannel.sendReport\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    let sendChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerPlatformChannel.send\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
     if let api = api {
-      sendReportChannel.setMessageHandler { message, reply in
+      sendChannel.setMessageHandler { message, reply in
         let args = message as! [Any?]
         let deviceIdArg = args[0] as! String
         let dataArg = args[1] as! FlutterStandardTypedData
         do {
-          try api.sendReport(deviceId: deviceIdArg, data: dataArg)
+          try api.send(deviceId: deviceIdArg, data: dataArg)
           reply(wrapResult(nil))
         } catch {
           reply(wrapError(error))
         }
       }
     } else {
-      sendReportChannel.setMessageHandler(nil)
+      sendChannel.setMessageHandler(nil)
     }
   }
 }

@@ -38,8 +38,10 @@ abstract class UniversalBluetoothInterface {
     throw UnimplementedError();
   }
 
-  /// Disconnects a device, or closes an iOS External Accessory session when
-  /// [identifier] is a protocol string.
+  /// Disconnects a device, or closes iOS External Accessory sessions.
+  ///
+  /// On iOS, [identifier] is an optional protocol string; when omitted, every
+  /// open session is closed.
   Future<void> disconnect([String? identifier]) {
     throw UnimplementedError();
   }
@@ -62,12 +64,6 @@ abstract class UniversalBluetoothInterface {
   Future<void> send(String deviceId, Uint8List data) {
     throw UnimplementedError();
   }
-
-  /// Sends a HID [data] report to the connected device with the given
-  /// [deviceId].
-  @Deprecated('Use send instead.')
-  Future<void> sendReport(String deviceId, Uint8List data) =>
-      send(deviceId, data);
 
   /// Starts scanning for nearby Bluetooth devices.
   Future<void> startScan() {

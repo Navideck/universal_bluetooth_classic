@@ -53,7 +53,7 @@ class AccessoryManager extends UniversalBluetoothInterface {
 
   @override
   Future<void> send(String deviceId, Uint8List data) =>
-      _hidManagerChannel.sendReport(deviceId, data);
+      _hidManagerChannel.send(deviceId, data);
 
   @override
   Future<void> setupSdp(SdpConfig config) =>

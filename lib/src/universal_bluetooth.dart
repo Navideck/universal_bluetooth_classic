@@ -32,12 +32,11 @@ class UniversalBluetooth {
     return _platform.showBluetoothAccessoryPicker(withNames: withNames);
   }
 
-  /// Disconnects a Bluetooth device or closes an iOS External Accessory
-  /// session.
+  /// Disconnects a Bluetooth device or closes iOS External Accessory sessions.
   ///
   /// [identifier] is the device ID on Android, macOS, Windows, and Linux. On
-  /// iOS it is an optional protocol string; when omitted, the first available
-  /// protocol is used.
+  /// iOS it is an optional protocol string; when omitted, every open session
+  /// is closed.
   static Future<void> disconnect([String? identifier]) =>
       _platform.disconnect(identifier);
 
@@ -55,12 +54,6 @@ class UniversalBluetooth {
   /// the device ID and this sends an output report.
   static Future<void> send(String identifier, Uint8List data) =>
       _platform.send(identifier, data);
-
-  /// Sends a HID [data] report to the connected device with the given
-  /// [deviceId].
-  @Deprecated('Use send instead.')
-  static Future<void> sendReport(String deviceId, Uint8List data) =>
-      _platform.send(deviceId, data);
 
   /// Registers a Bluetooth HID service using the given platform-specific
   /// [config].

@@ -189,7 +189,7 @@ UniversalBluetooth.onData = (identifier, data) {
 
 On the HID platforms `send` writes an output report and `onData` delivers the
 bytes the connected device sends. On iOS both operate on the open External
-Accessory session. The deprecated `sendReport` alias forwards to `send`.
+Accessory session. `sendReport` has been replaced by `send`.
 
 Respond to HID get-report requests:
 

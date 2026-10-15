@@ -310,9 +310,9 @@ class BluetoothHidManagerPlatformChannel {
     }
   }
 
-  Future<void> sendReport(String deviceId, Uint8List data) async {
+  Future<void> send(String deviceId, Uint8List data) async {
     final String pigeonVar_channelName =
-        'dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerPlatformChannel.sendReport$pigeonVar_messageChannelSuffix';
+        'dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerPlatformChannel.send$pigeonVar_messageChannelSuffix';
     final BasicMessageChannel<Object?> pigeonVar_channel =
         BasicMessageChannel<Object?>(
       pigeonVar_channelName,

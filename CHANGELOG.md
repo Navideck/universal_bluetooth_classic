@@ -1,8 +1,8 @@
 ## 1.1.0
 
 * Add a unified byte-stream API. `connect`, `send`, and the new `onData`
-  callback exchange bytes with a connected device; `sendReport` is deprecated in
-  favour of `send`.
+  callback exchange bytes with a connected device. The HID `sendReport` method
+  is replaced by `send`.
 * Add iOS External Accessory data support. `connect(protocolString)` opens an
   `EASession`, `send` writes to its output stream, and `onData` receives bytes
   from its input stream.

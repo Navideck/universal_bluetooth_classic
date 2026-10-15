@@ -45,7 +45,7 @@ class BluetoothDeviceItem extends StatelessWidget {
     }
   }
 
-  Future<void> sendReport() async {
+  Future<void> send() async {
     try {
       if (Platform.isAndroid) {
         await sendAndroidKeyboardKey();
@@ -140,7 +140,7 @@ class BluetoothDeviceItem extends StatelessWidget {
               text: "Disconnect",
             ),
             PlatformButton(
-              onPressed: sendReport,
+              onPressed: send,
               text: "Send Report",
             ),
           ],
