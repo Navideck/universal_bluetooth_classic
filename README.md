@@ -247,21 +247,29 @@ with `pair` or the native picker) before connecting.
 
 Most serial accessories use the well-known SPP UUID
 (`00001101-0000-1000-8000-00805F9B34FB`, also exported as `sppServiceUuid`),
-which is the default. For accessories that advertise a custom UUID, pass it to
-`connect`:
+which is the default and can be omitted. For accessories that advertise a custom
+UUID, pass it to `connect`:
 
 ```dart
+// A vendor-assigned UUID, not the default.
 await UniversalBluetooth.connect(
   address,
   transport: BluetoothTransport.spp,
-  serviceUuid: '00001101-0000-1000-8000-00805F9B34FB',
+  serviceUuid: '0000AB12-0000-1000-8000-00805F9B34FB',
 );
 ```
 
 The serial transport is available on Android, macOS, and Windows. It is not
-available on iOS (which uses External Accessory) or Linux. On Windows it is the
-default transport, so `transport: BluetoothTransport.spp` may be omitted there;
-on Android and macOS it must be requested explicitly.
+available on iOS or Linux. On Windows it is the default transport, so
+`transport: BluetoothTransport.spp` may be omitted there; on Android and macOS
+it must be requested explicitly.
+
+This transport lets you name the device and the service UUID and get a raw byte
+channel. iOS offers no equivalent: Apple exposes neither an RFCOMM socket nor an
+SDP query API, and `IOBluetooth` (which the macOS implementation uses) is
+macOS-only. That is a limitation of the app-facing API rather than of the
+transport on the wire — see [iOS External Accessory](#ios-external-accessory)
+for how iOS reaches the same kind of data channel.
 
 To verify against hardware, pair a serial accessory (or another computer
 running an RFCOMM server on the SPP UUID), connect with
@@ -313,6 +321,16 @@ SDP registration is available on Android, macOS, and Windows.
 
 External Accessory sessions are iOS-only, but their connection changes use the
 same callback as the other platforms.
+
+This is also how iOS reaches the data channel that
+[Serial (SPP/RFCOMM)](#serial-spprfcomm) provides on the other platforms.
+`BluetoothTransport.spp` is unavailable on iOS, but MFi accessories that expose an
+iAP2 data channel implement it over Bluetooth RFCOMM, and an `EASession` hands you
+that same byte stream. The difference is who sets it up: Apple's stack selects the
+RFCOMM channel from the accessory's advertised protocol string, so you pass a
+protocol string rather than a device address plus service UUID, and there is no
+SDP lookup to choose. Data pass-through over iAP2 is therefore supported; choosing
+an arbitrary RFCOMM endpoint is not.
 
 Pair Bluetooth Classic MFi devices through `showBluetoothAccessoryPicker`,
 which presents the system pairing UI for your declared
@@ -414,7 +432,9 @@ is the External Accessory protocol string on iOS and the device ID elsewhere.
   transport: HID on Android and macOS, serial (SPP/RFCOMM) on Windows, and an
   External Accessory session on iOS.
 - `BluetoothTransport.hid` connects over Bluetooth HID.
-- `BluetoothTransport.spp` opens a serial (SPP/RFCOMM) connection.
+- `BluetoothTransport.spp` opens a serial (SPP/RFCOMM) connection. It is not
+  available on iOS, where the External Accessory iAP2 byte channel plays that
+  role instead.
 
 For `BluetoothTransport.spp`, `connect` also accepts an optional `serviceUuid`,
 defaulting to the well-known `sppServiceUuid`.

@@ -17,6 +17,8 @@ For environment setup, the checks to run before opening a PR, Pigeon regeneratio
 
 Do not add platform checks outside `_defaultPlatform()` and the platform classes.
 
+`TransportRouter` (`lib/src/transport_router.dart`) holds `AccessoryManager`'s routing rules and takes the `TargetPlatform` as a constructor argument precisely so it contains no platform check of its own; the platform class supplies `defaultTargetPlatform`. Keep it that way when adding transports.
+
 Note: `AccessoryManager` handles both the HID channel and the serial channel. The Windows plugin implements the accessory channel (discovery, pairing, picker) and the serial (SPP/RFCOMM) channel, but not the HID channel: `BluetoothTransport.auto` resolves to the serial transport on Windows (see `TransportRouter`), while `setupSdp` / `closeSdp` and HID connections are unsupported there. Keep the README matrix accurate.
 
 ## `identifier` is overloaded across platforms (critical)
@@ -65,6 +67,12 @@ This was the root cause of "iOS connect/disconnect events never fired".
 - A session that dies on its own and the accessory-level disconnect notification are deduplicated by connection ID (via `reportedDisconnected`), so `onConnectionStateChanged` fires at most once per connection episode.
 
 Preserve these semantics when changing the session code.
+
+## iOS: no RFCOMM or SDP (critical)
+
+iOS exposes no RFCOMM socket API and no SDP query API, and `IOBluetooth` (which the macOS serial manager uses) is macOS-only. Do not add an iOS serial/RFCOMM implementation, and do not route `BluetoothTransport.spp` to the External Accessory channel: `ExternalAccessory.connect` throws `UnsupportedError` for `spp`.
+
+MFi/iAP2 accessories do carry their data channel over RFCOMM, and `EASession` surfaces that stream, so iOS is not without a byte pipe — but Apple's stack selects the channel from the accessory's advertised protocol string. On iOS the identifier is therefore always a protocol string, and there is no way to pass a device address or a service UUID. Keep that distinction when describing iOS in the README.
 
 ## Callback payloads
 
