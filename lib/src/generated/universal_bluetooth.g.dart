@@ -15,12 +15,8 @@ PlatformException _createConnectionError(String channelName) {
   );
 }
 
-/// @nodoc
-List<Object?> wrapResponse({
-  Object? result,
-  PlatformException? error,
-  bool empty = false,
-}) {
+List<Object?> wrapResponse(
+    {Object? result, PlatformException? error, bool empty = false}) {
   if (empty) {
     return <Object?>[];
   }
@@ -83,7 +79,6 @@ enum DeviceType {
 
 /// A discovered or paired Bluetooth device.
 class BluetoothDevice {
-  /// Creates a Bluetooth device.
   BluetoothDevice({
     required this.address,
     this.name,
@@ -115,7 +110,6 @@ class BluetoothDevice {
   /// The device type.
   DeviceType? deviceType;
 
-  /// @nodoc
   Object encode() {
     return <Object?>[
       address,
@@ -128,7 +122,6 @@ class BluetoothDevice {
     ];
   }
 
-  /// @nodoc
   static BluetoothDevice decode(Object result) {
     result as List<Object?>;
     return BluetoothDevice(
@@ -181,15 +174,14 @@ class _PigeonCodec extends StandardMessageCodec {
   }
 }
 
-/// @nodoc
+/// Flutter -> Native
 class FlutterAccessoryPlatformChannel {
   /// Constructor for [FlutterAccessoryPlatformChannel].  The [binaryMessenger] named argument is
   /// available for dependency injection.  If it is left null, the default
   /// BinaryMessenger will be used which routes to the host platform.
-  FlutterAccessoryPlatformChannel({
-    BinaryMessenger? binaryMessenger,
-    String messageChannelSuffix = '',
-  })  : pigeonVar_binaryMessenger = binaryMessenger,
+  FlutterAccessoryPlatformChannel(
+      {BinaryMessenger? binaryMessenger, String messageChannelSuffix = ''})
+      : pigeonVar_binaryMessenger = binaryMessenger,
         pigeonVar_messageChannelSuffix =
             messageChannelSuffix.isNotEmpty ? '.$messageChannelSuffix' : '';
   final BinaryMessenger? pigeonVar_binaryMessenger;
@@ -383,7 +375,7 @@ class FlutterAccessoryPlatformChannel {
   }
 }
 
-/// @nodoc
+/// Native -> Flutter
 abstract class FlutterAccessoryCallbackChannel {
   static const MessageCodec<Object?> pigeonChannelCodec = _PigeonCodec();
 
@@ -399,26 +391,22 @@ abstract class FlutterAccessoryCallbackChannel {
     messageChannelSuffix =
         messageChannelSuffix.isNotEmpty ? '.$messageChannelSuffix' : '';
     {
-      final BasicMessageChannel<Object?> pigeonVar_channel =
-          BasicMessageChannel<Object?>(
-        'dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryCallbackChannel.onDeviceDiscover$messageChannelSuffix',
-        pigeonChannelCodec,
-        binaryMessenger: binaryMessenger,
-      );
+      final BasicMessageChannel<
+          Object?> pigeonVar_channel = BasicMessageChannel<
+              Object?>(
+          'dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryCallbackChannel.onDeviceDiscover$messageChannelSuffix',
+          pigeonChannelCodec,
+          binaryMessenger: binaryMessenger);
       if (api == null) {
         pigeonVar_channel.setMessageHandler(null);
       } else {
         pigeonVar_channel.setMessageHandler((Object? message) async {
-          assert(
-            message != null,
-            'Argument for dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryCallbackChannel.onDeviceDiscover was null.',
-          );
+          assert(message != null,
+              'Argument for dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryCallbackChannel.onDeviceDiscover was null.');
           final List<Object?> args = (message as List<Object?>?)!;
           final BluetoothDevice? arg_device = (args[0] as BluetoothDevice?);
-          assert(
-            arg_device != null,
-            'Argument for dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryCallbackChannel.onDeviceDiscover was null, expected non-null BluetoothDevice.',
-          );
+          assert(arg_device != null,
+              'Argument for dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryCallbackChannel.onDeviceDiscover was null, expected non-null BluetoothDevice.');
           try {
             api.onDeviceDiscover(arg_device!);
             return wrapResponse(empty: true);
@@ -426,33 +414,28 @@ abstract class FlutterAccessoryCallbackChannel {
             return wrapResponse(error: e);
           } catch (e) {
             return wrapResponse(
-              error: PlatformException(code: 'error', message: e.toString()),
-            );
+                error: PlatformException(code: 'error', message: e.toString()));
           }
         });
       }
     }
     {
-      final BasicMessageChannel<Object?> pigeonVar_channel =
-          BasicMessageChannel<Object?>(
-        'dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryCallbackChannel.onDeviceRemoved$messageChannelSuffix',
-        pigeonChannelCodec,
-        binaryMessenger: binaryMessenger,
-      );
+      final BasicMessageChannel<
+          Object?> pigeonVar_channel = BasicMessageChannel<
+              Object?>(
+          'dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryCallbackChannel.onDeviceRemoved$messageChannelSuffix',
+          pigeonChannelCodec,
+          binaryMessenger: binaryMessenger);
       if (api == null) {
         pigeonVar_channel.setMessageHandler(null);
       } else {
         pigeonVar_channel.setMessageHandler((Object? message) async {
-          assert(
-            message != null,
-            'Argument for dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryCallbackChannel.onDeviceRemoved was null.',
-          );
+          assert(message != null,
+              'Argument for dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryCallbackChannel.onDeviceRemoved was null.');
           final List<Object?> args = (message as List<Object?>?)!;
           final BluetoothDevice? arg_device = (args[0] as BluetoothDevice?);
-          assert(
-            arg_device != null,
-            'Argument for dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryCallbackChannel.onDeviceRemoved was null, expected non-null BluetoothDevice.',
-          );
+          assert(arg_device != null,
+              'Argument for dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryCallbackChannel.onDeviceRemoved was null, expected non-null BluetoothDevice.');
           try {
             api.onDeviceRemoved(arg_device!);
             return wrapResponse(empty: true);
@@ -460,8 +443,7 @@ abstract class FlutterAccessoryCallbackChannel {
             return wrapResponse(error: e);
           } catch (e) {
             return wrapResponse(
-              error: PlatformException(code: 'error', message: e.toString()),
-            );
+                error: PlatformException(code: 'error', message: e.toString()));
           }
         });
       }

@@ -5,7 +5,8 @@
   are exchanged through the existing `send` / `onData` API, and connection
   events carry `BluetoothConnectionSource.spp`. Windows gains data-transport
   support (`connect` / `send` / `onData` / `disconnect`) through this transport;
-  Bluetooth HID remains unimplemented there.
+  Bluetooth HID remains unimplemented there, so `BluetoothTransport.auto`
+  resolves to the serial transport on Windows.
 * Note that adding the optional `transport` and `serviceUuid` parameters to
   `connect` is a source-breaking change for custom `UniversalBluetoothInterface`
   implementations.

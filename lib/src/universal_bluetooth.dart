@@ -43,10 +43,12 @@ class UniversalBluetooth {
   /// Connects to the device with the given [identifier].
   ///
   /// [transport] selects the Bluetooth Classic transport. [BluetoothTransport.auto]
-  /// (the default) keeps the historical behavior: on iOS [identifier] is an
-  /// External Accessory protocol string and this opens an `EASession` for it;
-  /// on the HID platforms it is the device ID of the HID device to connect.
-  /// Pass [BluetoothTransport.spp] to open a serial (SPP/RFCOMM) connection.
+  /// (the default) picks the platform's natural data transport: on iOS
+  /// [identifier] is an External Accessory protocol string and this opens an
+  /// `EASession` for it, on Android and macOS it is the device ID of the HID
+  /// device to connect, and on Windows it opens a serial (SPP/RFCOMM)
+  /// connection. Pass [BluetoothTransport.spp] to force a serial connection on
+  /// the other platforms, or [BluetoothTransport.hid] to force HID.
   ///
   /// [serviceUuid] is only used for [BluetoothTransport.spp] and defaults to
   /// the well-known [sppServiceUuid]. Pass a custom UUID for accessories that

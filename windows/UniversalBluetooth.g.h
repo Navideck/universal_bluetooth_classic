@@ -57,28 +57,47 @@ template<class T> class ErrorOr {
 };
 
 
+// The class of a Bluetooth device.
 enum class DeviceClass {
+  // Audio or video device, for example a headset or speaker.
   kAudioVideo = 0,
+  // Computer or computer-like device.
   kComputer = 1,
+  // Health device, for example a heart-rate monitor.
   kHealth = 2,
+  // Imaging device, for example a printer.
   kImaging = 3,
+  // Miscellaneous device.
   kMisc = 4,
+  // Networking device, for example a modem or router.
   kNetworking = 5,
+  // Peripheral device, for example a keyboard or mouse.
   kPeripheral = 6,
+  // Phone or smartphone.
   kPhone = 7,
+  // Toy.
   kToy = 8,
+  // Uncategorized device.
   kUncategorized = 9,
+  // Wearable device.
   kWearable = 10
 };
 
+// The type of a Bluetooth device.
 enum class DeviceType {
+  // Bluetooth Classic device.
   kClassic = 0,
+  // Bluetooth Low Energy device.
   kLe = 1,
+  // Dual-mode device supporting both Classic and LE.
   kDual = 2,
+  // Unknown type.
   kUnknown = 3
 };
 
 
+// A discovered or paired Bluetooth device.
+//
 // Generated class from Pigeon that represents data sent in messages.
 class BluetoothDevice {
  public:
@@ -98,27 +117,34 @@ class BluetoothDevice {
     const DeviceClass* device_class,
     const DeviceType* device_type);
 
+  // The device address, or the connection ID on iOS.
   const std::string& address() const;
   void set_address(std::string_view value_arg);
 
+  // The human-readable device name, when known.
   const std::string* name() const;
   void set_name(const std::string_view* value_arg);
   void set_name(std::string_view value_arg);
 
+  // Whether the device is paired.
   bool paired() const;
   void set_paired(bool value_arg);
 
+  // Whether the device is connected over HID.
   const bool* is_connected_with_hid() const;
   void set_is_connected_with_hid(const bool* value_arg);
   void set_is_connected_with_hid(bool value_arg);
 
+  // The received signal strength indicator, in dBm.
   int64_t rssi() const;
   void set_rssi(int64_t value_arg);
 
+  // The device class.
   const DeviceClass* device_class() const;
   void set_device_class(const DeviceClass* value_arg);
   void set_device_class(const DeviceClass& value_arg);
 
+  // The device type.
   const DeviceType* device_type() const;
   void set_device_type(const DeviceType* value_arg);
   void set_device_type(const DeviceType& value_arg);

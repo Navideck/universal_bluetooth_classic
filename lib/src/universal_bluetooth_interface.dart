@@ -37,9 +37,9 @@ abstract class UniversalBluetoothInterface {
   ///
   /// [transport] selects the Bluetooth Classic transport:
   ///
-  /// * [BluetoothTransport.auto] (the default) preserves the historical
-  ///   behavior: Bluetooth HID on Android, macOS, and Windows, and an External
-  ///   Accessory session on iOS.
+  /// * [BluetoothTransport.auto] (the default) picks the platform's natural
+  ///   data transport: Bluetooth HID on Android and macOS, serial (SPP/RFCOMM)
+  ///   on Windows, and an External Accessory session on iOS.
   /// * [BluetoothTransport.hid] connects over Bluetooth HID.
   /// * [BluetoothTransport.spp] opens a serial (SPP/RFCOMM) connection. When
   ///   [serviceUuid] is omitted, the well-known [sppServiceUuid] is used.
@@ -134,8 +134,8 @@ enum BluetoothConnectionSource { hid, externalAccessory, spp, system }
 /// Not every transport is available on every platform; see the README support
 /// matrix for the per-platform details.
 enum BluetoothTransport {
-  /// The platform default: Bluetooth HID on Android, macOS, and Windows, and
-  /// an External Accessory session on iOS.
+  /// The platform default: Bluetooth HID on Android and macOS, serial
+  /// (SPP/RFCOMM) on Windows, and an External Accessory session on iOS.
   auto,
 
   /// Bluetooth HID.

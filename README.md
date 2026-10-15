@@ -54,9 +54,10 @@ All APIs are called through the same `UniversalBluetooth` class. Platform differ
 ³ On iOS, `connect` opens an External Accessory session for a protocol string
 and `send` / `onData` exchange bytes over it. On the HID platforms `onData`
 delivers bytes received from the connected device.
-⁴ On Windows only the serial (SPP/RFCOMM) transport is implemented
-(`connect` / `send` / `onData` / `disconnect` with `transport: BluetoothTransport.spp`).
-Bluetooth HID is not implemented on Windows.
+⁴ On Windows only the serial (SPP/RFCOMM) transport is implemented, and
+`BluetoothTransport.auto` resolves to it: `connect` / `send` / `onData` /
+`disconnect` work without passing a transport. Bluetooth HID is not implemented
+on Windows.
 
 ## Getting Started
 
@@ -258,7 +259,9 @@ await UniversalBluetooth.connect(
 ```
 
 The serial transport is available on Android, macOS, and Windows. It is not
-available on iOS (which uses External Accessory) or Linux.
+available on iOS (which uses External Accessory) or Linux. On Windows it is the
+default transport, so `transport: BluetoothTransport.spp` may be omitted there;
+on Android and macOS it must be requested explicitly.
 
 To verify against hardware, pair a serial accessory (or another computer
 running an RFCOMM server on the SPP UUID), connect with
@@ -407,8 +410,9 @@ is the External Accessory protocol string on iOS and the device ID elsewhere.
 
 `connect` accepts a `transport` argument:
 
-- `BluetoothTransport.auto` (the default) uses HID on Android, macOS, and
-  Windows, and an External Accessory session on iOS.
+- `BluetoothTransport.auto` (the default) picks the platform's natural
+  transport: HID on Android and macOS, serial (SPP/RFCOMM) on Windows, and an
+  External Accessory session on iOS.
 - `BluetoothTransport.hid` connects over Bluetooth HID.
 - `BluetoothTransport.spp` opens a serial (SPP/RFCOMM) connection.
 

@@ -68,35 +68,61 @@ private func nilOrValue<T>(_ value: Any?) -> T? {
   return value as! T?
 }
 
+/// The class of a Bluetooth device.
 enum DeviceClass: Int {
+  /// Audio or video device, for example a headset or speaker.
   case audioVideo = 0
+  /// Computer or computer-like device.
   case computer = 1
+  /// Health device, for example a heart-rate monitor.
   case health = 2
+  /// Imaging device, for example a printer.
   case imaging = 3
+  /// Miscellaneous device.
   case misc = 4
+  /// Networking device, for example a modem or router.
   case networking = 5
+  /// Peripheral device, for example a keyboard or mouse.
   case peripheral = 6
+  /// Phone or smartphone.
   case phone = 7
+  /// Toy.
   case toy = 8
+  /// Uncategorized device.
   case uncategorized = 9
+  /// Wearable device.
   case wearable = 10
 }
 
+/// The type of a Bluetooth device.
 enum DeviceType: Int {
+  /// Bluetooth Classic device.
   case classic = 0
+  /// Bluetooth Low Energy device.
   case le = 1
+  /// Dual-mode device supporting both Classic and LE.
   case dual = 2
+  /// Unknown type.
   case unknown = 3
 }
 
+/// A discovered or paired Bluetooth device.
+///
 /// Generated class from Pigeon that represents data sent in messages.
 struct BluetoothDevice {
+  /// The device address, or the connection ID on iOS.
   var address: String
+  /// The human-readable device name, when known.
   var name: String? = nil
+  /// Whether the device is paired.
   var paired: Bool
+  /// Whether the device is connected over HID.
   var isConnectedWithHid: Bool? = nil
+  /// The received signal strength indicator, in dBm.
   var rssi: Int64
+  /// The device class.
   var deviceClass: DeviceClass? = nil
+  /// The device type.
   var deviceType: DeviceType? = nil
 
 

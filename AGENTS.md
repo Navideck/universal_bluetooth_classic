@@ -17,7 +17,7 @@ For environment setup, the checks to run before opening a PR, Pigeon regeneratio
 
 Do not add platform checks outside `_defaultPlatform()` and the platform classes.
 
-Note: `AccessoryManager` handles both the HID channel and the serial channel. The Windows plugin implements the accessory channel (discovery, pairing, picker) and the serial (SPP/RFCOMM) channel, but not the HID channel. On Windows, `connect` / `send` / `onData` / `disconnect` work only with `transport: BluetoothTransport.spp`; `setupSdp` / `closeSdp` and HID connections are unsupported. Keep the README matrix accurate.
+Note: `AccessoryManager` handles both the HID channel and the serial channel. The Windows plugin implements the accessory channel (discovery, pairing, picker) and the serial (SPP/RFCOMM) channel, but not the HID channel: `BluetoothTransport.auto` resolves to the serial transport on Windows (see `TransportRouter`), while `setupSdp` / `closeSdp` and HID connections are unsupported there. Keep the README matrix accurate.
 
 ## `identifier` is overloaded across platforms (critical)
 

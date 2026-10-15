@@ -49,17 +49,29 @@ class FlutterError (
   val details: Any? = null
 ) : Throwable()
 
+/** The class of a Bluetooth device. */
 enum class DeviceClass(val raw: Int) {
+  /** Audio or video device, for example a headset or speaker. */
   AUDIO_VIDEO(0),
+  /** Computer or computer-like device. */
   COMPUTER(1),
+  /** Health device, for example a heart-rate monitor. */
   HEALTH(2),
+  /** Imaging device, for example a printer. */
   IMAGING(3),
+  /** Miscellaneous device. */
   MISC(4),
+  /** Networking device, for example a modem or router. */
   NETWORKING(5),
+  /** Peripheral device, for example a keyboard or mouse. */
   PERIPHERAL(6),
+  /** Phone or smartphone. */
   PHONE(7),
+  /** Toy. */
   TOY(8),
+  /** Uncategorized device. */
   UNCATEGORIZED(9),
+  /** Wearable device. */
   WEARABLE(10);
 
   companion object {
@@ -69,10 +81,15 @@ enum class DeviceClass(val raw: Int) {
   }
 }
 
+/** The type of a Bluetooth device. */
 enum class DeviceType(val raw: Int) {
+  /** Bluetooth Classic device. */
   CLASSIC(0),
+  /** Bluetooth Low Energy device. */
   LE(1),
+  /** Dual-mode device supporting both Classic and LE. */
   DUAL(2),
+  /** Unknown type. */
   UNKNOWN(3);
 
   companion object {
@@ -82,14 +99,25 @@ enum class DeviceType(val raw: Int) {
   }
 }
 
-/** Generated class from Pigeon that represents data sent in messages. */
+/**
+ * A discovered or paired Bluetooth device.
+ *
+ * Generated class from Pigeon that represents data sent in messages.
+ */
 data class BluetoothDevice (
+  /** The device address, or the connection ID on iOS. */
   val address: String,
+  /** The human-readable device name, when known. */
   val name: String? = null,
+  /** Whether the device is paired. */
   val paired: Boolean,
+  /** Whether the device is connected over HID. */
   val isConnectedWithHid: Boolean? = null,
+  /** The received signal strength indicator, in dBm. */
   val rssi: Long,
+  /** The device class. */
   val deviceClass: DeviceClass? = null,
+  /** The device type. */
   val deviceType: DeviceType? = null
 )
  {
