@@ -58,6 +58,7 @@ Host–native APIs are defined under [pigeon/](pigeon/). Each input file has a `
 dart run pigeon --input pigeon/universal_bluetooth.dart
 dart run pigeon --input pigeon/bluetooth_hid_manager.dart
 dart run pigeon --input pigeon/external_accessory.dart
+dart run pigeon --input pigeon/bluetooth_serial_manager.dart
 ```
 
 Outputs, per input:
@@ -67,6 +68,12 @@ Outputs, per input:
 | `universal_bluetooth.dart` | `lib/src/generated/universal_bluetooth.g.dart` | Android `UniversalBluetooth.g.kt`, macOS `UniversalBluetooth.g.swift`, Windows `UniversalBluetooth.g.h` / `.g.cpp` |
 | `bluetooth_hid_manager.dart` | `lib/src/generated/bluetooth_hid_manager.g.dart` | Android `BluetoothHidManager.g.kt`, macOS `BluetoothHidManager.g.swift` |
 | `external_accessory.dart` | `lib/src/generated/external_accessory.g.dart` | iOS `ExternalAccessory.g.swift` |
+| `bluetooth_serial_manager.dart` | `lib/src/generated/bluetooth_serial_manager.g.dart` | Android `BluetoothSerialManager.g.kt`, macOS `BluetoothSerialManager.g.swift`, Windows `BluetoothSerialManager.g.h` / `.g.cpp` |
+
+The `bluetooth_serial_manager.dart` C++ output uses the
+`universal_bluetooth_classic_serial` namespace so it can coexist with the
+`universal_bluetooth.dart` output in the same translation unit (Pigeon emits a
+`FlutterError` type in each generated header).
 
 Pigeon's Dart output is not `dart format`-clean; the committed generated Dart is formatted. Run the formatter over the generated files after regenerating:
 
@@ -101,7 +108,7 @@ Converting an existing positional callback to a model object is a **breaking cha
 
 ## Platform-specific APIs and parameters
 
-This plugin spans three native transports: Apple External Accessory (iOS), Bluetooth HID (Android and macOS), and BlueZ (Linux). Windows currently implements only discovery, pairing, and the accessory picker. See the README for the full matrix.
+This plugin spans four native transports: Apple External Accessory (iOS), Bluetooth HID (Android and macOS), Bluetooth Classic serial / SPP-RFCOMM (Android, macOS, and Windows), and BlueZ (Linux). Windows currently implements discovery, pairing, the accessory picker, and the serial transport. See the README for the full matrix.
 
 - **Prefer extending existing entry points.** Add a new public API only when none of the existing ones (`connect`, `disconnect`, `send`, `setupSdp`, …) can reasonably cover the behavior on that platform.
 - **Document limitations.** When an API is unsupported on a platform, say so in the README matrix and make the call fail clearly rather than silently doing nothing.

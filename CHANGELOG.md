@@ -1,3 +1,15 @@
+## Unreleased
+
+* Add a generic serial (SPP/RFCOMM) transport on Android, macOS, and Windows.
+  `connect` takes a `BluetoothTransport` and an optional `serviceUuid`; bytes
+  are exchanged through the existing `send` / `onData` API, and connection
+  events carry `BluetoothConnectionSource.spp`. Windows gains data-transport
+  support (`connect` / `send` / `onData` / `disconnect`) through this transport;
+  Bluetooth HID remains unimplemented there.
+* Note that adding the optional `transport` and `serviceUuid` parameters to
+  `connect` is a source-breaking change for custom `UniversalBluetoothInterface`
+  implementations.
+
 ## 1.1.0
 
 * Add a unified byte-stream API. `connect`, `send`, and the new `onData`

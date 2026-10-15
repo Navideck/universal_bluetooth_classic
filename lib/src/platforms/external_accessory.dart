@@ -21,7 +21,19 @@ class ExternalAccessory extends UniversalBluetoothInterface {
   }
 
   @override
-  Future<void> connect(String deviceId) => _channel.openSession(deviceId);
+  Future<void> connect(
+    String deviceId, {
+    BluetoothTransport transport = BluetoothTransport.auto,
+    String? serviceUuid,
+  }) {
+    if (transport == BluetoothTransport.spp) {
+      throw UnsupportedError(
+        'Serial (SPP/RFCOMM) connections are not supported on iOS. '
+        'Use an External Accessory protocol string instead.',
+      );
+    }
+    return _channel.openSession(deviceId);
+  }
 
   @override
   Future<void> send(String deviceId, Uint8List data) =>

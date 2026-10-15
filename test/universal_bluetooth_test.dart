@@ -40,6 +40,8 @@ void main() {
 
     expect(platform.pickerNames, ['Keyboard']);
     expect(platform.connectedDeviceId, 'device-id');
+    expect(platform.connectedTransport, BluetoothTransport.auto);
+    expect(platform.connectedServiceUuid, isNull);
     expect(platform.disconnectCalled, isTrue);
     expect(platform.disconnectedIdentifier, isNull);
     expect(platform.reportDeviceId, 'device-id');
@@ -92,6 +94,38 @@ void main() {
     expect(receivedIdentifier, 'com.example.protocol');
     expect(receivedData, same(data));
   });
+
+  test('forwards the serial transport selection to the platform', () async {
+    await UniversalBluetooth.connect(
+      '00:11:22:33:44:55',
+      transport: BluetoothTransport.spp,
+      serviceUuid: '00001101-0000-1000-8000-00805F9B34FB',
+    );
+
+    expect(platform.connectedDeviceId, '00:11:22:33:44:55');
+    expect(platform.connectedTransport, BluetoothTransport.spp);
+    expect(
+      platform.connectedServiceUuid,
+      '00001101-0000-1000-8000-00805F9B34FB',
+    );
+  });
+
+  test('delivers serial connection events with the spp source', () {
+    BluetoothConnectionEvent? received;
+
+    UniversalBluetooth.onConnectionStateChanged = (event) {
+      received = event;
+    };
+    UniversalBluetoothInterface.onConnectionStateChanged?.call(
+      const BluetoothConnectionEvent(
+        identifier: '00:11:22:33:44:55',
+        state: BluetoothConnectionState.connected,
+        source: BluetoothConnectionSource.spp,
+      ),
+    );
+
+    expect(received?.source, BluetoothConnectionSource.spp);
+  });
 }
 
 class _FakeUniversalBluetooth extends UniversalBluetoothInterface {
@@ -106,6 +140,8 @@ class _FakeUniversalBluetooth extends UniversalBluetoothInterface {
 
   List<String>? pickerNames;
   String? connectedDeviceId;
+  BluetoothTransport? connectedTransport;
+  String? connectedServiceUuid;
   bool disconnectCalled = false;
   String? disconnectedIdentifier;
   String? reportDeviceId;
@@ -123,8 +159,14 @@ class _FakeUniversalBluetooth extends UniversalBluetoothInterface {
   }
 
   @override
-  Future<void> connect(String deviceId) async {
+  Future<void> connect(
+    String deviceId, {
+    BluetoothTransport transport = BluetoothTransport.auto,
+    String? serviceUuid,
+  }) async {
     connectedDeviceId = deviceId;
+    connectedTransport = transport;
+    connectedServiceUuid = serviceUuid;
   }
 
   @override

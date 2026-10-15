@@ -45,6 +45,30 @@ class BluetoothDeviceItem extends StatelessWidget {
     }
   }
 
+  Future<void> connectSerial() async {
+    try {
+      print("Connecting (SPP)");
+      await UniversalBluetooth.connect(
+        device.address,
+        transport: BluetoothTransport.spp,
+      );
+      print("Connected Successfully (SPP)");
+    } catch (e) {
+      print("SPP ConnectionFailed $e");
+    }
+  }
+
+  Future<void> sendSerial() async {
+    try {
+      await UniversalBluetooth.send(
+        device.address,
+        Uint8List.fromList('PING\r'.codeUnits),
+      );
+    } catch (e) {
+      print(e);
+    }
+  }
+
   Future<void> send() async {
     try {
       if (Platform.isAndroid) {
@@ -142,6 +166,14 @@ class BluetoothDeviceItem extends StatelessWidget {
             PlatformButton(
               onPressed: send,
               text: "Send Report",
+            ),
+            PlatformButton(
+              onPressed: connectSerial,
+              text: "Connect SPP",
+            ),
+            PlatformButton(
+              onPressed: sendSerial,
+              text: "Send SPP",
             ),
           ],
         )

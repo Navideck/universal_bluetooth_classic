@@ -1,0 +1,292 @@
+#include "bluetooth_serial_manager.h"
+
+#include <winrt/Windows.Devices.Enumeration.h>
+
+#include <cctype>
+#include <array>
+#include <cstdint>
+#include <cstring>
+#include <iostream>
+
+using namespace winrt;
+using namespace winrt::Windows::Devices::Bluetooth;
+using namespace winrt::Windows::Devices::Bluetooth::Rfcomm;
+using namespace winrt::Windows::Devices::Enumeration;
+using namespace winrt::Windows::Networking::Sockets;
+using namespace winrt::Windows::Storage::Streams;
+
+namespace universal_bluetooth_classic
+{
+    namespace serial = universal_bluetooth_classic_serial;
+
+    namespace
+    {
+        uint64_t StrToMacAddress(const std::string &mac_str)
+        {
+            uint64_t mac_address_number = 0;
+            uint8_t *mac_ptr = reinterpret_cast<uint8_t *>(&mac_address_number);
+            sscanf_s(mac_str.c_str(), "%02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx",
+                     &mac_ptr[5], &mac_ptr[4], &mac_ptr[3], &mac_ptr[2], &mac_ptr[1], &mac_ptr[0]);
+            return mac_address_number;
+        }
+
+        /// Parses a canonical UUID string (with or without dashes) into a GUID.
+        guid ParseUuid(const std::string &uuid)
+        {
+            std::string hex;
+            for (char c : uuid)
+            {
+                if (std::isxdigit(static_cast<unsigned char>(c)))
+                {
+                    hex += c;
+                }
+            }
+            if (hex.size() != 32)
+            {
+                throw serial::FlutterError("InvalidUUID", "Invalid UUID: " + uuid);
+            }
+
+            uint8_t bytes[16] = {0};
+            for (size_t i = 0; i < 16; i++)
+            {
+                bytes[i] = static_cast<uint8_t>(std::stoi(hex.substr(i * 2, 2), nullptr, 16));
+            }
+
+            uint32_t data1 = (static_cast<uint32_t>(bytes[0]) << 24) |
+                             (static_cast<uint32_t>(bytes[1]) << 16) |
+                             (static_cast<uint32_t>(bytes[2]) << 8) |
+                             static_cast<uint32_t>(bytes[3]);
+            uint16_t data2 = static_cast<uint16_t>((bytes[4] << 8) | bytes[5]);
+            uint16_t data3 = static_cast<uint16_t>((bytes[6] << 8) | bytes[7]);
+            std::array<uint8_t, 8> data4{};
+            std::memcpy(data4.data(), bytes + 8, 8);
+            return guid(data1, data2, data3, data4);
+        }
+    } // namespace
+
+    BluetoothSerialManager::BluetoothSerialManager(flutter::PluginRegistrarWindows *registrar)
+        : uiThreadHandler_(registrar)
+    {
+        callbackChannel_ = std::make_unique<serial::BluetoothSerialCallbackChannel>(registrar->messenger());
+    }
+
+    BluetoothSerialManager::~BluetoothSerialManager()
+    {
+        Dispose();
+    }
+
+    void BluetoothSerialManager::Connect(
+        const std::string &device_id,
+        const std::string &service_uuid,
+        std::function<void(std::optional<serial::FlutterError> reply)> result)
+    {
+        ConnectAsync(device_id, service_uuid, result);
+    }
+
+    void BluetoothSerialManager::Disconnect(
+        const std::string &device_id,
+        std::function<void(std::optional<serial::FlutterError> reply)> result)
+    {
+        StreamSocket socket{nullptr};
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            auto it = sockets_.find(device_id);
+            if (it != sockets_.end())
+            {
+                socket = it->second;
+                sockets_.erase(it);
+            }
+        }
+
+        if (socket != nullptr)
+        {
+            try
+            {
+                socket.Close();
+            }
+            catch (...)
+            {
+            }
+            PostConnectionState(device_id, false);
+        }
+        result(std::nullopt);
+    }
+
+    std::optional<serial::FlutterError> BluetoothSerialManager::Send(
+        const std::string &device_id,
+        const std::vector<uint8_t> &data)
+    {
+        StreamSocket socket{nullptr};
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            auto it = sockets_.find(device_id);
+            if (it != sockets_.end())
+            {
+                socket = it->second;
+            }
+        }
+
+        if (socket == nullptr)
+        {
+            return serial::FlutterError("NotFound", "Device not connected");
+        }
+
+        try
+        {
+            DataWriter writer(socket.OutputStream());
+            writer.WriteBytes(data);
+            writer.StoreAsync().get();
+            writer.DetachStream();
+        }
+        catch (const hresult_error &err)
+        {
+            std::cout << "Send failed: " << to_string(err.message()) << std::endl;
+            return serial::FlutterError("Failed", "Failed to send data");
+        }
+        catch (...)
+        {
+            return serial::FlutterError("Failed", "Failed to send data");
+        }
+        return std::nullopt;
+    }
+
+    void BluetoothSerialManager::Dispose()
+    {
+        std::unordered_map<std::string, StreamSocket> sockets;
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            sockets.swap(sockets_);
+        }
+        for (auto &entry : sockets)
+        {
+            try
+            {
+                entry.second.Close();
+            }
+            catch (...)
+            {
+            }
+        }
+    }
+
+    winrt::fire_and_forget BluetoothSerialManager::ConnectAsync(
+        std::string device_id,
+        std::string service_uuid,
+        std::function<void(std::optional<serial::FlutterError> reply)> result)
+    {
+        try
+        {
+            auto uuid = ParseUuid(service_uuid);
+
+            BluetoothDevice btDevice = co_await BluetoothDevice::FromBluetoothAddressAsync(StrToMacAddress(device_id));
+            if (btDevice == nullptr)
+            {
+                result(serial::FlutterError("NotFound", "Device not found"));
+                co_return;
+            }
+
+            // RfcommDeviceService is the documented way to resolve a service
+            // UUID to a connectable RFCOMM endpoint. FromIdAsync runs the SDP
+            // lookup for us.
+            auto serviceUuid = RfcommServiceId::FromUuid(uuid);
+            auto selector = RfcommDeviceService::GetDeviceSelectorForBluetoothDeviceAndServiceId(btDevice, serviceUuid);
+            auto deviceInformations = co_await DeviceInformation::FindAllAsync(selector);
+            if (deviceInformations.Size() == 0)
+            {
+                result(serial::FlutterError(
+                    "ServiceNotFound",
+                    "Service " + service_uuid + " not found on " + device_id));
+                co_return;
+            }
+
+            RfcommDeviceService service =
+                co_await RfcommDeviceService::FromIdAsync(deviceInformations.GetAt(0).Id());
+            if (service == nullptr)
+            {
+                result(serial::FlutterError("ServiceNotFound", "Failed to access service " + service_uuid));
+                co_return;
+            }
+
+            StreamSocket socket;
+            co_await socket.ConnectAsync(service.ConnectionHostName(), service.ConnectionServiceName());
+
+            {
+                std::lock_guard<std::mutex> lock(mutex_);
+                sockets_[device_id] = socket;
+            }
+
+            PostConnectionState(device_id, true);
+            result(std::nullopt);
+
+            ReadLoop(socket, device_id);
+        }
+        catch (const winrt::hresult_error &err)
+        {
+            int32_t code = static_cast<int32_t>(err.code().value);
+            result(serial::FlutterError(std::to_string(code), to_string(err.message())));
+        }
+        catch (const serial::FlutterError &err)
+        {
+            result(serial::FlutterError(err.code(), err.message()));
+        }
+        catch (...)
+        {
+            result(serial::FlutterError("Unknown error"));
+        }
+    }
+
+    winrt::fire_and_forget BluetoothSerialManager::ReadLoop(StreamSocket socket, std::string device_id)
+    {
+        try
+        {
+            DataReader reader(socket.InputStream());
+            reader.InputStreamOptions(InputStreamOptions::Partial);
+            while (true)
+            {
+                auto loaded = co_await reader.LoadAsync(1024);
+                if (loaded == 0)
+                {
+                    break;
+                }
+                std::vector<uint8_t> buffer(loaded);
+                reader.ReadBytes(buffer);
+                PostData(device_id, std::move(buffer));
+            }
+            reader.DetachStream();
+        }
+        catch (const hresult_error &err)
+        {
+            std::cout << "Serial read loop ended for " << device_id << ": " << to_string(err.message()) << std::endl;
+        }
+        catch (...)
+        {
+        }
+
+        bool removed = false;
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            removed = sockets_.erase(device_id) > 0;
+        }
+        if (removed)
+        {
+            PostConnectionState(device_id, false);
+        }
+    }
+
+    void BluetoothSerialManager::PostConnectionState(const std::string &device_id, bool connected)
+    {
+        uiThreadHandler_.Post([this, device_id, connected]()
+                              { callbackChannel_->OnConnectionStateChanged(
+                                    device_id, connected, []() {}, [](const serial::FlutterError &error)
+                                    { std::cout << "onConnectionStateChanged error: " << error.message() << std::endl; }); });
+    }
+
+    void BluetoothSerialManager::PostData(const std::string &device_id, std::vector<uint8_t> data)
+    {
+        uiThreadHandler_.Post([this, device_id, data = std::move(data)]()
+                              { callbackChannel_->OnData(
+                                    device_id, data, []() {}, [](const serial::FlutterError &error)
+                                    { std::cout << "onData error: " << error.message() << std::endl; }); });
+    }
+
+} // namespace universal_bluetooth_classic

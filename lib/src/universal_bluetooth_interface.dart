@@ -33,8 +33,24 @@ abstract class UniversalBluetoothInterface {
     throw UnimplementedError();
   }
 
-  /// Connects to the Bluetooth HID device with the given [deviceId].
-  Future<void> connect(String deviceId) {
+  /// Connects to the device with the given [deviceId].
+  ///
+  /// [transport] selects the Bluetooth Classic transport:
+  ///
+  /// * [BluetoothTransport.auto] (the default) preserves the historical
+  ///   behavior: Bluetooth HID on Android, macOS, and Windows, and an External
+  ///   Accessory session on iOS.
+  /// * [BluetoothTransport.hid] connects over Bluetooth HID.
+  /// * [BluetoothTransport.spp] opens a serial (SPP/RFCOMM) connection. When
+  ///   [serviceUuid] is omitted, the well-known [sppServiceUuid] is used.
+  ///
+  /// [serviceUuid] is only meaningful for [BluetoothTransport.spp]; it lets a
+  /// serial accessory advertise a custom service UUID instead of the SPP one.
+  Future<void> connect(
+    String deviceId, {
+    BluetoothTransport transport = BluetoothTransport.auto,
+    String? serviceUuid,
+  }) {
     throw UnimplementedError();
   }
 
@@ -60,7 +76,9 @@ abstract class UniversalBluetoothInterface {
   ///
   /// On iOS the device is identified by its External Accessory protocol string
   /// and the session must have been opened with [connect]. On the HID platforms
-  /// this sends an output report.
+  /// this sends an output report. For a serial
+  /// ([BluetoothTransport.spp]) connection the bytes are written to the RFCOMM
+  /// channel.
   Future<void> send(String deviceId, Uint8List data) {
     throw UnimplementedError();
   }
@@ -109,7 +127,26 @@ typedef ConnectionChangeCallback = void Function(
 enum BluetoothConnectionState { connected, disconnected }
 
 /// The source that triggered a connection state change.
-enum BluetoothConnectionSource { hid, externalAccessory, system }
+enum BluetoothConnectionSource { hid, externalAccessory, spp, system }
+
+/// The Bluetooth Classic transport used to reach a device.
+///
+/// Not every transport is available on every platform; see the README support
+/// matrix for the per-platform details.
+enum BluetoothTransport {
+  /// The platform default: Bluetooth HID on Android, macOS, and Windows, and
+  /// an External Accessory session on iOS.
+  auto,
+
+  /// Bluetooth HID.
+  hid,
+
+  /// Serial Port Profile (SPP) over RFCOMM.
+  spp,
+}
+
+/// The well-known Serial Port Profile (SPP) service UUID.
+const String sppServiceUuid = '00001101-0000-1000-8000-00805F9B34FB';
 
 /// Describes a connection state change of a Bluetooth device.
 class BluetoothConnectionEvent {

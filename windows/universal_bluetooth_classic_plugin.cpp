@@ -9,10 +9,13 @@
 
 #include <memory>
 #include <sstream>
+#include "bluetooth_serial_manager.h"
 #include "pin_entry.h"
 
 namespace universal_bluetooth_classic
 {
+  namespace serial = universal_bluetooth_classic_serial;
+
   const auto isConnectableKey = L"System.Devices.Aep.Bluetooth.Le.IsConnectable";
   const auto isConnectedKey = L"System.Devices.Aep.IsConnected";
   const auto isPairedKey = L"System.Devices.Aep.IsPaired";
@@ -21,6 +24,7 @@ namespace universal_bluetooth_classic
   const auto signalStrengthKey = L"System.Devices.Aep.SignalStrength";
 
   std::unique_ptr<FlutterAccessoryCallbackChannel> callbackChannel;
+  std::unique_ptr<BluetoothSerialManager> serialManager;
 
   void UniversalBluetoothPlugin::RegisterWithRegistrar(
       flutter::PluginRegistrarWindows *registrar)
@@ -28,6 +32,10 @@ namespace universal_bluetooth_classic
     auto plugin = std::make_unique<UniversalBluetoothPlugin>(registrar);
     FlutterAccessoryPlatformChannel::SetUp(registrar->messenger(), plugin.get());
     callbackChannel = std::make_unique<FlutterAccessoryCallbackChannel>(registrar->messenger());
+
+    serialManager = std::make_unique<BluetoothSerialManager>(registrar);
+    serial::BluetoothSerialPlatformChannel::SetUp(registrar->messenger(), serialManager.get());
+
     registrar->AddPlugin(std::move(plugin));
   }
 

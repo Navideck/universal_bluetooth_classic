@@ -34,8 +34,12 @@ endif()
 list(APPEND PLUGIN_SOURCES
   "UniversalBluetooth.g.cpp"
   "UniversalBluetooth.g.h"
+  "BluetoothSerialManager.g.cpp"
+  "BluetoothSerialManager.g.h"
   "universal_bluetooth_classic_plugin.cpp"
   "universal_bluetooth_classic_plugin.h"
+  "bluetooth_serial_manager.cpp"
+  "bluetooth_serial_manager.h"
   "ui_thread_handler.hpp"
   "pin_entry.h"
 )

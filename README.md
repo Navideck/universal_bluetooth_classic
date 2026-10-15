@@ -21,6 +21,7 @@ Looking for Bluetooth Low Energy? Check [universal_ble](https://pub.dev/packages
 - [**Pairing**](#pairing) — pair and unpair accessories by address.
 - [**Native accessory picker**](#native-accessory-picker) — open the platform picker, with optional device-name filtering. On iOS, this is how you can use MFi-certified Bluetooth Classic devices.
 - [**Bluetooth HID**](#connecting) — connect to HID devices and exchange reports.
+- [**Serial (SPP/RFCOMM)**](#serial-spprfcomm) — connect to serial accessories on Android, macOS, and Windows.
 - [**SDP registration**](#sdp-service-registration) — advertise a Bluetooth HID service.
 - [**Apple External Accessory**](#ios-external-accessory) — receive connection events and manage EA sessions on iOS.
 - [**Five desktop and mobile platforms**](#api-support) — Android, iOS, macOS, Windows, and Linux.
@@ -35,14 +36,14 @@ All APIs are called through the same `UniversalBluetooth` class. Platform differ
 | `startScan` / `stopScan` / `isScanning` | ✔️ | — | ✔️ | ✔️ | ✔️ |
 | `pair` / `unpair` | ✔️ | — | ✔️ | ✔️ | ✔️ |
 | `getPairedDevices` | ✔️ | — | ✔️ | ✔️ | ✔️ |
-| `connect` | ✔️ | ✔️³ | ✔️ | — | — |
-| `disconnect` | ✔️ | ✔️¹ | ✔️ | — | ✔️² |
-| `send` | ✔️ | ✔️³ | ✔️ | — | — |
+| `connect` | ✔️ | ✔️³ | ✔️ | ✔️⁴ | — |
+| `disconnect` | ✔️ | ✔️¹ | ✔️ | ✔️⁴ | ✔️² |
+| `send` | ✔️ | ✔️³ | ✔️ | ✔️⁴ | — |
 | `setupSdp` / `closeSdp` | ✔️ | — | ✔️ | — | — |
 | `onDeviceDiscovered` | ✔️ | — | ✔️ | ✔️ | ✔️ |
 | `onDeviceRemoved` | ✔️ | — | ✔️ | ✔️ | — |
-| `onConnectionStateChanged` | ✔️ | ✔️ | ✔️ | — | ✔️ |
-| `onData` | ✔️ | ✔️³ | ✔️ | — | — |
+| `onConnectionStateChanged` | ✔️ | ✔️ | ✔️ | ✔️⁴ | ✔️ |
+| `onData` | ✔️ | ✔️³ | ✔️ | ✔️⁴ | — |
 | `onGetReport` | ✔️ | — | ✔️ | — | — |
 | `onSdpServiceRegistrationUpdate` | ✔️ | — | ✔️ | — | — |
 
@@ -53,6 +54,9 @@ All APIs are called through the same `UniversalBluetooth` class. Platform differ
 ³ On iOS, `connect` opens an External Accessory session for a protocol string
 and `send` / `onData` exchange bytes over it. On the HID platforms `onData`
 delivers bytes received from the connected device.
+⁴ On Windows only the serial (SPP/RFCOMM) transport is implemented
+(`connect` / `send` / `onData` / `disconnect` with `transport: BluetoothTransport.spp`).
+Bluetooth HID is not implemented on Windows.
 
 ## Getting Started
 
@@ -163,8 +167,10 @@ await UniversalBluetooth.disconnect(deviceId);
 HID connections are available on Android, macOS, and Windows. On iOS,
 `connect` takes an External Accessory protocol string and opens an `EASession`,
 which lets you exchange bytes with the accessory (see
-[iOS External Accessory](#ios-external-accessory)). Linux supports only the
-basic `disconnect` operation.
+[iOS External Accessory](#ios-external-accessory)). Pass
+`transport: BluetoothTransport.spp` to open a serial (SPP/RFCOMM) connection
+instead (see [Serial (SPP/RFCOMM)](#serial-spprfcomm)); this is the only data
+transport on Windows. Linux supports only the basic `disconnect` operation.
 
 ## Sending and receiving data
 
@@ -203,6 +209,62 @@ UniversalBluetooth.onGetReport =
 ```
 
 HID reports are available on Android, macOS, and Windows.
+
+## Serial (SPP/RFCOMM)
+
+Some Bluetooth Classic accessories expose a serial stream over the Serial Port
+Profile (SPP) instead of HID. Open one with `transport: BluetoothTransport.spp`:
+
+```dart
+import 'dart:typed_data';
+
+import 'package:universal_bluetooth_classic/universal_bluetooth_classic.dart';
+
+const address = '00:11:22:33:44:55';
+
+UniversalBluetooth.onConnectionStateChanged = (event) {
+  print('${event.identifier}: ${event.state.name} (${event.source.name})');
+};
+
+UniversalBluetooth.onData = (identifier, data) {
+  print('$identifier received: $data');
+};
+
+// Opens an RFCOMM connection for the well-known SPP service UUID.
+await UniversalBluetooth.connect(address, transport: BluetoothTransport.spp);
+
+await UniversalBluetooth.send(address, Uint8List.fromList('PING\r'.codeUnits));
+
+await UniversalBluetooth.disconnect(address);
+```
+
+The identifier is the device address, and connection events carry
+`source: BluetoothConnectionSource.spp`. Pair the accessory first (for example
+with `pair` or the native picker) before connecting.
+
+### Custom service UUID
+
+Most serial accessories use the well-known SPP UUID
+(`00001101-0000-1000-8000-00805F9B34FB`, also exported as `sppServiceUuid`),
+which is the default. For accessories that advertise a custom UUID, pass it to
+`connect`:
+
+```dart
+await UniversalBluetooth.connect(
+  address,
+  transport: BluetoothTransport.spp,
+  serviceUuid: '00001101-0000-1000-8000-00805F9B34FB',
+);
+```
+
+The serial transport is available on Android, macOS, and Windows. It is not
+available on iOS (which uses External Accessory) or Linux.
+
+To verify against hardware, pair a serial accessory (or another computer
+running an RFCOMM server on the SPP UUID), connect with
+`transport: BluetoothTransport.spp`, send a known payload, and confirm it
+arrives and that replies surface through `onData`. The example app exposes the
+same flow.
 
 ## SDP Service Registration
 
@@ -333,13 +395,25 @@ iOS External Accessory events provide the accessory name, manufacturer, model an
 ### `BluetoothConnectionEvent`
 
 Connection events provide an opaque identifier, a `connected` or `disconnected`
-state, and a source: `hid`, `externalAccessory`, or `system`. The External
-Accessory source also includes the full iOS `EAAccessory` value.
+state, and a source: `hid`, `externalAccessory`, `spp`, or `system`. The
+External Accessory source also includes the full iOS `EAAccessory` value.
 
 ### `DataCallback`
 
 `onData` delivers bytes as `(String identifier, Uint8List data)`. The identifier
 is the External Accessory protocol string on iOS and the device ID elsewhere.
+
+### `BluetoothTransport`
+
+`connect` accepts a `transport` argument:
+
+- `BluetoothTransport.auto` (the default) uses HID on Android, macOS, and
+  Windows, and an External Accessory session on iOS.
+- `BluetoothTransport.hid` connects over Bluetooth HID.
+- `BluetoothTransport.spp` opens a serial (SPP/RFCOMM) connection.
+
+For `BluetoothTransport.spp`, `connect` also accepts an optional `serviceUuid`,
+defaulting to the well-known `sppServiceUuid`.
 
 ### HID configuration
 
@@ -408,7 +482,7 @@ plugs:
   - bluez
 ```
 
-Linux supports scanning, paired-device lookup, pairing, unpairing, basic disconnects, discovery callbacks, and system connection-state events. The native picker, HID connections and reports, and SDP registration are not implemented.
+Linux supports scanning, paired-device lookup, pairing, unpairing, basic disconnects, discovery callbacks, and system connection-state events. The native picker, HID connections and reports, serial (SPP/RFCOMM) connections, and SDP registration are not implemented.
 
 ## Customizing Platform Implementation
 

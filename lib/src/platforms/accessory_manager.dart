@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:universal_bluetooth_classic/src/universal_bluetooth_interface.dart';
 import 'package:universal_bluetooth_classic/src/generated/bluetooth_hid_manager.g.dart';
+import 'package:universal_bluetooth_classic/src/generated/bluetooth_serial_manager.g.dart';
 import 'package:universal_bluetooth_classic/src/generated/universal_bluetooth.g.dart';
 
 class AccessoryManager extends UniversalBluetoothInterface {
@@ -11,10 +12,16 @@ class AccessoryManager extends UniversalBluetoothInterface {
   AccessoryManager._() {
     FlutterAccessoryCallbackChannel.setUp(_AccessoryCallbackHandler());
     BluetoothHidManagerCallbackChannel.setUp(_HidCallbackHandler());
+    BluetoothSerialCallbackChannel.setUp(_SerialCallbackHandler());
   }
 
   static final _accessoryManagerChannel = FlutterAccessoryPlatformChannel();
   static final _hidManagerChannel = BluetoothHidManagerPlatformChannel();
+  static final _serialChannel = BluetoothSerialPlatformChannel();
+
+  /// The transport used to connect each device, so that [send] and
+  /// [disconnect] can be routed to the matching native channel.
+  final Map<String, BluetoothTransport> _activeTransports = {};
 
   @override
   Future<void> showBluetoothAccessoryPicker({
@@ -25,8 +32,14 @@ class AccessoryManager extends UniversalBluetoothInterface {
   }
 
   @override
-  Future<void> disconnect([String? identifier]) =>
-      _hidManagerChannel.disconnect(_requireIdentifier(identifier));
+  Future<void> disconnect([String? identifier]) {
+    final deviceId = _requireIdentifier(identifier);
+    final transport = _activeTransports.remove(deviceId);
+    if (transport == BluetoothTransport.spp) {
+      return _serialChannel.disconnect(deviceId);
+    }
+    return _hidManagerChannel.disconnect(deviceId);
+  }
 
   @override
   Future<void> startScan() => _accessoryManagerChannel.startScan();
@@ -49,11 +62,26 @@ class AccessoryManager extends UniversalBluetoothInterface {
       _accessoryManagerChannel.getPairedDevices();
 
   @override
-  Future<void> connect(String deviceId) => _hidManagerChannel.connect(deviceId);
+  Future<void> connect(
+    String deviceId, {
+    BluetoothTransport transport = BluetoothTransport.auto,
+    String? serviceUuid,
+  }) {
+    if (transport == BluetoothTransport.spp) {
+      _activeTransports[deviceId] = BluetoothTransport.spp;
+      return _serialChannel.connect(deviceId, serviceUuid ?? sppServiceUuid);
+    }
+    _activeTransports[deviceId] = BluetoothTransport.hid;
+    return _hidManagerChannel.connect(deviceId);
+  }
 
   @override
-  Future<void> send(String deviceId, Uint8List data) =>
-      _hidManagerChannel.send(deviceId, data);
+  Future<void> send(String deviceId, Uint8List data) {
+    if (_activeTransports[deviceId] == BluetoothTransport.spp) {
+      return _serialChannel.send(deviceId, data);
+    }
+    return _hidManagerChannel.send(deviceId, data);
+  }
 
   @override
   Future<void> setupSdp(SdpConfig config) =>
@@ -112,5 +140,28 @@ class _HidCallbackHandler extends BluetoothHidManagerCallbackChannel {
     UniversalBluetoothInterface.onSdpServiceRegistrationUpdate?.call(
       registered,
     );
+  }
+}
+
+class _SerialCallbackHandler extends BluetoothSerialCallbackChannel {
+  @override
+  void onConnectionStateChanged(String deviceId, bool connected) {
+    if (!connected) {
+      AccessoryManager.instance._activeTransports.remove(deviceId);
+    }
+    UniversalBluetoothInterface.onConnectionStateChanged?.call(
+      BluetoothConnectionEvent(
+        identifier: deviceId,
+        state: connected
+            ? BluetoothConnectionState.connected
+            : BluetoothConnectionState.disconnected,
+        source: BluetoothConnectionSource.spp,
+      ),
+    );
+  }
+
+  @override
+  void onData(String deviceId, Uint8List data) {
+    UniversalBluetoothInterface.onData?.call(deviceId, data);
   }
 }

@@ -26,6 +26,7 @@ private const val TAG = "UniversalBluetoothPlugin"
 class UniversalBluetoothPlugin : FlutterAccessoryPlatformChannel, FlutterPlugin,
     ActivityAware {
     private var callbackChannel: FlutterAccessoryCallbackChannel? = null
+    private var serialManager: BluetoothSerialManager? = null
     private val pairResultFutures = mutableMapOf<String, (Result<Boolean>) -> Unit>()
     private var activity: Activity? = null
     private val actionBluetoothSelected =
@@ -55,6 +56,12 @@ class UniversalBluetoothPlugin : FlutterAccessoryPlatformChannel, FlutterPlugin,
         callbackChannel = FlutterAccessoryCallbackChannel(flutterPluginBinding.binaryMessenger)
         FlutterAccessoryPlatformChannel.setUp(flutterPluginBinding.binaryMessenger, this)
 
+        val serial = BluetoothSerialManager(
+            BluetoothSerialCallbackChannel(flutterPluginBinding.binaryMessenger)
+        )
+        serialManager = serial
+        BluetoothSerialPlatformChannel.setUp(flutterPluginBinding.binaryMessenger, serial)
+
 
         val intentFilter = IntentFilter(BluetoothDevice.ACTION_FOUND)
         intentFilter.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED)
@@ -69,6 +76,8 @@ class UniversalBluetoothPlugin : FlutterAccessoryPlatformChannel, FlutterPlugin,
         accessoryManagerThreadHandler = null
         callbackChannel = null
         bluetoothAdapter = null
+        serialManager?.dispose()
+        serialManager = null
         binding.applicationContext.unregisterReceiver(broadcastReceiver)
     }
 

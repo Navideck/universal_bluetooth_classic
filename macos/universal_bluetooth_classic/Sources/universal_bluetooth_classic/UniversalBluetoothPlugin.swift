@@ -38,6 +38,7 @@ public class UniversalBluetoothPlugin: NSObject, FlutterPlugin {
         let instance = UniversalBluetoothPlugin(callbackChannel: callbackChannel, hidCallback: hidCallback)
         FlutterAccessoryPlatformChannelSetup.setUp(binaryMessenger: messenger, api: instance)
         BluetoothHidManagerPlatformChannelSetup.setUp(binaryMessenger: messenger, api: instance)
+        BluetoothSerialManager.register(with: registrar)
     }
 }
 

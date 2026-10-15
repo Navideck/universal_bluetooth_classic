@@ -42,16 +42,33 @@ class UniversalBluetooth {
 
   /// Connects to the device with the given [identifier].
   ///
-  /// On iOS [identifier] is an External Accessory protocol string and this
-  /// opens an `EASession` for it. On the HID platforms it is the device ID of
-  /// the HID device to connect.
-  static Future<void> connect(String deviceId) => _platform.connect(deviceId);
+  /// [transport] selects the Bluetooth Classic transport. [BluetoothTransport.auto]
+  /// (the default) keeps the historical behavior: on iOS [identifier] is an
+  /// External Accessory protocol string and this opens an `EASession` for it;
+  /// on the HID platforms it is the device ID of the HID device to connect.
+  /// Pass [BluetoothTransport.spp] to open a serial (SPP/RFCOMM) connection.
+  ///
+  /// [serviceUuid] is only used for [BluetoothTransport.spp] and defaults to
+  /// the well-known [sppServiceUuid]. Pass a custom UUID for accessories that
+  /// advertise one.
+  static Future<void> connect(
+    String deviceId, {
+    BluetoothTransport transport = BluetoothTransport.auto,
+    String? serviceUuid,
+  }) =>
+      _platform.connect(
+        deviceId,
+        transport: transport,
+        serviceUuid: serviceUuid,
+      );
 
   /// Sends raw [data] to the connected device with the given [identifier].
   ///
   /// On iOS [identifier] is an External Accessory protocol string and the
   /// session must have been opened with [connect]. On the HID platforms it is
-  /// the device ID and this sends an output report.
+  /// the device ID and this sends an output report. For a serial
+  /// ([BluetoothTransport.spp]) connection it is the device address and the
+  /// bytes are written to the RFCOMM channel.
   static Future<void> send(String identifier, Uint8List data) =>
       _platform.send(identifier, data);
 

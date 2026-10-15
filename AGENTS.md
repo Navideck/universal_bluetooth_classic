@@ -1,6 +1,6 @@
 # Universal Bluetooth Classic Agent Guidelines
 
-This repository provides a unified cross-platform Flutter plugin (`universal_bluetooth_classic`) for Bluetooth Classic HID and Apple External Accessory, targeting Android, iOS, macOS, Windows, and Linux. Bluetooth Low Energy (BLE) is out of scope.
+This repository provides a unified cross-platform Flutter plugin (`universal_bluetooth_classic`) for Bluetooth Classic HID, Bluetooth Classic serial (SPP/RFCOMM), and Apple External Accessory, targeting Android, iOS, macOS, Windows, and Linux. Bluetooth Low Energy (BLE) is out of scope.
 
 For environment setup, the checks to run before opening a PR, Pigeon regeneration commands, PR conventions, and licensing, follow [CONTRIBUTING.md](CONTRIBUTING.md). This file records the invariants an agent must not break.
 
@@ -12,12 +12,12 @@ For environment setup, the checks to run before opening a PR, Pigeon regeneratio
 | :-- | :-- | :-- |
 | Linux | `AccessoryManagerBluez` | BlueZ |
 | iOS | `ExternalAccessory` | Apple External Accessory |
-| Android, macOS, Windows | `AccessoryManager` | Bluetooth HID |
+| Android, macOS, Windows | `AccessoryManager` | Bluetooth HID and/or serial (SPP/RFCOMM) |
 | Web | `_DefaultImpl` | none |
 
 Do not add platform checks outside `_defaultPlatform()` and the platform classes.
 
-Note: `AccessoryManager` is also the fallback on Windows, but the Windows plugin implements only the accessory channel (discovery, pairing, picker), not the HID channel. `connect`, `send`, `setupSdp`, and `closeSdp` are unsupported on Windows. Keep the README matrix accurate.
+Note: `AccessoryManager` handles both the HID channel and the serial channel. The Windows plugin implements the accessory channel (discovery, pairing, picker) and the serial (SPP/RFCOMM) channel, but not the HID channel. On Windows, `connect` / `send` / `onData` / `disconnect` work only with `transport: BluetoothTransport.spp`; `setupSdp` / `closeSdp` and HID connections are unsupported. Keep the README matrix accurate.
 
 ## `identifier` is overloaded across platforms (critical)
 
@@ -31,6 +31,8 @@ The same `String identifier` passed to `connect`, `send`, `disconnect`, and deli
 | `disconnect` | device ID | optional protocol string; omitted closes **every** open session |
 
 On Linux only `disconnect` (BlueZ) is implemented; the data APIs are unsupported.
+
+For serial (SPP/RFCOMM) connections (`transport: BluetoothTransport.spp`) on Android, macOS, and Windows, the identifier is the device address (MAC), the same vocabulary as HID.
 
 Do not assume the identifier is a MAC address or a protocol string in shared Dart code. Keep the distinction inside the platform implementations and in the README.
 

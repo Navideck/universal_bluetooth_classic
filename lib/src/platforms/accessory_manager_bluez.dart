@@ -103,6 +103,18 @@ class AccessoryManagerBluez extends UniversalBluetoothInterface {
     await device.disconnect();
   }
 
+  @override
+  Future<void> connect(
+    String deviceId, {
+    BluetoothTransport transport = BluetoothTransport.auto,
+    String? serviceUuid,
+  }) {
+    throw UnsupportedError(
+      'Serial (SPP/RFCOMM) connections are not supported on Linux. '
+      'The BlueZ Dart bindings expose no RFCOMM socket API.',
+    );
+  }
+
   void _onDeviceAdd(BlueZDevice device) {
     _devices[device.address] = device;
     _watchConnectionChanges(device);
