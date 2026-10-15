@@ -4,8 +4,8 @@ import UIKit
 
 public class UniversalBluetoothPlugin: NSObject, FlutterPlugin, ExternalAccessoryChannel {
   var callbackChannel: ExternalAccessoryCallbackChannel
-  private var manager = EAAccessoryManager.shared()
-  private var eaSessionDisconnectionCompleterMap = [String: (Result<Void, any Error>) -> Void]()
+  private let manager = EAAccessoryManager.shared()
+  private var sessionControllers = [String: EASessionController]()
 
   init(callbackChannel: ExternalAccessoryCallbackChannel) {
     self.callbackChannel = callbackChannel
@@ -52,61 +52,75 @@ public class UniversalBluetoothPlugin: NSObject, FlutterPlugin, ExternalAccessor
     }
   }
 
-  func closeEASession(protocolString: String? = nil, completion: @escaping (Result<Void, Error>) -> Void) {
-      enum SessionError: Error {
-          case alreadyInProgress
-          case accessoryNotFound
-          case sessionCreationFailed
-          case noProtocolStringsAvailable
-      }
-      
-      // Determine the protocol string to use
-      let effectiveProtocolString: String
-      if let protocolString = protocolString {
-          effectiveProtocolString = protocolString
-      } else {
-          // Find first accessory and get its first protocol string
-          guard let firstAccessory = manager.connectedAccessories.last,
-                let firstProtocolString = firstAccessory.protocolStrings.first else {
-              completion(.failure(SessionError.noProtocolStringsAvailable))
-              return
-          }
-          effectiveProtocolString = firstProtocolString
-      }
-      
-      // Guard against existing session
-      guard eaSessionDisconnectionCompleterMap[effectiveProtocolString] == nil else {
-          completion(.failure(SessionError.alreadyInProgress))
-          return
-      }
-      
-      // Find matching accessory
-      guard let accessory = manager.connectedAccessories.first(where: {
-          $0.protocolStrings.contains(effectiveProtocolString)
-      }) else {
-          completion(.failure(SessionError.accessoryNotFound))
-          return
-      }
-      
-      // Create and validate session
-      guard let session = EASession(accessory: accessory, forProtocol: effectiveProtocolString) else {
-          completion(.failure(SessionError.sessionCreationFailed))
-          return
-      }
-      
-      // Store completion handler
-      eaSessionDisconnectionCompleterMap[effectiveProtocolString] = completion
-      
-      // Schedule session cleanup
-      DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-          session.inputStream?.close()
-          session.outputStream?.close()
-      }
+  func openSession(protocolString: String, completion: @escaping (Result<Void, any Error>) -> Void) {
+    guard sessionControllers[protocolString] == nil else {
+      completion(.failure(ExternalAccessorySessionError.sessionAlreadyOpen))
+      return
+    }
+
+    // Find the connected accessory that advertises this protocol.
+    guard let accessory = manager.connectedAccessories.first(where: {
+      $0.protocolStrings.contains(protocolString)
+    }) else {
+      completion(.failure(ExternalAccessorySessionError.accessoryNotFound))
+      return
+    }
+
+    guard let controller = EASessionController(accessory: accessory, protocolString: protocolString) else {
+      completion(.failure(ExternalAccessorySessionError.sessionCreationFailed))
+      return
+    }
+
+    controller.onData = { [weak self] data in
+      self?.callbackChannel.onData(
+        protocolString: protocolString,
+        data: FlutterStandardTypedData(bytes: data)
+      ) { _ in }
+    }
+    controller.onFinished = { [weak self] in
+      self?.sessionDidFinish(protocolString: protocolString, accessory: accessory)
+    }
+
+    sessionControllers[protocolString] = controller
+    controller.open()
+    completion(.success(()))
+  }
+
+  func send(protocolString: String, data: FlutterStandardTypedData, completion: @escaping (Result<Void, any Error>) -> Void) {
+    guard let controller = sessionControllers[protocolString] else {
+      completion(.failure(ExternalAccessorySessionError.sessionNotOpen))
+      return
+    }
+    controller.write(data.data)
+    completion(.success(()))
+  }
+
+  func closeSession(protocolString: String?, completion: @escaping (Result<Void, any Error>) -> Void) {
+    // An explicit protocol string closes that session; omitting it closes every
+    // open session. Closing an already-closed session is a no-op.
+    let protocols = protocolString.map { [$0] } ?? Array(sessionControllers.keys)
+    for protocolString in protocols {
+      sessionControllers.removeValue(forKey: protocolString)?.close()
+    }
+    completion(.success(()))
+  }
+
+  /// Handles a session whose streams ended on their own.
+  private func sessionDidFinish(protocolString: String, accessory: ExternalAccessory.EAAccessory) {
+    guard sessionControllers.removeValue(forKey: protocolString) != nil else { return }
+    // Only surface a disconnect when the accessory is still physically
+    // connected: that means the session failed on its own. When the accessory
+    // itself disconnected, `accessoryDisconnected` already reported it and
+    // `accessory.isConnected` is false.
+    guard accessory.isConnected else { return }
+    callbackChannel.onConnectionStateChanged(
+      accessory: accessory.toEAAccessoryObject(),
+      connected: false
+    ) { _ in }
   }
 
   @objc private func accessoryConnected(_ notification: NSNotification) {
-    let connectedAccessory = notification.userInfo![EAAccessoryKey] as? EAAccessory
-    guard let connectedAccessory else { return }
+    guard let connectedAccessory = notification.userInfo?[EAAccessoryKey] as? ExternalAccessory.EAAccessory else { return }
     callbackChannel.onConnectionStateChanged(
       accessory: connectedAccessory.toEAAccessoryObject(),
       connected: true
@@ -114,10 +128,10 @@ public class UniversalBluetoothPlugin: NSObject, FlutterPlugin, ExternalAccessor
   }
 
   @objc private func accessoryDisconnected(_ notification: NSNotification) {
-    let connectedAccessory = notification.userInfo![EAAccessoryKey] as? EAAccessory
-    guard let connectedAccessory else { return }
+    guard let connectedAccessory = notification.userInfo?[EAAccessoryKey] as? ExternalAccessory.EAAccessory else { return }
+    // Tear down any session opened for the accessory's protocols.
     for protocolString in connectedAccessory.protocolStrings {
-      eaSessionDisconnectionCompleterMap.removeValue(forKey: protocolString)?(.success(()))
+      sessionControllers.removeValue(forKey: protocolString)?.close()
     }
     callbackChannel.onConnectionStateChanged(
       accessory: connectedAccessory.toEAAccessoryObject(),
@@ -126,7 +140,14 @@ public class UniversalBluetoothPlugin: NSObject, FlutterPlugin, ExternalAccessor
   }
 }
 
-extension EAAccessory {
+enum ExternalAccessorySessionError: Error {
+  case accessoryNotFound
+  case sessionCreationFailed
+  case sessionAlreadyOpen
+  case sessionNotOpen
+}
+
+extension ExternalAccessory.EAAccessory {
   func toEAAccessoryObject() -> EAAccessory {
     return EAAccessory(
       isConnected: isConnected,

@@ -1,3 +1,18 @@
+## Unreleased
+
+* Add a unified byte-stream API. `connect`, `send`, and the new `onData`
+  callback exchange bytes with a connected device; `sendReport` is deprecated in
+  favour of `send`.
+* Add iOS External Accessory data support. `connect(protocolString)` opens an
+  `EASession`, `send` writes to its output stream, and `onData` receives bytes
+  from its input stream.
+* Fix iOS `disconnect` hanging until the accessory physically disconnected. It
+  now closes the session and completes immediately, and closes every open
+  session when the protocol string is omitted.
+* Fix iOS External Accessory connect/disconnect events never firing. The Pigeon
+  `EAAccessory` struct shadowed the framework class, so the notification
+  handlers always failed to cast and returned early.
+
 ## 1.0.0
 
 * Fix `showBluetoothAccessoryPicker` not presenting on iOS apps that use the

@@ -166,7 +166,9 @@ class ExternalAccessoryPigeonCodec: FlutterStandardMessageCodec, @unchecked Send
 /// Generated protocol from Pigeon that represents a handler of messages from Flutter.
 protocol ExternalAccessoryChannel {
   func showBluetoothAccessoryPicker(withNames: [String], completion: @escaping (Result<Void, Error>) -> Void)
-  func closeEASession(protocolString: String?, completion: @escaping (Result<Void, Error>) -> Void)
+  func openSession(protocolString: String, completion: @escaping (Result<Void, Error>) -> Void)
+  func send(protocolString: String, data: FlutterStandardTypedData, completion: @escaping (Result<Void, Error>) -> Void)
+  func closeSession(protocolString: String?, completion: @escaping (Result<Void, Error>) -> Void)
 }
 
 /// Generated setup class from Pigeon to handle messages through the `binaryMessenger`.
@@ -192,12 +194,12 @@ class ExternalAccessoryChannelSetup {
     } else {
       showBluetoothAccessoryPickerChannel.setMessageHandler(nil)
     }
-    let closeEASessionChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.universal_bluetooth_classic.ExternalAccessoryChannel.closeEASession\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    let openSessionChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.universal_bluetooth_classic.ExternalAccessoryChannel.openSession\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
     if let api = api {
-      closeEASessionChannel.setMessageHandler { message, reply in
+      openSessionChannel.setMessageHandler { message, reply in
         let args = message as! [Any?]
-        let protocolStringArg: String? = nilOrValue(args[0])
-        api.closeEASession(protocolString: protocolStringArg) { result in
+        let protocolStringArg = args[0] as! String
+        api.openSession(protocolString: protocolStringArg) { result in
           switch result {
           case .success:
             reply(wrapResult(nil))
@@ -207,7 +209,42 @@ class ExternalAccessoryChannelSetup {
         }
       }
     } else {
-      closeEASessionChannel.setMessageHandler(nil)
+      openSessionChannel.setMessageHandler(nil)
+    }
+    let sendChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.universal_bluetooth_classic.ExternalAccessoryChannel.send\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      sendChannel.setMessageHandler { message, reply in
+        let args = message as! [Any?]
+        let protocolStringArg = args[0] as! String
+        let dataArg = args[1] as! FlutterStandardTypedData
+        api.send(protocolString: protocolStringArg, data: dataArg) { result in
+          switch result {
+          case .success:
+            reply(wrapResult(nil))
+          case .failure(let error):
+            reply(wrapError(error))
+          }
+        }
+      }
+    } else {
+      sendChannel.setMessageHandler(nil)
+    }
+    let closeSessionChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.universal_bluetooth_classic.ExternalAccessoryChannel.closeSession\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      closeSessionChannel.setMessageHandler { message, reply in
+        let args = message as! [Any?]
+        let protocolStringArg: String? = nilOrValue(args[0])
+        api.closeSession(protocolString: protocolStringArg) { result in
+          switch result {
+          case .success:
+            reply(wrapResult(nil))
+          case .failure(let error):
+            reply(wrapError(error))
+          }
+        }
+      }
+    } else {
+      closeSessionChannel.setMessageHandler(nil)
     }
   }
 }
@@ -216,6 +253,7 @@ class ExternalAccessoryChannelSetup {
 /// Generated protocol from Pigeon that represents Flutter messages that can be called from Swift.
 protocol ExternalAccessoryCallbackChannelProtocol {
   func onConnectionStateChanged(accessory accessoryArg: EAAccessory, connected connectedArg: Bool, completion: @escaping (Result<Void, PigeonError>) -> Void)
+  func onData(protocolString protocolStringArg: String, data dataArg: FlutterStandardTypedData, completion: @escaping (Result<Void, PigeonError>) -> Void)
 }
 class ExternalAccessoryCallbackChannel: ExternalAccessoryCallbackChannelProtocol {
   private let binaryMessenger: FlutterBinaryMessenger
@@ -231,6 +269,24 @@ class ExternalAccessoryCallbackChannel: ExternalAccessoryCallbackChannelProtocol
     let channelName: String = "dev.flutter.pigeon.universal_bluetooth_classic.ExternalAccessoryCallbackChannel.onConnectionStateChanged\(messageChannelSuffix)"
     let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
     channel.sendMessage([accessoryArg, connectedArg] as [Any?]) { response in
+      guard let listResponse = response as? [Any?] else {
+        completion(.failure(createConnectionError(withChannelName: channelName)))
+        return
+      }
+      if listResponse.count > 1 {
+        let code: String = listResponse[0] as! String
+        let message: String? = nilOrValue(listResponse[1])
+        let details: String? = nilOrValue(listResponse[2])
+        completion(.failure(PigeonError(code: code, message: message, details: details)))
+      } else {
+        completion(.success(Void()))
+      }
+    }
+  }
+  func onData(protocolString protocolStringArg: String, data dataArg: FlutterStandardTypedData, completion: @escaping (Result<Void, PigeonError>) -> Void) {
+    let channelName: String = "dev.flutter.pigeon.universal_bluetooth_classic.ExternalAccessoryCallbackChannel.onData\(messageChannelSuffix)"
+    let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
+    channel.sendMessage([protocolStringArg, dataArg] as [Any?]) { response in
       guard let listResponse = response as? [Any?] else {
         completion(.failure(createConnectionError(withChannelName: channelName)))
         return

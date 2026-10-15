@@ -41,13 +41,26 @@ class UniversalBluetooth {
   static Future<void> disconnect([String? identifier]) =>
       _platform.disconnect(identifier);
 
-  /// Connects to the Bluetooth HID device with the given [deviceId].
+  /// Connects to the device with the given [identifier].
+  ///
+  /// On iOS [identifier] is an External Accessory protocol string and this
+  /// opens an `EASession` for it. On the HID platforms it is the device ID of
+  /// the HID device to connect.
   static Future<void> connect(String deviceId) => _platform.connect(deviceId);
+
+  /// Sends raw [data] to the connected device with the given [identifier].
+  ///
+  /// On iOS [identifier] is an External Accessory protocol string and the
+  /// session must have been opened with [connect]. On the HID platforms it is
+  /// the device ID and this sends an output report.
+  static Future<void> send(String identifier, Uint8List data) =>
+      _platform.send(identifier, data);
 
   /// Sends a HID [data] report to the connected device with the given
   /// [deviceId].
+  @Deprecated('Use send instead.')
   static Future<void> sendReport(String deviceId, Uint8List data) =>
-      _platform.sendReport(deviceId, data);
+      _platform.send(deviceId, data);
 
   /// Registers a Bluetooth HID service using the given platform-specific
   /// [config].
@@ -95,6 +108,14 @@ class UniversalBluetooth {
   /// Called when the platform requests a HID report.
   static set onGetReport(GetReportCallback? callback) {
     UniversalBluetoothInterface.onGetReport = callback;
+  }
+
+  /// Called when data is received from a connected device.
+  ///
+  /// [identifier] is the device ID, or the External Accessory protocol string
+  /// on iOS.
+  static set onData(DataCallback? callback) {
+    UniversalBluetoothInterface.onData = callback;
   }
 
   /// Called when the SDP service registration status changes.

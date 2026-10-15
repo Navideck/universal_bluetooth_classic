@@ -21,6 +21,9 @@ abstract class UniversalBluetoothInterface {
   /// Called when the platform requests a HID report.
   static GetReportCallback? onGetReport;
 
+  /// Called when data is received from a connected device.
+  static DataCallback? onData;
+
   /// Called when the SDP service registration status changes.
   static SdpServiceRegistrationUpdateCallback? onSdpServiceRegistrationUpdate;
 
@@ -51,11 +54,20 @@ abstract class UniversalBluetoothInterface {
     throw UnimplementedError();
   }
 
-  /// Sends a HID [data] report to the connected device with the given
-  /// [deviceId].
-  Future<void> sendReport(String deviceId, Uint8List data) {
+  /// Sends raw [data] to the connected device with the given [deviceId].
+  ///
+  /// On iOS the device is identified by its External Accessory protocol string
+  /// and the session must have been opened with [connect]. On the HID platforms
+  /// this sends an output report.
+  Future<void> send(String deviceId, Uint8List data) {
     throw UnimplementedError();
   }
+
+  /// Sends a HID [data] report to the connected device with the given
+  /// [deviceId].
+  @Deprecated('Use send instead.')
+  Future<void> sendReport(String deviceId, Uint8List data) =>
+      send(deviceId, data);
 
   /// Starts scanning for nearby Bluetooth devices.
   Future<void> startScan() {
@@ -133,6 +145,9 @@ typedef GetReportCallback = ReportReply? Function(
   ReportType type,
   int bufferSize,
 );
+
+/// Callback for data received from a connected device.
+typedef DataCallback = void Function(String identifier, Uint8List data);
 
 /// Callback for SDP service registration status changes.
 typedef SdpServiceRegistrationUpdateCallback = void Function(bool registered);

@@ -52,7 +52,7 @@ class AccessoryManager extends UniversalBluetoothInterface {
   Future<void> connect(String deviceId) => _hidManagerChannel.connect(deviceId);
 
   @override
-  Future<void> sendReport(String deviceId, Uint8List data) =>
+  Future<void> send(String deviceId, Uint8List data) =>
       _hidManagerChannel.sendReport(deviceId, data);
 
   @override
