@@ -1,5 +1,15 @@
-## Unreleased
+## 1.2.0
 
+* Add a generic serial (SPP/RFCOMM) transport on Android, macOS, and Windows.
+  `connect` takes a `BluetoothTransport` and an optional `serviceUuid`; bytes
+  are exchanged through the existing `send` / `onData` API, and connection
+  events carry `BluetoothConnectionSource.spp`. Windows gains data-transport
+  support (`connect` / `send` / `onData` / `disconnect`) through this transport;
+  Bluetooth HID remains unimplemented there, so `BluetoothTransport.auto`
+  resolves to the serial transport on Windows.
+* Note that adding the optional `transport` and `serviceUuid` parameters to
+  `connect` is a source-breaking change for custom `UniversalBluetoothInterface`
+  implementations.
 * Migrate the Pigeon definitions and generated bindings to Pigeon 29.0.10. The
   generated Kotlin and Swift host APIs and Flutter callbacks are now suspending
   / `async`, so the hand-written native implementations were updated to match.
@@ -16,19 +26,6 @@
   (`AndroidSdpChannel`, `MacSdpChannel`) so each platform's generated code
   carries only its own config. The public `SdpConfig` / `MacSdpConfig` /
   `AndroidSdpConfig` API is unchanged.
-
-## 1.2.0
-
-* Add a generic serial (SPP/RFCOMM) transport on Android, macOS, and Windows.
-  `connect` takes a `BluetoothTransport` and an optional `serviceUuid`; bytes
-  are exchanged through the existing `send` / `onData` API, and connection
-  events carry `BluetoothConnectionSource.spp`. Windows gains data-transport
-  support (`connect` / `send` / `onData` / `disconnect`) through this transport;
-  Bluetooth HID remains unimplemented there, so `BluetoothTransport.auto`
-  resolves to the serial transport on Windows.
-* Note that adding the optional `transport` and `serviceUuid` parameters to
-  `connect` is a source-breaking change for custom `UniversalBluetoothInterface`
-  implementations.
 
 ## 1.1.0
 
