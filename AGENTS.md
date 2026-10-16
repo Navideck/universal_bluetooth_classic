@@ -93,4 +93,4 @@ Never hand-edit generated files (`*.g.dart`, `*.g.kt`, `*.g.swift`, `*.g.h`, `*.
 
 ## Documentation
 
-Keep `README.md` (including the platform support matrix) and `CHANGELOG.md` current with any API change. Every new or changed public API belongs in the platform matrix.
+Keep `README.md` and `CHANGELOG.md` current with any API change. The README carries two tables: the platform × API matrix (every new or changed public API belongs there) and the platform × transport table (update it whenever a transport or a platform's `BluetoothTransport.auto` default changes).

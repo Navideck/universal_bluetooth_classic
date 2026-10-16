@@ -36,28 +36,41 @@ All APIs are called through the same `UniversalBluetooth` class. Platform differ
 | `startScan` / `stopScan` / `isScanning` | ✔️ | — | ✔️ | ✔️ | ✔️ |
 | `pair` / `unpair` | ✔️ | — | ✔️ | ✔️ | ✔️ |
 | `getPairedDevices` | ✔️ | — | ✔️ | ✔️ | ✔️ |
-| `connect` | ✔️ | ✔️³ | ✔️ | ✔️⁴ | — |
-| `disconnect` | ✔️ | ✔️¹ | ✔️ | ✔️⁴ | ✔️² |
-| `send` | ✔️ | ✔️³ | ✔️ | ✔️⁴ | — |
+| `connect` | ✔️ | ✔️ | ✔️ | ✔️ | — |
+| `disconnect` | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ |
+| `send` | ✔️ | ✔️ | ✔️ | ✔️ | — |
 | `setupSdp` / `closeSdp` | ✔️ | — | ✔️ | — | — |
 | `onDeviceDiscovered` | ✔️ | — | ✔️ | ✔️ | ✔️ |
 | `onDeviceRemoved` | ✔️ | — | ✔️ | ✔️ | — |
-| `onConnectionStateChanged` | ✔️ | ✔️ | ✔️ | ✔️⁴ | ✔️ |
-| `onData` | ✔️ | ✔️³ | ✔️ | ✔️⁴ | — |
+| `onConnectionStateChanged` | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ |
+| `onData` | ✔️ | ✔️ | ✔️ | ✔️ | — |
 | `onGetReport` | ✔️ | — | ✔️ | — | — |
 | `onSdpServiceRegistrationUpdate` | ✔️ | — | ✔️ | — | — |
 
 **Legend:** ✔️ supported, — not supported.
 
-¹ On iOS, `disconnect` closes an External Accessory session.
-² Linux supports a basic disconnect, not an HID-specific disconnect.
-³ On iOS, `connect` opens an External Accessory session for a protocol string
-and `send` / `onData` exchange bytes over it. On the HID platforms `onData`
-delivers bytes received from the connected device.
-⁴ On Windows only the serial (SPP/RFCOMM) transport is implemented, and
-`BluetoothTransport.auto` resolves to it: `connect` / `send` / `onData` /
-`disconnect` work without passing a transport. Bluetooth HID is not implemented
-on Windows.
+A ✔️ means the API is available. Which transport (if any) carries the bytes is a
+separate axis:
+
+| Platform | HID | Serial (SPP/RFCOMM) | External Accessory | `BluetoothTransport.auto` resolves to |
+| :-- | :--: | :--: | :--: | :-- |
+| Android | ✔️ | ✔️ | — | HID |
+| iOS | — | — | ✔️ | External Accessory |
+| macOS | ✔️ | ✔️ | — | HID |
+| Windows | — | ✔️ | — | Serial (SPP) |
+| Linux | — | — | — | — (no data transport) |
+
+`BluetoothTransport.auto` is the default for `connect`; pass
+`BluetoothTransport.hid` or `BluetoothTransport.spp` to force one (see
+[`BluetoothTransport`](#bluetoothtransport)).
+
+Two details the tables cannot show:
+
+- On iOS the identifier is an External Accessory protocol string: `connect`
+  opens an `EASession` for it and `disconnect` closes it, closing every open
+  session when the identifier is omitted. On every other platform the
+  identifier is the device address.
+- On Linux only a basic `disconnect` is implemented.
 
 ## Getting Started
 
