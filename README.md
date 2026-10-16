@@ -293,7 +293,7 @@ final config = SdpConfig(
   ),
   androidSdpConfig: AndroidSdpConfig(
     name: 'My HID Service',
-    serviceDescription: 'HID Service Description',
+    description: 'HID Service Description',
     provider: 'My Company',
     subclass: 0x2540,
     descriptors: Uint8List.fromList([
@@ -443,7 +443,7 @@ defaulting to the well-known `sppServiceUuid`.
 
 - `SdpConfig` holds the platform-specific `MacSdpConfig` and `AndroidSdpConfig` values used for service registration.
   - `MacSdpConfig` takes an optional `sdpPlistFile` path and a `data` map of SDP properties.
-  - `AndroidSdpConfig` requires `name`, `serviceDescription`, `provider`, `subclass`, and `descriptors`.
+  - `AndroidSdpConfig` requires `name`, `description`, `provider`, `subclass`, and `descriptors`.
 - `ReportReply` returns optional report `data` or an optional HID `error` code from `onGetReport`.
 - `ReportType` identifies `input`, `output`, and `feature` reports.
 
@@ -531,6 +531,11 @@ Restore the default platform implementation with:
 ```dart
 UniversalBluetooth.setInstance(null);
 ```
+
+Emit an inbound event by calling the matching field on `callbacks`, for example
+`callbacks.onData?.call(identifier, bytes)`. `UniversalBluetooth` assigns its own
+registry when it selects the implementation, so the app's `UniversalBluetooth.onXxx`
+callbacks receive it.
 
 ## Example app
 

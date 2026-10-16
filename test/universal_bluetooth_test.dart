@@ -74,7 +74,7 @@ void main() {
     UniversalBluetooth.onConnectionStateChanged = (value) {
       receivedEvent = value;
     };
-    UniversalBluetoothInterface.onConnectionStateChanged?.call(event);
+    platform.callbacks.onConnectionStateChanged?.call(event);
 
     expect(receivedEvent, same(event));
   });
@@ -89,7 +89,7 @@ void main() {
     };
 
     final data = Uint8List.fromList([0x41, 0x54, 0x5A, 0x0D]);
-    UniversalBluetoothInterface.onData?.call('com.example.protocol', data);
+    platform.callbacks.onData?.call('com.example.protocol', data);
 
     expect(receivedIdentifier, 'com.example.protocol');
     expect(receivedData, same(data));
@@ -116,7 +116,7 @@ void main() {
     UniversalBluetooth.onConnectionStateChanged = (event) {
       received = event;
     };
-    UniversalBluetoothInterface.onConnectionStateChanged?.call(
+    platform.callbacks.onConnectionStateChanged?.call(
       const BluetoothConnectionEvent(
         identifier: '00:11:22:33:44:55',
         state: BluetoothConnectionState.connected,

@@ -8,7 +8,7 @@ class ExternalAccessory extends UniversalBluetoothInterface {
   static ExternalAccessory get instance => _instance ??= ExternalAccessory._();
 
   ExternalAccessory._() {
-    ExternalAccessoryCallbackChannel.setUp(_CallbackHandler());
+    ExternalAccessoryCallbackChannel.setUp(_CallbackHandler(this));
   }
 
   static final _channel = ExternalAccessoryChannel();
@@ -48,9 +48,13 @@ class ExternalAccessory extends UniversalBluetoothInterface {
 
 // Handle callbacks from Native to Flutter
 class _CallbackHandler extends ExternalAccessoryCallbackChannel {
+  _CallbackHandler(this._owner);
+
+  final ExternalAccessory _owner;
+
   @override
   void onConnectionStateChanged(EAAccessory accessory, bool connected) {
-    UniversalBluetoothInterface.onConnectionStateChanged?.call(
+    _owner.callbacks.onConnectionStateChanged?.call(
       BluetoothConnectionEvent(
         identifier: accessory.connectionID.toString(),
         state: connected
@@ -64,6 +68,6 @@ class _CallbackHandler extends ExternalAccessoryCallbackChannel {
 
   @override
   void onData(String protocolString, Uint8List data) {
-    UniversalBluetoothInterface.onData?.call(protocolString, data);
+    _owner.callbacks.onData?.call(protocolString, data);
   }
 }

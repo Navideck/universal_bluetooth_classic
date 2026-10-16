@@ -6,11 +6,16 @@
   Android now depends on `kotlinx-coroutines-android`, and the minimum iOS
   deployment target is raised to 13.0 because the generated Swift uses Swift
   concurrency.
-* Rename `AndroidSdpConfig.description` to
-  `AndroidSdpConfig.serviceDescription`. Pigeon's generated Swift data classes
-  now conform to `CustomStringConvertible`, so a field named `description` is
-  rejected. This is a source-breaking change for callers that build an
-  `AndroidSdpConfig`.
+* Replace the `static` callback fields on `UniversalBluetoothInterface` with a
+  per-implementation `UniversalBluetoothCallbacks` registry. The
+  `UniversalBluetooth.onXxx` setters are unchanged, but a custom
+  `UniversalBluetoothInterface` implementation must now forward its events to
+  `callbacks` instead of the removed statics. This is a source-breaking change
+  for custom implementations.
+* Give Android and macOS SDP registration their own Pigeon channels
+  (`AndroidSdpChannel`, `MacSdpChannel`) so each platform's generated code
+  carries only its own config. The public `SdpConfig` / `MacSdpConfig` /
+  `AndroidSdpConfig` API is unchanged.
 
 ## 1.2.0
 

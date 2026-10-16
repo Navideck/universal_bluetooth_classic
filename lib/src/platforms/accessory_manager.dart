@@ -1,8 +1,11 @@
 import 'package:flutter/foundation.dart';
+import 'package:universal_bluetooth_classic/src/sdp_config.dart';
 import 'package:universal_bluetooth_classic/src/transport_router.dart';
 import 'package:universal_bluetooth_classic/src/universal_bluetooth_interface.dart';
+import 'package:universal_bluetooth_classic/src/generated/android_sdp.g.dart';
 import 'package:universal_bluetooth_classic/src/generated/bluetooth_hid_manager.g.dart';
 import 'package:universal_bluetooth_classic/src/generated/bluetooth_serial_manager.g.dart';
+import 'package:universal_bluetooth_classic/src/generated/mac_sdp.g.dart';
 import 'package:universal_bluetooth_classic/src/generated/universal_bluetooth.g.dart';
 
 class AccessoryManager extends UniversalBluetoothInterface {
@@ -10,14 +13,16 @@ class AccessoryManager extends UniversalBluetoothInterface {
   static AccessoryManager get instance => _instance ??= AccessoryManager._();
 
   AccessoryManager._() {
-    FlutterAccessoryCallbackChannel.setUp(_AccessoryCallbackHandler());
-    BluetoothHidManagerCallbackChannel.setUp(_HidCallbackHandler());
-    BluetoothSerialCallbackChannel.setUp(_SerialCallbackHandler());
+    FlutterAccessoryCallbackChannel.setUp(_AccessoryCallbackHandler(this));
+    BluetoothHidManagerCallbackChannel.setUp(_HidCallbackHandler(this));
+    BluetoothSerialCallbackChannel.setUp(_SerialCallbackHandler(this));
   }
 
   static final _accessoryManagerChannel = FlutterAccessoryPlatformChannel();
   static final _hidManagerChannel = BluetoothHidManagerPlatformChannel();
   static final _serialChannel = BluetoothSerialPlatformChannel();
+  static final _androidSdpChannel = AndroidSdpChannel();
+  static final _macSdpChannel = MacSdpChannel();
 
   /// Tracks the last transport each device was connected with, so [send] and
   /// [disconnect] can be routed to the matching native channel.
@@ -103,8 +108,30 @@ class AccessoryManager extends UniversalBluetoothInterface {
   }
 
   @override
-  Future<void> setupSdp(SdpConfig config) =>
-      _hidManagerChannel.setupSdp(config);
+  Future<void> setupSdp(SdpConfig config) {
+    // Each platform has its own SDP channel, so the union in [SdpConfig] is
+    // resolved here, inside a platform class, keeping the check out of shared
+    // code; see AGENTS.md.
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+        final androidConfig = config.androidSdpConfig;
+        if (androidConfig == null) {
+          throw ArgumentError.notNull('config.androidSdpConfig');
+        }
+        return _androidSdpChannel.setupSdp(androidConfig);
+      case TargetPlatform.macOS:
+        final macConfig = config.macSdpConfig;
+        if (macConfig == null) {
+          throw ArgumentError.notNull('config.macSdpConfig');
+        }
+        return _macSdpChannel.setupSdp(macConfig);
+      default:
+        throw UnsupportedError(
+          'SDP service registration is not supported on '
+          '${defaultTargetPlatform.name}.',
+        );
+    }
+  }
 
   @override
   Future<void> closeSdp() => _hidManagerChannel.closeSdp();
@@ -115,21 +142,29 @@ String _requireIdentifier(String? identifier) =>
 
 // Handle callbacks from Native to Flutter
 class _AccessoryCallbackHandler extends FlutterAccessoryCallbackChannel {
+  _AccessoryCallbackHandler(this._owner);
+
+  final AccessoryManager _owner;
+
   @override
   void onDeviceDiscover(BluetoothDevice device) {
-    UniversalBluetoothInterface.onDeviceDiscovered?.call(device);
+    _owner.callbacks.onDeviceDiscovered?.call(device);
   }
 
   @override
   void onDeviceRemoved(BluetoothDevice device) {
-    UniversalBluetoothInterface.onDeviceRemoved?.call(device);
+    _owner.callbacks.onDeviceRemoved?.call(device);
   }
 }
 
 class _HidCallbackHandler extends BluetoothHidManagerCallbackChannel {
+  _HidCallbackHandler(this._owner);
+
+  final AccessoryManager _owner;
+
   @override
   void onConnectionStateChanged(String deviceId, bool connected) {
-    UniversalBluetoothInterface.onConnectionStateChanged?.call(
+    _owner.callbacks.onConnectionStateChanged?.call(
       BluetoothConnectionEvent(
         identifier: deviceId,
         state: connected
@@ -142,30 +177,28 @@ class _HidCallbackHandler extends BluetoothHidManagerCallbackChannel {
 
   @override
   void onData(String deviceId, Uint8List data) {
-    UniversalBluetoothInterface.onData?.call(deviceId, data);
+    _owner.callbacks.onData?.call(deviceId, data);
   }
 
   @override
   ReportReply? onGetReport(String deviceId, ReportType type, int bufferSize) {
-    return UniversalBluetoothInterface.onGetReport?.call(
-      deviceId,
-      type,
-      bufferSize,
-    );
+    return _owner.callbacks.onGetReport?.call(deviceId, type, bufferSize);
   }
 
   @override
   void onSdpServiceRegistrationUpdate(bool registered) {
-    UniversalBluetoothInterface.onSdpServiceRegistrationUpdate?.call(
-      registered,
-    );
+    _owner.callbacks.onSdpServiceRegistrationUpdate?.call(registered);
   }
 }
 
 class _SerialCallbackHandler extends BluetoothSerialCallbackChannel {
+  _SerialCallbackHandler(this._owner);
+
+  final AccessoryManager _owner;
+
   @override
   void onConnectionStateChanged(String deviceId, bool connected) {
-    UniversalBluetoothInterface.onConnectionStateChanged?.call(
+    _owner.callbacks.onConnectionStateChanged?.call(
       BluetoothConnectionEvent(
         identifier: deviceId,
         state: connected
@@ -178,6 +211,6 @@ class _SerialCallbackHandler extends BluetoothSerialCallbackChannel {
 
   @override
   void onData(String deviceId, Uint8List data) {
-    UniversalBluetoothInterface.onData?.call(deviceId, data);
+    _owner.callbacks.onData?.call(deviceId, data);
   }
 }

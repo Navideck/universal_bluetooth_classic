@@ -38,19 +38,18 @@ public class UniversalBluetoothPlugin: NSObject, FlutterPlugin {
         let instance = UniversalBluetoothPlugin(callbackChannel: callbackChannel, hidCallback: hidCallback)
         FlutterAccessoryPlatformChannelSetup.setUp(binaryMessenger: messenger, api: instance)
         BluetoothHidManagerPlatformChannelSetup.setUp(binaryMessenger: messenger, api: instance)
+        MacSdpChannelSetup.setUp(binaryMessenger: messenger, api: instance)
         BluetoothSerialManager.register(with: registrar)
     }
 }
 
-extension UniversalBluetoothPlugin: BluetoothHidManagerPlatformChannel {
-    func setupSdp(config: SdpConfig) throws {
-        if let macConfig = config.macSdpConfig {
-            try setupBluetoothSdpConfig(config: macConfig)
-        } else {
-            throw PigeonError(code: "ConfigError", message: "MacConfig not provided", details: nil)
-        }
+extension UniversalBluetoothPlugin: MacSdpChannel {
+    func setupSdp(config: MacSdpConfig) throws {
+        try setupBluetoothSdpConfig(config: config)
     }
+}
 
+extension UniversalBluetoothPlugin: BluetoothHidManagerPlatformChannel {
     func closeSdp() throws {
         sdpService?.remove()
         controlNotification?.unregister()

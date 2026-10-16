@@ -50,6 +50,10 @@ class UniversalBluetoothPlugin : FlutterAccessoryPlatformChannel, FlutterPlugin,
                 flutterPluginBinding.binaryMessenger,
                 bluetoothHidManager,
             )
+            AndroidSdpChannel.setUp(
+                flutterPluginBinding.binaryMessenger,
+                bluetoothHidManager,
+            )
         } else {
             Log.e(TAG, "BluetoothHidManager not initialized")
         }

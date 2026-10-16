@@ -22,13 +22,12 @@ typealias ConnectionFuture = CompletableDeferred<Unit>
 class BluetoothHidManager(
     private val context: Context,
     private val callbackChannel: BluetoothHidManagerCallbackChannel,
-) : BluetoothHidManagerPlatformChannel, BluetoothHidDevice.Callback() {
+) : BluetoothHidManagerPlatformChannel, AndroidSdpChannel, BluetoothHidDevice.Callback() {
     private var initialized = false
     private var connectionFuture = mutableMapOf<String, ConnectionFuture>()
     private var disconnectionFuture = mutableMapOf<String, ConnectionFuture>()
 
-    override fun setupSdp(config: SdpConfig) {
-        val androidConfig = config.androidSdpConfig ?: throw FlutterError("InvalidAndroidConfig")
+    override fun setupSdp(config: AndroidSdpConfig) {
         if (initialized) {
             throw FlutterError("AlreadyInitialized", "BluetoothProxyProfile already initialized")
         }
@@ -40,7 +39,7 @@ class BluetoothHidManager(
                     Log.d(TAG, "Got HID device")
                     btHidProxy = proxy as BluetoothHidDevice
                     btHidProxy?.registerApp(
-                        androidConfig.toSdp(),
+                        config.toSdp(),
                         null,
                         BluetoothHidDeviceAppQosSettings(
                             BluetoothHidDeviceAppQosSettings.SERVICE_BEST_EFFORT,
@@ -266,7 +265,7 @@ class BluetoothHidManager(
     private fun AndroidSdpConfig.toSdp(): BluetoothHidDeviceAppSdpSettings {
         return BluetoothHidDeviceAppSdpSettings(
             name,
-            serviceDescription,
+            description,
             provider,
             subclass.toByte(),
             descriptors

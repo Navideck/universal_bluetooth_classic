@@ -3,29 +3,20 @@ import 'dart:typed_data';
 import 'package:universal_bluetooth_classic/src/generated/bluetooth_hid_manager.g.dart';
 import 'package:universal_bluetooth_classic/src/generated/external_accessory.g.dart';
 import 'package:universal_bluetooth_classic/src/generated/universal_bluetooth.g.dart';
+import 'package:universal_bluetooth_classic/src/sdp_config.dart';
 
 /// Platform interface for [UniversalBluetooth].
 ///
 /// Extend this class to provide a custom or mocked platform implementation.
 /// Unsupported operations throw [UnimplementedError] by default.
 abstract class UniversalBluetoothInterface {
-  /// Called when a Bluetooth device is discovered during a scan.
-  static BluetoothDeviceCallback? onDeviceDiscovered;
-
-  /// Called when a previously discovered Bluetooth device is removed.
-  static BluetoothDeviceCallback? onDeviceRemoved;
-
-  /// Called when the connection state of a device changes.
-  static ConnectionChangeCallback? onConnectionStateChanged;
-
-  /// Called when the platform requests a HID report.
-  static GetReportCallback? onGetReport;
-
-  /// Called when data is received from a connected device.
-  static DataCallback? onData;
-
-  /// Called when the SDP service registration status changes.
-  static SdpServiceRegistrationUpdateCallback? onSdpServiceRegistrationUpdate;
+  /// The registry the implementation reports inbound events to.
+  ///
+  /// [UniversalBluetooth] assigns its own registry when it selects the active
+  /// implementation. A platform implementation must forward its inbound events
+  /// to these fields; app code registers them through the
+  /// `UniversalBluetooth.onXxx` setters rather than touching this directly.
+  UniversalBluetoothCallbacks callbacks = UniversalBluetoothCallbacks();
 
   /// Opens the platform Bluetooth accessory picker, optionally filtered by
   /// [withNames].
@@ -184,3 +175,28 @@ typedef DataCallback = void Function(String identifier, Uint8List data);
 
 /// Callback for SDP service registration status changes.
 typedef SdpServiceRegistrationUpdateCallback = void Function(bool registered);
+
+/// The inbound events a [UniversalBluetoothInterface] implementation reports.
+///
+/// Every field is `null` until the app registers a callback through the
+/// matching `UniversalBluetooth.onXxx` setter, so implementations must
+/// null-check before invoking them.
+class UniversalBluetoothCallbacks {
+  /// Called when a Bluetooth device is discovered during a scan.
+  BluetoothDeviceCallback? onDeviceDiscovered;
+
+  /// Called when a previously discovered Bluetooth device is removed.
+  BluetoothDeviceCallback? onDeviceRemoved;
+
+  /// Called when the connection state of a device changes.
+  ConnectionChangeCallback? onConnectionStateChanged;
+
+  /// Called when the platform requests a HID report.
+  GetReportCallback? onGetReport;
+
+  /// Called when data is received from a connected device.
+  DataCallback? onData;
+
+  /// Called when the SDP service registration status changes.
+  SdpServiceRegistrationUpdateCallback? onSdpServiceRegistrationUpdate;
+}

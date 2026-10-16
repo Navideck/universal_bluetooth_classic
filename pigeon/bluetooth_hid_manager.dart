@@ -26,8 +26,6 @@ import 'package:pigeon/pigeon.dart';
 /// Flutter -> Native
 @HostApi()
 abstract class BluetoothHidManagerPlatformChannel {
-  void setupSdp(SdpConfig config);
-
   void closeSdp();
 
   @async
@@ -58,42 +56,3 @@ class ReportReply {
 }
 
 enum ReportType { input, output, feature }
-
-class SdpConfig {
-  MacSdpConfig? macSdpConfig;
-  AndroidSdpConfig? androidSdpConfig;
-
-  SdpConfig({
-    required this.macSdpConfig,
-    required this.androidSdpConfig,
-  });
-}
-
-class MacSdpConfig {
-  String? sdpPlistFile;
-  Map<String, Object>? data;
-
-  MacSdpConfig({this.data});
-}
-
-class AndroidSdpConfig {
-  String name;
-
-  /// The service description advertised in the SDP record.
-  ///
-  /// Named `serviceDescription` because Pigeon's generated Swift classes
-  /// conform to `CustomStringConvertible`, so a field named `description`
-  /// collides with the generated `description` property.
-  String serviceDescription;
-  String provider;
-  int subclass;
-  Uint8List descriptors;
-
-  AndroidSdpConfig({
-    required this.name,
-    required this.serviceDescription,
-    required this.provider,
-    required this.subclass,
-    required this.descriptors,
-  });
-}

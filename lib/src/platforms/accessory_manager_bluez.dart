@@ -123,9 +123,7 @@ class AccessoryManagerBluez extends UniversalBluetoothInterface {
   void _onDeviceAdd(BlueZDevice device) {
     _devices[device.address] = device;
     _watchConnectionChanges(device);
-    UniversalBluetoothInterface.onDeviceDiscovered?.call(
-      device.toBluetoothDevice(),
-    );
+    callbacks.onDeviceDiscovered?.call(device.toBluetoothDevice());
   }
 
   void _watchConnectionChanges(BlueZDevice device) {
@@ -153,7 +151,7 @@ class AccessoryManagerBluez extends UniversalBluetoothInterface {
     final connected = device.connected;
     if (_connectionStates[device.address] == connected) return;
     _connectionStates[device.address] = connected;
-    UniversalBluetoothInterface.onConnectionStateChanged?.call(
+    callbacks.onConnectionStateChanged?.call(
       BluetoothConnectionEvent(
         identifier: device.address,
         state: connected

@@ -19,7 +19,11 @@ Do not add platform checks outside `_defaultPlatform()` and the platform classes
 
 `TransportRouter` (`lib/src/transport_router.dart`) holds `AccessoryManager`'s routing rules and takes the `TargetPlatform` as a constructor argument precisely so it contains no platform check of its own; the platform class supplies `defaultTargetPlatform`. Keep it that way when adding transports.
 
-Note: `AccessoryManager` handles both the HID channel and the serial channel. The Windows plugin implements the accessory channel (discovery, pairing, picker) and the serial (SPP/RFCOMM) channel, but not the HID channel: `BluetoothTransport.auto` resolves to the serial transport on Windows (see `TransportRouter`), while `setupSdp` / `closeSdp` and HID connections are unsupported there. Keep the README matrix accurate.
+Note: `AccessoryManager` handles the HID channel, the serial channel, and the per-platform SDP channels (`AndroidSdpChannel` / `MacSdpChannel`). The Windows plugin implements the accessory channel (discovery, pairing, picker) and the serial (SPP/RFCOMM) channel, but not the HID channel: `BluetoothTransport.auto` resolves to the serial transport on Windows (see `TransportRouter`), while `setupSdp` / `closeSdp` and HID connections are unsupported there (`AccessoryManager.setupSdp` throws `UnsupportedError`). Keep the README matrix accurate.
+
+## SDP configuration is split per platform
+
+Android and macOS register their HID service through separate Pigeon channels, each defined in its own input file: `pigeon/android_sdp.dart` (`AndroidSdpConfig`, Kotlin + Dart output only) and `pigeon/mac_sdp.dart` (`MacSdpConfig`, Swift + Dart output only). This is deliberate: Pigeon emits every class into every configured output and validates Swift for a field named `description`, so an Android config type must never share a file with `swiftOut`. The public `SdpConfig` union (`lib/src/sdp_config.dart`) is hand-written Dart that keeps one cross-platform call site; `AccessoryManager.setupSdp` resolves it to the platform's channel. Do not move these types back into `pigeon/bluetooth_hid_manager.dart`.
 
 ## `identifier` is overloaded across platforms (critical)
 
@@ -76,7 +80,7 @@ MFi/iAP2 accessories do carry their data channel over RFCOMM, and `EASession` su
 
 ## Callback payloads
 
-Callbacks are declared as static fields on `UniversalBluetoothInterface` and surfaced through the `UniversalBluetooth` setters.
+Callbacks live on the `UniversalBluetoothCallbacks` registry that `UniversalBluetoothInterface` exposes as `callbacks`; `UniversalBluetooth` owns the registry, injects it into the active implementation, and surfaces it through the `UniversalBluetooth` setters. Platform implementations forward inbound events to `callbacks`, never to global state.
 
 - Use positional arguments for three values or fewer, or for internal plumbing (for example `onData(String identifier, Uint8List data)`).
 - Use a model object for four or more related values, or when a payload is expected to grow past three. `onConnectionStateChanged` delivers a `BluetoothConnectionEvent` for exactly this reason.

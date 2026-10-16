@@ -9,7 +9,12 @@ export 'package:universal_bluetooth_classic/src/generated/external_accessory.g.d
     show EAAccessory;
 export 'package:universal_bluetooth_classic/src/generated/universal_bluetooth.g.dart'
     show BluetoothDevice, DeviceType, DeviceClass;
+export 'package:universal_bluetooth_classic/src/generated/android_sdp.g.dart'
+    show AndroidSdpConfig;
 export 'package:universal_bluetooth_classic/src/generated/bluetooth_hid_manager.g.dart'
-    show SdpConfig, MacSdpConfig, AndroidSdpConfig, ReportReply, ReportType;
+    show ReportReply, ReportType;
+export 'package:universal_bluetooth_classic/src/generated/mac_sdp.g.dart'
+    show MacSdpConfig;
+export 'package:universal_bluetooth_classic/src/sdp_config.dart';
 export 'package:universal_bluetooth_classic/src/universal_bluetooth.dart';
 export 'package:universal_bluetooth_classic/src/universal_bluetooth_interface.dart';

@@ -13,12 +13,23 @@ import 'package:universal_bluetooth_classic/src/platforms/external_accessory.dar
 class UniversalBluetooth {
   /// Default platform accessor.
   static UniversalBluetoothInterface? _platformInstance;
-  static UniversalBluetoothInterface get _platform =>
-      _platformInstance ??= _defaultPlatform();
+
+  /// The single registry the active platform reports inbound events to. It is
+  /// owned here, not on the interface, so callbacks survive an instance swap
+  /// and are never global mutable state on the interface itself.
+  static final UniversalBluetoothCallbacks _callbacks =
+      UniversalBluetoothCallbacks();
+
+  static UniversalBluetoothInterface get _platform {
+    final instance = _platformInstance ??= _defaultPlatform();
+    instance.callbacks = _callbacks;
+    return instance;
+  }
 
   /// Set custom platform specific implementation (e.g. for testing).
   static void setInstance(UniversalBluetoothInterface? instance) {
     _platformInstance = instance;
+    instance?.callbacks = _callbacks;
   }
 
   /// Opens the platform Bluetooth accessory picker.
@@ -104,22 +115,22 @@ class UniversalBluetooth {
 
   /// Called when a Bluetooth device is discovered during a scan.
   static set onDeviceDiscovered(BluetoothDeviceCallback? callback) {
-    UniversalBluetoothInterface.onDeviceDiscovered = callback;
+    _callbacks.onDeviceDiscovered = callback;
   }
 
   /// Called when a previously discovered Bluetooth device is removed.
   static set onDeviceRemoved(BluetoothDeviceCallback? callback) {
-    UniversalBluetoothInterface.onDeviceRemoved = callback;
+    _callbacks.onDeviceRemoved = callback;
   }
 
   /// Called when the connection state of a device changes.
   static set onConnectionStateChanged(ConnectionChangeCallback? callback) {
-    UniversalBluetoothInterface.onConnectionStateChanged = callback;
+    _callbacks.onConnectionStateChanged = callback;
   }
 
   /// Called when the platform requests a HID report.
   static set onGetReport(GetReportCallback? callback) {
-    UniversalBluetoothInterface.onGetReport = callback;
+    _callbacks.onGetReport = callback;
   }
 
   /// Called when data is received from a connected device.
@@ -127,14 +138,14 @@ class UniversalBluetooth {
   /// [identifier] is the device ID, or the External Accessory protocol string
   /// on iOS.
   static set onData(DataCallback? callback) {
-    UniversalBluetoothInterface.onData = callback;
+    _callbacks.onData = callback;
   }
 
   /// Called when the SDP service registration status changes.
   static set onSdpServiceRegistrationUpdate(
     SdpServiceRegistrationUpdateCallback? callback,
   ) {
-    UniversalBluetoothInterface.onSdpServiceRegistrationUpdate = callback;
+    _callbacks.onSdpServiceRegistrationUpdate = callback;
   }
 
   static UniversalBluetoothInterface _defaultPlatform() {

@@ -164,185 +164,6 @@ class ReportReply {
   }
 }
 
-class SdpConfig {
-  SdpConfig({
-    this.macSdpConfig,
-    this.androidSdpConfig,
-  });
-
-  MacSdpConfig? macSdpConfig;
-
-  AndroidSdpConfig? androidSdpConfig;
-
-  List<Object?> _toList() {
-    return <Object?>[
-      macSdpConfig,
-      androidSdpConfig,
-    ];
-  }
-
-  Object encode() {
-    return _toList();
-  }
-
-  static SdpConfig decode(Object result) {
-    result as List<Object?>;
-    return SdpConfig(
-      macSdpConfig: result[0] as MacSdpConfig?,
-      androidSdpConfig: result[1] as AndroidSdpConfig?,
-    );
-  }
-
-  @override
-  // ignore: avoid_equals_and_hash_code_on_mutable_classes
-  bool operator ==(Object other) {
-    if (other is! SdpConfig || other.runtimeType != runtimeType) {
-      return false;
-    }
-    if (identical(this, other)) {
-      return true;
-    }
-    return _deepEquals(macSdpConfig, other.macSdpConfig) &&
-        _deepEquals(androidSdpConfig, other.androidSdpConfig);
-  }
-
-  @override
-  // ignore: avoid_equals_and_hash_code_on_mutable_classes
-  int get hashCode => _deepHash(<Object?>[runtimeType, ..._toList()]);
-
-  @override
-  String toString() {
-    return 'SdpConfig(macSdpConfig: $macSdpConfig, androidSdpConfig: $androidSdpConfig)';
-  }
-}
-
-class MacSdpConfig {
-  MacSdpConfig({
-    this.sdpPlistFile,
-    this.data,
-  });
-
-  String? sdpPlistFile;
-
-  Map<String, Object>? data;
-
-  List<Object?> _toList() {
-    return <Object?>[
-      sdpPlistFile,
-      data,
-    ];
-  }
-
-  Object encode() {
-    return _toList();
-  }
-
-  static MacSdpConfig decode(Object result) {
-    result as List<Object?>;
-    return MacSdpConfig(
-      sdpPlistFile: result[0] as String?,
-      data: (result[1] as Map<Object?, Object?>?)?.cast<String, Object>(),
-    );
-  }
-
-  @override
-  // ignore: avoid_equals_and_hash_code_on_mutable_classes
-  bool operator ==(Object other) {
-    if (other is! MacSdpConfig || other.runtimeType != runtimeType) {
-      return false;
-    }
-    if (identical(this, other)) {
-      return true;
-    }
-    return _deepEquals(sdpPlistFile, other.sdpPlistFile) &&
-        _deepEquals(data, other.data);
-  }
-
-  @override
-  // ignore: avoid_equals_and_hash_code_on_mutable_classes
-  int get hashCode => _deepHash(<Object?>[runtimeType, ..._toList()]);
-
-  @override
-  String toString() {
-    return 'MacSdpConfig(sdpPlistFile: $sdpPlistFile, data: $data)';
-  }
-}
-
-class AndroidSdpConfig {
-  AndroidSdpConfig({
-    required this.name,
-    required this.serviceDescription,
-    required this.provider,
-    required this.subclass,
-    required this.descriptors,
-  });
-
-  String name;
-
-  /// The service description advertised in the SDP record.
-  ///
-  /// Named `serviceDescription` because Pigeon's generated Swift classes
-  /// conform to `CustomStringConvertible`, so a field named `description`
-  /// collides with the generated `description` property.
-  String serviceDescription;
-
-  String provider;
-
-  int subclass;
-
-  Uint8List descriptors;
-
-  List<Object?> _toList() {
-    return <Object?>[
-      name,
-      serviceDescription,
-      provider,
-      subclass,
-      descriptors,
-    ];
-  }
-
-  Object encode() {
-    return _toList();
-  }
-
-  static AndroidSdpConfig decode(Object result) {
-    result as List<Object?>;
-    return AndroidSdpConfig(
-      name: result[0]! as String,
-      serviceDescription: result[1]! as String,
-      provider: result[2]! as String,
-      subclass: result[3]! as int,
-      descriptors: result[4]! as Uint8List,
-    );
-  }
-
-  @override
-  // ignore: avoid_equals_and_hash_code_on_mutable_classes
-  bool operator ==(Object other) {
-    if (other is! AndroidSdpConfig || other.runtimeType != runtimeType) {
-      return false;
-    }
-    if (identical(this, other)) {
-      return true;
-    }
-    return _deepEquals(name, other.name) &&
-        _deepEquals(serviceDescription, other.serviceDescription) &&
-        _deepEquals(provider, other.provider) &&
-        _deepEquals(subclass, other.subclass) &&
-        _deepEquals(descriptors, other.descriptors);
-  }
-
-  @override
-  // ignore: avoid_equals_and_hash_code_on_mutable_classes
-  int get hashCode => _deepHash(<Object?>[runtimeType, ..._toList()]);
-
-  @override
-  String toString() {
-    return 'AndroidSdpConfig(name: $name, serviceDescription: $serviceDescription, provider: $provider, subclass: $subclass, descriptors: $descriptors)';
-  }
-}
-
 class _PigeonCodec extends StandardMessageCodec {
   const _PigeonCodec();
   @override
@@ -355,15 +176,6 @@ class _PigeonCodec extends StandardMessageCodec {
       writeValue(buffer, value.index);
     } else if (value is ReportReply) {
       buffer.putUint8(130);
-      writeValue(buffer, value.encode());
-    } else if (value is SdpConfig) {
-      buffer.putUint8(131);
-      writeValue(buffer, value.encode());
-    } else if (value is MacSdpConfig) {
-      buffer.putUint8(132);
-      writeValue(buffer, value.encode());
-    } else if (value is AndroidSdpConfig) {
-      buffer.putUint8(133);
       writeValue(buffer, value.encode());
     } else {
       super.writeValue(buffer, value);
@@ -378,12 +190,6 @@ class _PigeonCodec extends StandardMessageCodec {
         return value == null ? null : ReportType.values[value];
       case 130:
         return ReportReply.decode(readValue(buffer)!);
-      case 131:
-        return SdpConfig.decode(readValue(buffer)!);
-      case 132:
-        return MacSdpConfig.decode(readValue(buffer)!);
-      case 133:
-        return AndroidSdpConfig.decode(readValue(buffer)!);
       default:
         return super.readValueOfType(type, buffer);
     }
@@ -406,25 +212,6 @@ class BluetoothHidManagerPlatformChannel {
   static const MessageCodec<Object?> pigeonChannelCodec = _PigeonCodec();
 
   final String pigeonVar_messageChannelSuffix;
-
-  Future<void> setupSdp(SdpConfig config) async {
-    final pigeonVar_channelName =
-        'dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerPlatformChannel.setupSdp$pigeonVar_messageChannelSuffix';
-    final pigeonVar_channel = BasicMessageChannel<Object?>(
-      pigeonVar_channelName,
-      pigeonChannelCodec,
-      binaryMessenger: pigeonVar_binaryMessenger,
-    );
-    final Future<Object?> pigeonVar_sendFuture =
-        pigeonVar_channel.send(<Object?>[config]);
-    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
-
-    _extractReplyValueOrThrow(
-      pigeonVar_replyList,
-      pigeonVar_channelName,
-      isNullValid: true,
-    );
-  }
 
   Future<void> closeSdp() async {
     final pigeonVar_channelName =

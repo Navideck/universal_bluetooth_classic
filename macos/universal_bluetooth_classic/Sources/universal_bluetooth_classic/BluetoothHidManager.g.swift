@@ -216,146 +216,6 @@ struct ReportReply: Hashable, CustomStringConvertible {
   }
 }
 
-/// Generated class from Pigeon that represents data sent in messages.
-struct SdpConfig: Hashable, CustomStringConvertible {
-  var macSdpConfig: MacSdpConfig? = nil
-  var androidSdpConfig: AndroidSdpConfig? = nil
-
-
-  // swift-format-ignore: AlwaysUseLowerCamelCase
-  static func fromList(_ pigeonVar_list: [Any?]) -> SdpConfig? {
-    let macSdpConfig: MacSdpConfig? = nilOrValue(pigeonVar_list[0])
-    let androidSdpConfig: AndroidSdpConfig? = nilOrValue(pigeonVar_list[1])
-
-    return SdpConfig(
-      macSdpConfig: macSdpConfig,
-      androidSdpConfig: androidSdpConfig
-    )
-  }
-  func toList() -> [Any?] {
-    return [
-      macSdpConfig,
-      androidSdpConfig,
-    ]
-  }
-  static func == (lhs: SdpConfig, rhs: SdpConfig) -> Bool {
-    if Swift.type(of: lhs) != Swift.type(of: rhs) {
-      return false
-    }
-    return BluetoothHidManagerPigeonInternal.deepEquals(lhs.macSdpConfig, rhs.macSdpConfig) && BluetoothHidManagerPigeonInternal.deepEquals(lhs.androidSdpConfig, rhs.androidSdpConfig)
-  }
-
-  func hash(into hasher: inout Hasher) {
-    hasher.combine("SdpConfig")
-    BluetoothHidManagerPigeonInternal.deepHash(value: macSdpConfig, hasher: &hasher)
-    BluetoothHidManagerPigeonInternal.deepHash(value: androidSdpConfig, hasher: &hasher)
-  }
-
-  public var description: String {
-    return "SdpConfig(macSdpConfig: \(String(describing: macSdpConfig)), androidSdpConfig: \(String(describing: androidSdpConfig)))"
-  }
-}
-
-/// Generated class from Pigeon that represents data sent in messages.
-struct MacSdpConfig: Hashable, CustomStringConvertible {
-  var sdpPlistFile: String? = nil
-  var data: [String: Any]? = nil
-
-
-  // swift-format-ignore: AlwaysUseLowerCamelCase
-  static func fromList(_ pigeonVar_list: [Any?]) -> MacSdpConfig? {
-    let sdpPlistFile: String? = nilOrValue(pigeonVar_list[0])
-    let data: [String: Any]? = nilOrValue(pigeonVar_list[1])
-
-    return MacSdpConfig(
-      sdpPlistFile: sdpPlistFile,
-      data: data
-    )
-  }
-  func toList() -> [Any?] {
-    return [
-      sdpPlistFile,
-      data,
-    ]
-  }
-  static func == (lhs: MacSdpConfig, rhs: MacSdpConfig) -> Bool {
-    if Swift.type(of: lhs) != Swift.type(of: rhs) {
-      return false
-    }
-    return BluetoothHidManagerPigeonInternal.deepEquals(lhs.sdpPlistFile, rhs.sdpPlistFile) && BluetoothHidManagerPigeonInternal.deepEquals(lhs.data, rhs.data)
-  }
-
-  func hash(into hasher: inout Hasher) {
-    hasher.combine("MacSdpConfig")
-    BluetoothHidManagerPigeonInternal.deepHash(value: sdpPlistFile, hasher: &hasher)
-    BluetoothHidManagerPigeonInternal.deepHash(value: data, hasher: &hasher)
-  }
-
-  public var description: String {
-    return "MacSdpConfig(sdpPlistFile: \(String(describing: sdpPlistFile)), data: \(String(describing: data)))"
-  }
-}
-
-/// Generated class from Pigeon that represents data sent in messages.
-struct AndroidSdpConfig: Hashable, CustomStringConvertible {
-  var name: String
-  /// The service description advertised in the SDP record.
-  ///
-  /// Named `serviceDescription` because Pigeon's generated Swift classes
-  /// conform to `CustomStringConvertible`, so a field named `description`
-  /// collides with the generated `description` property.
-  var serviceDescription: String
-  var provider: String
-  var subclass: Int64
-  var descriptors: FlutterStandardTypedData
-
-
-  // swift-format-ignore: AlwaysUseLowerCamelCase
-  static func fromList(_ pigeonVar_list: [Any?]) -> AndroidSdpConfig? {
-    let name = pigeonVar_list[0] as! String
-    let serviceDescription = pigeonVar_list[1] as! String
-    let provider = pigeonVar_list[2] as! String
-    let subclass = pigeonVar_list[3] as! Int64
-    let descriptors = pigeonVar_list[4] as! FlutterStandardTypedData
-
-    return AndroidSdpConfig(
-      name: name,
-      serviceDescription: serviceDescription,
-      provider: provider,
-      subclass: subclass,
-      descriptors: descriptors
-    )
-  }
-  func toList() -> [Any?] {
-    return [
-      name,
-      serviceDescription,
-      provider,
-      subclass,
-      descriptors,
-    ]
-  }
-  static func == (lhs: AndroidSdpConfig, rhs: AndroidSdpConfig) -> Bool {
-    if Swift.type(of: lhs) != Swift.type(of: rhs) {
-      return false
-    }
-    return BluetoothHidManagerPigeonInternal.deepEquals(lhs.name, rhs.name) && BluetoothHidManagerPigeonInternal.deepEquals(lhs.serviceDescription, rhs.serviceDescription) && BluetoothHidManagerPigeonInternal.deepEquals(lhs.provider, rhs.provider) && BluetoothHidManagerPigeonInternal.deepEquals(lhs.subclass, rhs.subclass) && BluetoothHidManagerPigeonInternal.deepEquals(lhs.descriptors, rhs.descriptors)
-  }
-
-  func hash(into hasher: inout Hasher) {
-    hasher.combine("AndroidSdpConfig")
-    BluetoothHidManagerPigeonInternal.deepHash(value: name, hasher: &hasher)
-    BluetoothHidManagerPigeonInternal.deepHash(value: serviceDescription, hasher: &hasher)
-    BluetoothHidManagerPigeonInternal.deepHash(value: provider, hasher: &hasher)
-    BluetoothHidManagerPigeonInternal.deepHash(value: subclass, hasher: &hasher)
-    BluetoothHidManagerPigeonInternal.deepHash(value: descriptors, hasher: &hasher)
-  }
-
-  public var description: String {
-    return "AndroidSdpConfig(name: \(String(describing: name)), serviceDescription: \(String(describing: serviceDescription)), provider: \(String(describing: provider)), subclass: \(String(describing: subclass)), descriptors: \(String(describing: descriptors)))"
-  }
-}
-
 private class BluetoothHidManagerPigeonCodecReader: FlutterStandardReader {
   override func readValue(ofType type: UInt8) -> Any? {
     switch type {
@@ -367,12 +227,6 @@ private class BluetoothHidManagerPigeonCodecReader: FlutterStandardReader {
       return nil
     case 130:
       return ReportReply.fromList(self.readValue() as! [Any?])
-    case 131:
-      return SdpConfig.fromList(self.readValue() as! [Any?])
-    case 132:
-      return MacSdpConfig.fromList(self.readValue() as! [Any?])
-    case 133:
-      return AndroidSdpConfig.fromList(self.readValue() as! [Any?])
     default:
       return super.readValue(ofType: type)
     }
@@ -386,15 +240,6 @@ private class BluetoothHidManagerPigeonCodecWriter: FlutterStandardWriter {
       super.writeValue(value.rawValue)
     } else if let value = value as? ReportReply {
       super.writeByte(130)
-      super.writeValue(value.toList())
-    } else if let value = value as? SdpConfig {
-      super.writeByte(131)
-      super.writeValue(value.toList())
-    } else if let value = value as? MacSdpConfig {
-      super.writeByte(132)
-      super.writeValue(value.toList())
-    } else if let value = value as? AndroidSdpConfig {
-      super.writeByte(133)
       super.writeValue(value.toList())
     } else {
       super.writeValue(value)
@@ -421,7 +266,6 @@ class BluetoothHidManagerPigeonCodec: FlutterStandardMessageCodec, @unchecked Se
 ///
 /// Generated protocol from Pigeon that represents a handler of messages from Flutter.
 protocol BluetoothHidManagerPlatformChannel {
-  func setupSdp(config: SdpConfig) throws
   func closeSdp() throws
   func connect(deviceId: String) async throws
   func disconnect(deviceId: String) async throws
@@ -434,21 +278,6 @@ class BluetoothHidManagerPlatformChannelSetup {
   /// Sets up an instance of `BluetoothHidManagerPlatformChannel` to handle messages through the `binaryMessenger`.
   static func setUp(binaryMessenger: FlutterBinaryMessenger, api: BluetoothHidManagerPlatformChannel?, messageChannelSuffix: String = "") {
     let channelSuffix = messageChannelSuffix.count > 0 ? ".\(messageChannelSuffix)" : ""
-    let setupSdpChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerPlatformChannel.setupSdp\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
-    if let api = api {
-      setupSdpChannel.setMessageHandler { message, reply in
-        let args = message as! [Any?]
-        let configArg = args[0] as! SdpConfig
-        do {
-          try api.setupSdp(config: configArg)
-          reply(wrapResult(nil))
-        } catch {
-          reply(wrapError(error))
-        }
-      }
-    } else {
-      setupSdpChannel.setMessageHandler(nil)
-    }
     let closeSdpChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerPlatformChannel.closeSdp\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
     if let api = api {
       closeSdpChannel.setMessageHandler { _, reply in

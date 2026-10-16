@@ -241,148 +241,6 @@ data class ReportReply (
     return "ReportReply(error=$error, data=${data?.contentToString()})"
   }
 }
-
-/** Generated class from Pigeon that represents data sent in messages. */
-data class SdpConfig (
-  val macSdpConfig: MacSdpConfig? = null,
-  val androidSdpConfig: AndroidSdpConfig? = null
-)
- {
-  companion object {
-    fun fromList(pigeonVar_list: List<Any?>): SdpConfig {
-      val macSdpConfig = pigeonVar_list[0] as MacSdpConfig?
-      val androidSdpConfig = pigeonVar_list[1] as AndroidSdpConfig?
-      return SdpConfig(macSdpConfig, androidSdpConfig)
-    }
-  }
-  fun toList(): List<Any?> {
-    return listOf(
-      macSdpConfig,
-      androidSdpConfig,
-    )
-  }
-  override fun equals(other: Any?): Boolean {
-    if (other == null || other.javaClass != javaClass) {
-      return false
-    }
-    if (this === other) {
-      return true
-    }
-    val other = other as SdpConfig
-    return BluetoothHidManagerPigeonUtils.deepEquals(this.macSdpConfig, other.macSdpConfig) && BluetoothHidManagerPigeonUtils.deepEquals(this.androidSdpConfig, other.androidSdpConfig)
-  }
-
-  override fun hashCode(): Int {
-    var result = javaClass.hashCode()
-    result = 31 * result + BluetoothHidManagerPigeonUtils.deepHash(this.macSdpConfig)
-    result = 31 * result + BluetoothHidManagerPigeonUtils.deepHash(this.androidSdpConfig)
-    return result
-  }
-  override fun toString(): String {
-    return "SdpConfig(macSdpConfig=$macSdpConfig, androidSdpConfig=$androidSdpConfig)"
-  }
-}
-
-/** Generated class from Pigeon that represents data sent in messages. */
-data class MacSdpConfig (
-  val sdpPlistFile: String? = null,
-  val data: Map<String, Any>? = null
-)
- {
-  companion object {
-    fun fromList(pigeonVar_list: List<Any?>): MacSdpConfig {
-      val sdpPlistFile = pigeonVar_list[0] as String?
-      val data = pigeonVar_list[1] as Map<String, Any>?
-      return MacSdpConfig(sdpPlistFile, data)
-    }
-  }
-  fun toList(): List<Any?> {
-    return listOf(
-      sdpPlistFile,
-      data,
-    )
-  }
-  override fun equals(other: Any?): Boolean {
-    if (other == null || other.javaClass != javaClass) {
-      return false
-    }
-    if (this === other) {
-      return true
-    }
-    val other = other as MacSdpConfig
-    return BluetoothHidManagerPigeonUtils.deepEquals(this.sdpPlistFile, other.sdpPlistFile) && BluetoothHidManagerPigeonUtils.deepEquals(this.data, other.data)
-  }
-
-  override fun hashCode(): Int {
-    var result = javaClass.hashCode()
-    result = 31 * result + BluetoothHidManagerPigeonUtils.deepHash(this.sdpPlistFile)
-    result = 31 * result + BluetoothHidManagerPigeonUtils.deepHash(this.data)
-    return result
-  }
-  override fun toString(): String {
-    return "MacSdpConfig(sdpPlistFile=$sdpPlistFile, data=$data)"
-  }
-}
-
-/** Generated class from Pigeon that represents data sent in messages. */
-data class AndroidSdpConfig (
-  val name: String,
-  /**
-   * The service description advertised in the SDP record.
-   *
-   * Named `serviceDescription` because Pigeon's generated Swift classes
-   * conform to `CustomStringConvertible`, so a field named `description`
-   * collides with the generated `description` property.
-   */
-  val serviceDescription: String,
-  val provider: String,
-  val subclass: Long,
-  val descriptors: ByteArray
-)
- {
-  companion object {
-    fun fromList(pigeonVar_list: List<Any?>): AndroidSdpConfig {
-      val name = pigeonVar_list[0] as String
-      val serviceDescription = pigeonVar_list[1] as String
-      val provider = pigeonVar_list[2] as String
-      val subclass = pigeonVar_list[3] as Long
-      val descriptors = pigeonVar_list[4] as ByteArray
-      return AndroidSdpConfig(name, serviceDescription, provider, subclass, descriptors)
-    }
-  }
-  fun toList(): List<Any?> {
-    return listOf(
-      name,
-      serviceDescription,
-      provider,
-      subclass,
-      descriptors,
-    )
-  }
-  override fun equals(other: Any?): Boolean {
-    if (other == null || other.javaClass != javaClass) {
-      return false
-    }
-    if (this === other) {
-      return true
-    }
-    val other = other as AndroidSdpConfig
-    return BluetoothHidManagerPigeonUtils.deepEquals(this.name, other.name) && BluetoothHidManagerPigeonUtils.deepEquals(this.serviceDescription, other.serviceDescription) && BluetoothHidManagerPigeonUtils.deepEquals(this.provider, other.provider) && BluetoothHidManagerPigeonUtils.deepEquals(this.subclass, other.subclass) && BluetoothHidManagerPigeonUtils.deepEquals(this.descriptors, other.descriptors)
-  }
-
-  override fun hashCode(): Int {
-    var result = javaClass.hashCode()
-    result = 31 * result + BluetoothHidManagerPigeonUtils.deepHash(this.name)
-    result = 31 * result + BluetoothHidManagerPigeonUtils.deepHash(this.serviceDescription)
-    result = 31 * result + BluetoothHidManagerPigeonUtils.deepHash(this.provider)
-    result = 31 * result + BluetoothHidManagerPigeonUtils.deepHash(this.subclass)
-    result = 31 * result + BluetoothHidManagerPigeonUtils.deepHash(this.descriptors)
-    return result
-  }
-  override fun toString(): String {
-    return "AndroidSdpConfig(name=$name, serviceDescription=$serviceDescription, provider=$provider, subclass=$subclass, descriptors=${descriptors.contentToString()})"
-  }
-}
 private open class BluetoothHidManagerPigeonCodec : StandardMessageCodec() {
   override fun readValueOfType(type: Byte, buffer: ByteBuffer): Any? {
     return when (type) {
@@ -394,21 +252,6 @@ private open class BluetoothHidManagerPigeonCodec : StandardMessageCodec() {
       130.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
           ReportReply.fromList(it)
-        }
-      }
-      131.toByte() -> {
-        return (readValue(buffer) as? List<Any?>)?.let {
-          SdpConfig.fromList(it)
-        }
-      }
-      132.toByte() -> {
-        return (readValue(buffer) as? List<Any?>)?.let {
-          MacSdpConfig.fromList(it)
-        }
-      }
-      133.toByte() -> {
-        return (readValue(buffer) as? List<Any?>)?.let {
-          AndroidSdpConfig.fromList(it)
         }
       }
       else -> super.readValueOfType(type, buffer)
@@ -424,18 +267,6 @@ private open class BluetoothHidManagerPigeonCodec : StandardMessageCodec() {
         stream.write(130)
         writeValue(stream, value.toList())
       }
-      is SdpConfig -> {
-        stream.write(131)
-        writeValue(stream, value.toList())
-      }
-      is MacSdpConfig -> {
-        stream.write(132)
-        writeValue(stream, value.toList())
-      }
-      is AndroidSdpConfig -> {
-        stream.write(133)
-        writeValue(stream, value.toList())
-      }
       else -> super.writeValue(stream, value)
     }
   }
@@ -448,7 +279,6 @@ private open class BluetoothHidManagerPigeonCodec : StandardMessageCodec() {
  * Generated interface from Pigeon that represents a handler of messages from Flutter.
  */
 interface BluetoothHidManagerPlatformChannel {
-  fun setupSdp(config: SdpConfig)
   fun closeSdp()
   suspend fun connect(deviceId: String)
   suspend fun disconnect(deviceId: String)
@@ -463,24 +293,6 @@ interface BluetoothHidManagerPlatformChannel {
     @JvmOverloads
     fun setUp(binaryMessenger: BinaryMessenger, api: BluetoothHidManagerPlatformChannel?, messageChannelSuffix: String = "") {
       val separatedMessageChannelSuffix = if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
-      run {
-        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerPlatformChannel.setupSdp$separatedMessageChannelSuffix", codec)
-        if (api != null) {
-          channel.setMessageHandler { message, reply ->
-            val args = message as List<Any?>
-            val configArg = args[0] as SdpConfig
-            val wrapped: List<Any?> = try {
-              api.setupSdp(configArg)
-              listOf(null)
-            } catch (exception: Throwable) {
-              BluetoothHidManagerPigeonUtils.wrapError(exception)
-            }
-            reply.reply(wrapped)
-          }
-        } else {
-          channel.setMessageHandler(null)
-        }
-      }
       run {
         val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerPlatformChannel.closeSdp$separatedMessageChannelSuffix", codec)
         if (api != null) {
