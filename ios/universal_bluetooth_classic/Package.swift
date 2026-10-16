@@ -4,7 +4,7 @@ import PackageDescription
 
 let package = Package(
     name: "universal_bluetooth_classic",
-    platforms: [.iOS("13.0")],
+    platforms: [.iOS("12.0")],
     products: [
         .library(
             name: "universal-bluetooth-classic",

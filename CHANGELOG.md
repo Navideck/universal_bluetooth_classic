@@ -16,12 +16,11 @@
 * Note that adding the optional `transport` and `serviceUuid` parameters to
   `connect` is a source-breaking change for custom `UniversalBluetoothInterface`
   implementations.
-* Migrate the Pigeon definitions and generated bindings to Pigeon 29.0.10. The
-  generated Kotlin and Swift host APIs and Flutter callbacks are now suspending
-  / `async`, so the hand-written native implementations were updated to match.
-  Android now depends on `kotlinx-coroutines-android`, and the minimum iOS
-  deployment target is raised to 13.0 because the generated Swift uses Swift
-  concurrency.
+* Migrate the Pigeon definitions and generated bindings to Pigeon 29.0.10.
+  Because this plugin targets long-established platform APIs, the host and
+  callback methods use Pigeon's `@asyncCallback` style: the native side stays
+  callback-based, so no Kotlin coroutines dependency and no Swift concurrency
+  (and no iOS deployment-target bump) are required.
 * Replace the `static` callback fields on `UniversalBluetoothInterface` with a
   per-implementation `UniversalBluetoothCallbacks` registry. The
   `UniversalBluetooth.onXxx` setters are unchanged, but a custom

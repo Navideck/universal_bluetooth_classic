@@ -27,25 +27,27 @@ import 'package:pigeon/pigeon.dart';
 @HostApi()
 abstract class BluetoothSerialPlatformChannel {
   /// Opens an RFCOMM/SPP connection to [deviceId] for the service [serviceUuid].
-  @async
+  @asyncCallback
   void connect(String deviceId, String serviceUuid);
 
   /// Closes the RFCOMM/SPP connection to [deviceId].
-  @async
+  @asyncCallback
   void disconnect(String deviceId);
 
   /// Writes [data] to the RFCOMM/SPP connection to [deviceId].
   ///
   /// Asynchronous so the host can perform the (potentially blocking) socket
   /// write off the platform thread.
-  @async
+  @asyncCallback
   void send(String deviceId, Uint8List data);
 }
 
 /// Native -> Flutter
 @FlutterApi()
 abstract class BluetoothSerialCallbackChannel {
+  @asyncCallback
   void onConnectionStateChanged(String deviceId, bool connected);
 
+  @asyncCallback
   void onData(String deviceId, Uint8List data);
 }

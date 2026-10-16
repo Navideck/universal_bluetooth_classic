@@ -87,14 +87,14 @@ class BluetoothSerialManagerPigeonCodec: FlutterStandardMessageCodec, @unchecked
 /// Generated protocol from Pigeon that represents a handler of messages from Flutter.
 protocol BluetoothSerialPlatformChannel {
   /// Opens an RFCOMM/SPP connection to [deviceId] for the service [serviceUuid].
-  func connect(deviceId: String, serviceUuid: String) async throws
+  func connect(deviceId: String, serviceUuid: String, completion: @escaping (Result<Void, Error>) -> Void)
   /// Closes the RFCOMM/SPP connection to [deviceId].
-  func disconnect(deviceId: String) async throws
+  func disconnect(deviceId: String, completion: @escaping (Result<Void, Error>) -> Void)
   /// Writes [data] to the RFCOMM/SPP connection to [deviceId].
   ///
   /// Asynchronous so the host can perform the (potentially blocking) socket
   /// write off the platform thread.
-  func send(deviceId: String, data: FlutterStandardTypedData) async throws
+  func send(deviceId: String, data: FlutterStandardTypedData, completion: @escaping (Result<Void, Error>) -> Void)
 }
 
 /// Generated setup class from Pigeon to handle messages through the `binaryMessenger`.
@@ -110,11 +110,11 @@ class BluetoothSerialPlatformChannelSetup {
         let args = message as! [Any?]
         let deviceIdArg = args[0] as! String
         let serviceUuidArg = args[1] as! String
-        Task { @MainActor in
-          do {
-            try await api.connect(deviceId: deviceIdArg, serviceUuid: serviceUuidArg)
+        api.connect(deviceId: deviceIdArg, serviceUuid: serviceUuidArg) { result in
+          switch result {
+          case .success:
             reply(wrapResult(nil))
-          } catch {
+          case .failure(let error):
             reply(wrapError(error))
           }
         }
@@ -128,11 +128,11 @@ class BluetoothSerialPlatformChannelSetup {
       disconnectChannel.setMessageHandler { message, reply in
         let args = message as! [Any?]
         let deviceIdArg = args[0] as! String
-        Task { @MainActor in
-          do {
-            try await api.disconnect(deviceId: deviceIdArg)
+        api.disconnect(deviceId: deviceIdArg) { result in
+          switch result {
+          case .success:
             reply(wrapResult(nil))
-          } catch {
+          case .failure(let error):
             reply(wrapError(error))
           }
         }
@@ -150,11 +150,11 @@ class BluetoothSerialPlatformChannelSetup {
         let args = message as! [Any?]
         let deviceIdArg = args[0] as! String
         let dataArg = args[1] as! FlutterStandardTypedData
-        Task { @MainActor in
-          do {
-            try await api.send(deviceId: deviceIdArg, data: dataArg)
+        api.send(deviceId: deviceIdArg, data: dataArg) { result in
+          switch result {
+          case .success:
             reply(wrapResult(nil))
-          } catch {
+          case .failure(let error):
             reply(wrapError(error))
           }
         }
@@ -169,8 +169,8 @@ class BluetoothSerialPlatformChannelSetup {
 ///
 /// Generated protocol from Pigeon that represents Flutter messages that can be called from Swift.
 protocol BluetoothSerialCallbackChannelProtocol {
-  @MainActor func onConnectionStateChanged(deviceId deviceIdArg: String, connected connectedArg: Bool) async throws
-  @MainActor func onData(deviceId deviceIdArg: String, data dataArg: FlutterStandardTypedData) async throws
+  func onConnectionStateChanged(deviceId deviceIdArg: String, connected connectedArg: Bool, completion: @escaping (Result<Void, PigeonError>) -> Void)
+  func onData(deviceId deviceIdArg: String, data dataArg: FlutterStandardTypedData, completion: @escaping (Result<Void, PigeonError>) -> Void)
 }
 class BluetoothSerialCallbackChannel: BluetoothSerialCallbackChannelProtocol {
   private let binaryMessenger: FlutterBinaryMessenger
@@ -182,43 +182,39 @@ class BluetoothSerialCallbackChannel: BluetoothSerialCallbackChannelProtocol {
   var codec: BluetoothSerialManagerPigeonCodec {
     return BluetoothSerialManagerPigeonCodec.shared
   }
-  @MainActor func onConnectionStateChanged(deviceId deviceIdArg: String, connected connectedArg: Bool) async throws {
-    return try await withCheckedThrowingContinuation { continuation in
-      let channelName: String = "dev.flutter.pigeon.universal_bluetooth_classic.BluetoothSerialCallbackChannel.onConnectionStateChanged\(messageChannelSuffix)"
-      let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
-      channel.sendMessage([deviceIdArg, connectedArg] as [Any?]) { response in
-        guard let listResponse = response as? [Any?] else {
-          continuation.resume(throwing: createConnectionError(withChannelName: channelName))
-          return
-        }
-        if listResponse.count > 1 {
-          let code: String = listResponse[0] as! String
-          let message: String? = nilOrValue(listResponse[1])
-          let details: String? = nilOrValue(listResponse[2])
-          continuation.resume(throwing: PigeonError(code: code, message: message, details: details))
-        } else {
-          continuation.resume()
-        }
+  func onConnectionStateChanged(deviceId deviceIdArg: String, connected connectedArg: Bool, completion: @escaping (Result<Void, PigeonError>) -> Void) {
+    let channelName: String = "dev.flutter.pigeon.universal_bluetooth_classic.BluetoothSerialCallbackChannel.onConnectionStateChanged\(messageChannelSuffix)"
+    let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
+    channel.sendMessage([deviceIdArg, connectedArg] as [Any?]) { response in
+      guard let listResponse = response as? [Any?] else {
+        completion(.failure(createConnectionError(withChannelName: channelName)))
+        return
+      }
+      if listResponse.count > 1 {
+        let code: String = listResponse[0] as! String
+        let message: String? = nilOrValue(listResponse[1])
+        let details: String? = nilOrValue(listResponse[2])
+        completion(.failure(PigeonError(code: code, message: message, details: details)))
+      } else {
+        completion(.success(()))
       }
     }
   }
-  @MainActor func onData(deviceId deviceIdArg: String, data dataArg: FlutterStandardTypedData) async throws {
-    return try await withCheckedThrowingContinuation { continuation in
-      let channelName: String = "dev.flutter.pigeon.universal_bluetooth_classic.BluetoothSerialCallbackChannel.onData\(messageChannelSuffix)"
-      let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
-      channel.sendMessage([deviceIdArg, dataArg] as [Any?]) { response in
-        guard let listResponse = response as? [Any?] else {
-          continuation.resume(throwing: createConnectionError(withChannelName: channelName))
-          return
-        }
-        if listResponse.count > 1 {
-          let code: String = listResponse[0] as! String
-          let message: String? = nilOrValue(listResponse[1])
-          let details: String? = nilOrValue(listResponse[2])
-          continuation.resume(throwing: PigeonError(code: code, message: message, details: details))
-        } else {
-          continuation.resume()
-        }
+  func onData(deviceId deviceIdArg: String, data dataArg: FlutterStandardTypedData, completion: @escaping (Result<Void, PigeonError>) -> Void) {
+    let channelName: String = "dev.flutter.pigeon.universal_bluetooth_classic.BluetoothSerialCallbackChannel.onData\(messageChannelSuffix)"
+    let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
+    channel.sendMessage([deviceIdArg, dataArg] as [Any?]) { response in
+      guard let listResponse = response as? [Any?] else {
+        completion(.failure(createConnectionError(withChannelName: channelName)))
+        return
+      }
+      if listResponse.count > 1 {
+        let code: String = listResponse[0] as! String
+        let message: String? = nilOrValue(listResponse[1])
+        let details: String? = nilOrValue(listResponse[2])
+        completion(.failure(PigeonError(code: code, message: message, details: details)))
+      } else {
+        completion(.success(()))
       }
     }
   }

@@ -152,12 +152,12 @@ class _AccessoryCallbackHandler extends FlutterAccessoryCallbackChannel {
   final AccessoryManager _owner;
 
   @override
-  void onDeviceDiscover(BluetoothDevice device) {
+  Future<void> onDeviceDiscover(BluetoothDevice device) async {
     _owner.callbacks.onDeviceDiscovered?.call(device);
   }
 
   @override
-  void onDeviceRemoved(BluetoothDevice device) {
+  Future<void> onDeviceRemoved(BluetoothDevice device) async {
     _owner.callbacks.onDeviceRemoved?.call(device);
   }
 }
@@ -168,7 +168,7 @@ class _HidCallbackHandler extends BluetoothHidManagerCallbackChannel {
   final AccessoryManager _owner;
 
   @override
-  void onConnectionStateChanged(String deviceId, bool connected) {
+  Future<void> onConnectionStateChanged(String deviceId, bool connected) async {
     _owner.callbacks.onConnectionStateChanged?.call(
       BluetoothConnectionEvent(
         identifier: deviceId,
@@ -181,17 +181,21 @@ class _HidCallbackHandler extends BluetoothHidManagerCallbackChannel {
   }
 
   @override
-  void onData(String deviceId, Uint8List data) {
+  Future<void> onData(String deviceId, Uint8List data) async {
     _owner.callbacks.onData?.call(deviceId, data);
   }
 
   @override
-  ReportReply? onGetReport(String deviceId, ReportType type, int bufferSize) {
+  Future<ReportReply?> onGetReport(
+    String deviceId,
+    ReportType type,
+    int bufferSize,
+  ) async {
     return _owner.callbacks.onGetReport?.call(deviceId, type, bufferSize);
   }
 
   @override
-  void onSdpServiceRegistrationUpdate(bool registered) {
+  Future<void> onSdpServiceRegistrationUpdate(bool registered) async {
     _owner.callbacks.onSdpServiceRegistrationUpdate?.call(registered);
   }
 }
@@ -202,7 +206,7 @@ class _SerialCallbackHandler extends BluetoothSerialCallbackChannel {
   final AccessoryManager _owner;
 
   @override
-  void onConnectionStateChanged(String deviceId, bool connected) {
+  Future<void> onConnectionStateChanged(String deviceId, bool connected) async {
     _owner.callbacks.onConnectionStateChanged?.call(
       BluetoothConnectionEvent(
         identifier: deviceId,
@@ -215,7 +219,7 @@ class _SerialCallbackHandler extends BluetoothSerialCallbackChannel {
   }
 
   @override
-  void onData(String deviceId, Uint8List data) {
+  Future<void> onData(String deviceId, Uint8List data) async {
     _owner.callbacks.onData?.call(deviceId, data);
   }
 }

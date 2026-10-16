@@ -13,12 +13,6 @@ import io.flutter.plugin.common.StandardMethodCodec
 import io.flutter.plugin.common.StandardMessageCodec
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
 private object UniversalBluetoothPigeonUtils {
 
   fun createConnectionError(channelName: String): FlutterError {
@@ -369,13 +363,13 @@ private open class UniversalBluetoothPigeonCodec : StandardMessageCodec() {
  * Generated interface from Pigeon that represents a handler of messages from Flutter.
  */
 interface FlutterAccessoryPlatformChannel {
-  suspend fun showBluetoothAccessoryPicker(withNames: List<String>)
+  fun showBluetoothAccessoryPicker(withNames: List<String>, callback: (Result<Unit>) -> Unit)
   fun startScan()
   fun stopScan()
   fun isScanning(): Boolean
   fun getPairedDevices(): List<BluetoothDevice>
-  suspend fun pair(address: String): Boolean
-  suspend fun unpair(address: String)
+  fun pair(address: String, callback: (Result<Boolean>) -> Unit)
+  fun unpair(address: String, callback: (Result<Unit>) -> Unit)
 
   companion object {
     /** The codec used by FlutterAccessoryPlatformChannel. */
@@ -392,14 +386,13 @@ interface FlutterAccessoryPlatformChannel {
           channel.setMessageHandler { message, reply ->
             val args = message as List<Any?>
             val withNamesArg = args[0] as List<String>
-            CoroutineScope(Dispatchers.Main).launch {
-              val wrapped: List<Any?> = try {
-                api.showBluetoothAccessoryPicker(withNamesArg)
-                listOf(null)
-              } catch (exception: Throwable) {
-                UniversalBluetoothPigeonUtils.wrapError(exception)
+            api.showBluetoothAccessoryPicker(withNamesArg) { result: Result<Unit> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(UniversalBluetoothPigeonUtils.wrapError(error))
+              } else {
+                reply.reply(UniversalBluetoothPigeonUtils.wrapResult(null))
               }
-              reply.reply(wrapped)
             }
           }
         } else {
@@ -474,13 +467,14 @@ interface FlutterAccessoryPlatformChannel {
           channel.setMessageHandler { message, reply ->
             val args = message as List<Any?>
             val addressArg = args[0] as String
-            CoroutineScope(Dispatchers.Main).launch {
-              val wrapped: List<Any?> = try {
-                listOf(api.pair(addressArg))
-              } catch (exception: Throwable) {
-                UniversalBluetoothPigeonUtils.wrapError(exception)
+            api.pair(addressArg) { result: Result<Boolean> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(UniversalBluetoothPigeonUtils.wrapError(error))
+              } else {
+                val data = result.getOrNull()
+                reply.reply(UniversalBluetoothPigeonUtils.wrapResult(data))
               }
-              reply.reply(wrapped)
             }
           }
         } else {
@@ -493,14 +487,13 @@ interface FlutterAccessoryPlatformChannel {
           channel.setMessageHandler { message, reply ->
             val args = message as List<Any?>
             val addressArg = args[0] as String
-            CoroutineScope(Dispatchers.Main).launch {
-              val wrapped: List<Any?> = try {
-                api.unpair(addressArg)
-                listOf(null)
-              } catch (exception: Throwable) {
-                UniversalBluetoothPigeonUtils.wrapError(exception)
+            api.unpair(addressArg) { result: Result<Unit> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(UniversalBluetoothPigeonUtils.wrapError(error))
+              } else {
+                reply.reply(UniversalBluetoothPigeonUtils.wrapResult(null))
               }
-              reply.reply(wrapped)
             }
           }
         } else {
@@ -522,42 +515,38 @@ class FlutterAccessoryCallbackChannel(private val binaryMessenger: BinaryMesseng
       UniversalBluetoothPigeonCodec()
     }
   }
-  suspend fun onDeviceDiscover(deviceArg: BluetoothDevice)
+  fun onDeviceDiscover(deviceArg: BluetoothDevice, callback: (Result<Unit>) -> Unit)
 {
     val separatedMessageChannelSuffix = if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
-    return suspendCancellableCoroutine { continuation ->
-      val channelName = "dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryCallbackChannel.onDeviceDiscover$separatedMessageChannelSuffix"
-      val channel = BasicMessageChannel<Any?>(binaryMessenger, channelName, codec)
-      channel.send(listOf(deviceArg)) {
-        if (it is List<*>) {
-          if (it.size > 1) {
-            continuation.resumeWithException(FlutterError(it[0] as String, it[1] as String, it[2] as String?))
-          } else {
-            continuation.resume(Unit)
-          }
+    val channelName = "dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryCallbackChannel.onDeviceDiscover$separatedMessageChannelSuffix"
+    val channel = BasicMessageChannel<Any?>(binaryMessenger, channelName, codec)
+    channel.send(listOf(deviceArg)) {
+      if (it is List<*>) {
+        if (it.size > 1) {
+          callback(Result.failure(FlutterError(it[0] as String, it[1] as String, it[2] as String?)))
         } else {
-          continuation.resumeWithException(UniversalBluetoothPigeonUtils.createConnectionError(channelName))
-        } 
-      }
+          callback(Result.success(Unit))
+        }
+      } else {
+        callback(Result.failure(UniversalBluetoothPigeonUtils.createConnectionError(channelName)))
+      } 
     }
   }
-  suspend fun onDeviceRemoved(deviceArg: BluetoothDevice)
+  fun onDeviceRemoved(deviceArg: BluetoothDevice, callback: (Result<Unit>) -> Unit)
 {
     val separatedMessageChannelSuffix = if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
-    return suspendCancellableCoroutine { continuation ->
-      val channelName = "dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryCallbackChannel.onDeviceRemoved$separatedMessageChannelSuffix"
-      val channel = BasicMessageChannel<Any?>(binaryMessenger, channelName, codec)
-      channel.send(listOf(deviceArg)) {
-        if (it is List<*>) {
-          if (it.size > 1) {
-            continuation.resumeWithException(FlutterError(it[0] as String, it[1] as String, it[2] as String?))
-          } else {
-            continuation.resume(Unit)
-          }
+    val channelName = "dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryCallbackChannel.onDeviceRemoved$separatedMessageChannelSuffix"
+    val channel = BasicMessageChannel<Any?>(binaryMessenger, channelName, codec)
+    channel.send(listOf(deviceArg)) {
+      if (it is List<*>) {
+        if (it.size > 1) {
+          callback(Result.failure(FlutterError(it[0] as String, it[1] as String, it[2] as String?)))
         } else {
-          continuation.resumeWithException(UniversalBluetoothPigeonUtils.createConnectionError(channelName))
-        } 
-      }
+          callback(Result.success(Unit))
+        }
+      } else {
+        callback(Result.failure(UniversalBluetoothPigeonUtils.createConnectionError(channelName)))
+      } 
     }
   }
 }

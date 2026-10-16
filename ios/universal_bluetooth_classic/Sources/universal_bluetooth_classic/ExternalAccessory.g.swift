@@ -309,10 +309,10 @@ class ExternalAccessoryPigeonCodec: FlutterStandardMessageCodec, @unchecked Send
 ///
 /// Generated protocol from Pigeon that represents a handler of messages from Flutter.
 protocol ExternalAccessoryChannel {
-  func showBluetoothAccessoryPicker(withNames: [String]) async throws
-  func openSession(protocolString: String) async throws
-  func send(protocolString: String, data: FlutterStandardTypedData) async throws
-  func closeSession(protocolString: String?) async throws
+  func showBluetoothAccessoryPicker(withNames: [String], completion: @escaping (Result<Void, Error>) -> Void)
+  func openSession(protocolString: String, completion: @escaping (Result<Void, Error>) -> Void)
+  func send(protocolString: String, data: FlutterStandardTypedData, completion: @escaping (Result<Void, Error>) -> Void)
+  func closeSession(protocolString: String?, completion: @escaping (Result<Void, Error>) -> Void)
 }
 
 /// Generated setup class from Pigeon to handle messages through the `binaryMessenger`.
@@ -326,11 +326,11 @@ class ExternalAccessoryChannelSetup {
       showBluetoothAccessoryPickerChannel.setMessageHandler { message, reply in
         let args = message as! [Any?]
         let withNamesArg = args[0] as! [String]
-        Task { @MainActor in
-          do {
-            try await api.showBluetoothAccessoryPicker(withNames: withNamesArg)
+        api.showBluetoothAccessoryPicker(withNames: withNamesArg) { result in
+          switch result {
+          case .success:
             reply(wrapResult(nil))
-          } catch {
+          case .failure(let error):
             reply(wrapError(error))
           }
         }
@@ -343,11 +343,11 @@ class ExternalAccessoryChannelSetup {
       openSessionChannel.setMessageHandler { message, reply in
         let args = message as! [Any?]
         let protocolStringArg = args[0] as! String
-        Task { @MainActor in
-          do {
-            try await api.openSession(protocolString: protocolStringArg)
+        api.openSession(protocolString: protocolStringArg) { result in
+          switch result {
+          case .success:
             reply(wrapResult(nil))
-          } catch {
+          case .failure(let error):
             reply(wrapError(error))
           }
         }
@@ -361,11 +361,11 @@ class ExternalAccessoryChannelSetup {
         let args = message as! [Any?]
         let protocolStringArg = args[0] as! String
         let dataArg = args[1] as! FlutterStandardTypedData
-        Task { @MainActor in
-          do {
-            try await api.send(protocolString: protocolStringArg, data: dataArg)
+        api.send(protocolString: protocolStringArg, data: dataArg) { result in
+          switch result {
+          case .success:
             reply(wrapResult(nil))
-          } catch {
+          case .failure(let error):
             reply(wrapError(error))
           }
         }
@@ -378,11 +378,11 @@ class ExternalAccessoryChannelSetup {
       closeSessionChannel.setMessageHandler { message, reply in
         let args = message as! [Any?]
         let protocolStringArg: String? = nilOrValue(args[0])
-        Task { @MainActor in
-          do {
-            try await api.closeSession(protocolString: protocolStringArg)
+        api.closeSession(protocolString: protocolStringArg) { result in
+          switch result {
+          case .success:
             reply(wrapResult(nil))
-          } catch {
+          case .failure(let error):
             reply(wrapError(error))
           }
         }
@@ -397,8 +397,8 @@ class ExternalAccessoryChannelSetup {
 ///
 /// Generated protocol from Pigeon that represents Flutter messages that can be called from Swift.
 protocol ExternalAccessoryCallbackChannelProtocol {
-  @MainActor func onConnectionStateChanged(accessory accessoryArg: EAAccessory, connected connectedArg: Bool) async throws
-  @MainActor func onData(protocolString protocolStringArg: String, data dataArg: FlutterStandardTypedData) async throws
+  func onConnectionStateChanged(accessory accessoryArg: EAAccessory, connected connectedArg: Bool, completion: @escaping (Result<Void, PigeonError>) -> Void)
+  func onData(protocolString protocolStringArg: String, data dataArg: FlutterStandardTypedData, completion: @escaping (Result<Void, PigeonError>) -> Void)
 }
 class ExternalAccessoryCallbackChannel: ExternalAccessoryCallbackChannelProtocol {
   private let binaryMessenger: FlutterBinaryMessenger
@@ -410,43 +410,39 @@ class ExternalAccessoryCallbackChannel: ExternalAccessoryCallbackChannelProtocol
   var codec: ExternalAccessoryPigeonCodec {
     return ExternalAccessoryPigeonCodec.shared
   }
-  @MainActor func onConnectionStateChanged(accessory accessoryArg: EAAccessory, connected connectedArg: Bool) async throws {
-    return try await withCheckedThrowingContinuation { continuation in
-      let channelName: String = "dev.flutter.pigeon.universal_bluetooth_classic.ExternalAccessoryCallbackChannel.onConnectionStateChanged\(messageChannelSuffix)"
-      let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
-      channel.sendMessage([accessoryArg, connectedArg] as [Any?]) { response in
-        guard let listResponse = response as? [Any?] else {
-          continuation.resume(throwing: createConnectionError(withChannelName: channelName))
-          return
-        }
-        if listResponse.count > 1 {
-          let code: String = listResponse[0] as! String
-          let message: String? = nilOrValue(listResponse[1])
-          let details: String? = nilOrValue(listResponse[2])
-          continuation.resume(throwing: PigeonError(code: code, message: message, details: details))
-        } else {
-          continuation.resume()
-        }
+  func onConnectionStateChanged(accessory accessoryArg: EAAccessory, connected connectedArg: Bool, completion: @escaping (Result<Void, PigeonError>) -> Void) {
+    let channelName: String = "dev.flutter.pigeon.universal_bluetooth_classic.ExternalAccessoryCallbackChannel.onConnectionStateChanged\(messageChannelSuffix)"
+    let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
+    channel.sendMessage([accessoryArg, connectedArg] as [Any?]) { response in
+      guard let listResponse = response as? [Any?] else {
+        completion(.failure(createConnectionError(withChannelName: channelName)))
+        return
+      }
+      if listResponse.count > 1 {
+        let code: String = listResponse[0] as! String
+        let message: String? = nilOrValue(listResponse[1])
+        let details: String? = nilOrValue(listResponse[2])
+        completion(.failure(PigeonError(code: code, message: message, details: details)))
+      } else {
+        completion(.success(()))
       }
     }
   }
-  @MainActor func onData(protocolString protocolStringArg: String, data dataArg: FlutterStandardTypedData) async throws {
-    return try await withCheckedThrowingContinuation { continuation in
-      let channelName: String = "dev.flutter.pigeon.universal_bluetooth_classic.ExternalAccessoryCallbackChannel.onData\(messageChannelSuffix)"
-      let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
-      channel.sendMessage([protocolStringArg, dataArg] as [Any?]) { response in
-        guard let listResponse = response as? [Any?] else {
-          continuation.resume(throwing: createConnectionError(withChannelName: channelName))
-          return
-        }
-        if listResponse.count > 1 {
-          let code: String = listResponse[0] as! String
-          let message: String? = nilOrValue(listResponse[1])
-          let details: String? = nilOrValue(listResponse[2])
-          continuation.resume(throwing: PigeonError(code: code, message: message, details: details))
-        } else {
-          continuation.resume()
-        }
+  func onData(protocolString protocolStringArg: String, data dataArg: FlutterStandardTypedData, completion: @escaping (Result<Void, PigeonError>) -> Void) {
+    let channelName: String = "dev.flutter.pigeon.universal_bluetooth_classic.ExternalAccessoryCallbackChannel.onData\(messageChannelSuffix)"
+    let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
+    channel.sendMessage([protocolStringArg, dataArg] as [Any?]) { response in
+      guard let listResponse = response as? [Any?] else {
+        completion(.failure(createConnectionError(withChannelName: channelName)))
+        return
+      }
+      if listResponse.count > 1 {
+        let code: String = listResponse[0] as! String
+        let message: String? = nilOrValue(listResponse[1])
+        let details: String? = nilOrValue(listResponse[2])
+        completion(.failure(PigeonError(code: code, message: message, details: details)))
+      } else {
+        completion(.success(()))
       }
     }
   }

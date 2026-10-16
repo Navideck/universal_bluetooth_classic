@@ -37,7 +37,7 @@ public class BluetoothSerialManager: NSObject, BluetoothSerialPlatformChannel {
         BluetoothSerialPlatformChannelSetup.setUp(binaryMessenger: messenger, api: instance)
     }
 
-    func connect(deviceId: String, serviceUuid: String) async throws {
+    func connect(deviceId: String, serviceUuid: String, completion: @escaping (Result<Void, Error>) -> Void) {
         // Resolve the device up front so every map is keyed by IOBluetooth's
         // canonical address. The caller's string may differ in case or separator
         // style, and `sdpQueryComplete` reports the canonical `addressString`;
@@ -45,85 +45,87 @@ public class BluetoothSerialManager: NSObject, BluetoothSerialPlatformChannel {
         // looked up under a different string and left hanging forever.
         guard let device = IOBluetoothDevice(addressString: deviceId),
               let address = device.addressString else {
-            throw PigeonError(code: "Failed", message: "Device not found", details: nil)
+            completion(.failure(PigeonError(code: "Failed", message: "Device not found", details: nil)))
+            return
         }
 
         if rfcommChannels[address] != nil {
             onConnectionUpdate(deviceId: address, connected: true)
+            completion(.success(()))
             return
         }
         // A second connect while the SDP query is still running would overwrite
-        // the pending continuation and leave the first caller waiting forever.
+        // the pending completion and leave the first caller waiting forever.
         if pendingConnects[address] != nil {
-            throw PigeonError(
+            completion(.failure(PigeonError(
                 code: "InProgress",
                 message: "A connection to \(address) is already in progress",
                 details: nil
-            )
+            )))
+            return
         }
 
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
-            // Reserve the slot before the async work so a concurrent connect is
-            // rejected rather than replacing this one.
-            pendingConnects[address] = PendingConnect(
-                deviceId: address,
-                serviceUuid: serviceUuid,
-                continuation: continuation
-            )
+        // Reserve the slot before the async work so a concurrent connect is
+        // rejected rather than replacing this one.
+        pendingConnects[address] = PendingConnect(
+            deviceId: address,
+            serviceUuid: serviceUuid,
+            completion: completion
+        )
 
-            DispatchQueue.global(qos: .userInitiated).async {
-                if !device.isConnected() {
-                    let ioReturn = device.openConnection(
-                        nil,
-                        withPageTimeout: UInt16(round(2.0 * 1600)),
-                        authenticationRequired: true
-                    )
-                    if ioReturn != kIOReturnSuccess {
-                        let errorString = String(cString: mach_error_string(Int32(ioReturn)))
-                        self.failPending(address, PigeonError(code: "Failed", message: errorString, details: nil))
-                        return
-                    }
+        DispatchQueue.global(qos: .userInitiated).async {
+            if !device.isConnected() {
+                let ioReturn = device.openConnection(
+                    nil,
+                    withPageTimeout: UInt16(round(2.0 * 1600)),
+                    authenticationRequired: true
+                )
+                if ioReturn != kIOReturnSuccess {
+                    let errorString = String(cString: mach_error_string(Int32(ioReturn)))
+                    self.failPending(address, PigeonError(code: "Failed", message: errorString, details: nil))
+                    return
                 }
+            }
 
-                DispatchQueue.main.async {
-                    let status = device.performSDPQuery(self)
-                    if status != kIOReturnSuccess {
-                        self.failPending(address, PigeonError(
-                            code: "SDPFailed",
-                            message: "Failed to start SDP query",
-                            details: nil
-                        ))
-                    }
+            DispatchQueue.main.async {
+                let status = device.performSDPQuery(self)
+                if status != kIOReturnSuccess {
+                    self.failPending(address, PigeonError(
+                        code: "SDPFailed",
+                        message: "Failed to start SDP query",
+                        details: nil
+                    ))
                 }
             }
         }
     }
 
-    func disconnect(deviceId: String) async throws {
+    func disconnect(deviceId: String, completion: @escaping (Result<Void, Error>) -> Void) {
         let address = canonicalAddress(deviceId)
         guard let channel = rfcommChannels.removeValue(forKey: address) else {
+            completion(.success(()))
             return
         }
         channel.close()
         onConnectionUpdate(deviceId: address, connected: false)
+        completion(.success(()))
     }
 
-    func send(deviceId: String, data: FlutterStandardTypedData) async throws {
+    func send(deviceId: String, data: FlutterStandardTypedData, completion: @escaping (Result<Void, Error>) -> Void) {
         guard let channel = rfcommChannels[canonicalAddress(deviceId)] else {
-            throw PigeonError(code: "NotFound", message: "No serial connection for \(deviceId)", details: nil)
+            completion(.failure(PigeonError(code: "NotFound", message: "No serial connection for \(deviceId)", details: nil)))
+            return
         }
         let bytes = [UInt8](data.data)
         // writeSync blocks until the peer accepts the bytes, so keep it off the
         // platform thread. The serial writeQueue also keeps concurrent sends in
         // order.
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
-            writeQueue.async {
-                do {
-                    try Self.write(bytes, to: channel)
-                    continuation.resume()
-                } catch {
-                    continuation.resume(throwing: error)
-                }
+        writeQueue.async {
+            do {
+                try Self.write(bytes, to: channel)
+                completion(.success(()))
+            } catch {
+                completion(.failure(error))
             }
         }
     }
@@ -138,7 +140,7 @@ public class BluetoothSerialManager: NSObject, BluetoothSerialPlatformChannel {
     /// Fails the pending connect for [deviceId], if one is still registered.
     private func failPending(_ deviceId: String, _ error: Error) {
         DispatchQueue.main.async {
-            self.pendingConnects.removeValue(forKey: deviceId)?.continuation.resume(throwing: error)
+            self.pendingConnects.removeValue(forKey: deviceId)?.completion(.failure(error))
         }
     }
 
@@ -167,30 +169,30 @@ public class BluetoothSerialManager: NSObject, BluetoothSerialPlatformChannel {
     /// Opens the RFCOMM channel once the SDP query for the service has completed.
     private func openRFCOMMChannel(device: IOBluetoothDevice, pending: PendingConnect) {
         guard let uuid = Self.sdpUUID(from: pending.serviceUuid) else {
-            pending.continuation.resume(throwing: PigeonError(
+            pending.completion(.failure(PigeonError(
                 code: "InvalidUUID",
                 message: "Invalid service UUID \(pending.serviceUuid)",
                 details: nil
-            ))
+            )))
             return
         }
 
         guard let record = device.getServiceRecord(for: uuid) else {
-            pending.continuation.resume(throwing: PigeonError(
+            pending.completion(.failure(PigeonError(
                 code: "ServiceNotFound",
                 message: "Service \(pending.serviceUuid) not found on \(pending.deviceId)",
                 details: nil
-            ))
+            )))
             return
         }
 
         var channelId: BluetoothRFCOMMChannelID = 0
         guard record.getRFCOMMChannelID(&channelId) == kIOReturnSuccess else {
-            pending.continuation.resume(throwing: PigeonError(
+            pending.completion(.failure(PigeonError(
                 code: "SDPFailed",
                 message: "Service \(pending.serviceUuid) has no RFCOMM channel",
                 details: nil
-            ))
+            )))
             return
         }
 
@@ -198,26 +200,21 @@ public class BluetoothSerialManager: NSObject, BluetoothSerialPlatformChannel {
         let result = device.openRFCOMMChannelSync(&channel, withChannelID: channelId, delegate: self)
         guard result == kIOReturnSuccess, let openedChannel = channel else {
             let errorString = String(cString: mach_error_string(Int32(result)))
-            pending.continuation.resume(throwing: PigeonError(
+            pending.completion(.failure(PigeonError(
                 code: "Failed",
                 message: "Failed to open RFCOMM channel \(errorString)",
                 details: nil
-            ))
+            )))
             return
         }
 
         rfcommChannels[pending.deviceId] = openedChannel
         onConnectionUpdate(deviceId: pending.deviceId, connected: true)
-        pending.continuation.resume()
+        pending.completion(.success(()))
     }
 
     private func onConnectionUpdate(deviceId: String, connected: Bool) {
-        Task {
-            try? await callbackChannel.onConnectionStateChanged(
-                deviceId: deviceId,
-                connected: connected
-            )
-        }
+        callbackChannel.onConnectionStateChanged(deviceId: deviceId, connected: connected) { _ in }
     }
 
     /// Builds an SDP UUID from a canonical UUID string. Common Bluetooth base
@@ -252,7 +249,7 @@ public class BluetoothSerialManager: NSObject, BluetoothSerialPlatformChannel {
 private struct PendingConnect {
     let deviceId: String
     let serviceUuid: String
-    let continuation: CheckedContinuation<Void, any Error>
+    let completion: (Result<Void, Error>) -> Void
 }
 
 extension BluetoothSerialManager: IOBluetoothDeviceAsyncCallbacks {
@@ -267,11 +264,11 @@ extension BluetoothSerialManager: IOBluetoothDeviceAsyncCallbacks {
     public func sdpQueryComplete(_ device: IOBluetoothDevice, status: IOReturn) {
         guard let pending = pendingConnects.removeValue(forKey: device.addressString) else { return }
         guard status == kIOReturnSuccess else {
-            pending.continuation.resume(throwing: PigeonError(
+            pending.completion(.failure(PigeonError(
                 code: "SDPFailed",
                 message: "SDP query failed with status \(status)",
                 details: nil
-            ))
+            )))
             return
         }
         openRFCOMMChannel(device: device, pending: pending)
@@ -286,12 +283,7 @@ extension BluetoothSerialManager: IOBluetoothRFCOMMChannelDelegate {
     ) {
         guard dataLength > 0, let deviceId = rfcommChannel.getDevice()?.addressString else { return }
         let data = Data(bytes: dataPointer, count: dataLength)
-        Task {
-            try? await callbackChannel.onData(
-                deviceId: deviceId,
-                data: FlutterStandardTypedData(bytes: data)
-            )
-        }
+        callbackChannel.onData(deviceId: deviceId, data: FlutterStandardTypedData(bytes: data)) { _ in }
     }
 
     public func rfcommChannelClosed(_ rfcommChannel: IOBluetoothRFCOMMChannel) {

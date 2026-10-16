@@ -85,6 +85,14 @@ The `bluetooth_serial_manager.dart` C++ output uses the
 `universal_bluetooth.dart` output in the same translation unit (Pigeon emits a
 `FlutterError` type in each generated header).
 
+Async Pigeon methods use `@asyncCallback`, not `@async`. The plugin targets
+long-established platform APIs, and the callback style keeps the hand-written
+Kotlin and Swift implementations callback-based: it avoids the
+`kotlinx-coroutines-android` dependency, Swift concurrency, and the iOS 13
+deployment-target requirement that Pigeon 29's `@async` implies. Annotate both
+`@HostApi` and `@FlutterApi` methods; on a `@FlutterApi` the generated Dart
+methods then return `Future`.
+
 Pigeon's Dart output is not `dart format`-clean; the committed generated Dart is formatted. Run the formatter over the generated files after regenerating:
 
 ```sh

@@ -28,10 +28,10 @@ import 'package:pigeon/pigeon.dart';
 abstract class BluetoothHidManagerPlatformChannel {
   void closeSdp();
 
-  @async
+  @asyncCallback
   void connect(String deviceId);
 
-  @async
+  @asyncCallback
   void disconnect(String deviceId);
 
   void send(String deviceId, Uint8List data);
@@ -40,12 +40,16 @@ abstract class BluetoothHidManagerPlatformChannel {
 /// Native -> Flutter
 @FlutterApi()
 abstract class BluetoothHidManagerCallbackChannel {
+  @asyncCallback
   void onConnectionStateChanged(String deviceId, bool connected);
 
+  @asyncCallback
   void onSdpServiceRegistrationUpdate(bool registered);
 
+  @asyncCallback
   ReportReply? onGetReport(String deviceId, ReportType type, int bufferSize);
 
+  @asyncCallback
   void onData(String deviceId, Uint8List data);
 }
 

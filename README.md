@@ -502,9 +502,6 @@ Declare every External Accessory protocol supported by your accessory in `ios/Ru
 </array>
 ```
 
-Set the iOS deployment target to 13.0 or newer. The generated Pigeon code uses
-Swift concurrency (`async` / `await`), which is only available from iOS 13.
-
 ### macOS
 
 Add the Bluetooth capability to your macOS target in Xcode.

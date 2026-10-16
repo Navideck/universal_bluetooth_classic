@@ -331,9 +331,9 @@ class ExternalAccessoryChannel {
 abstract class ExternalAccessoryCallbackChannel {
   static const MessageCodec<Object?> pigeonChannelCodec = _PigeonCodec();
 
-  void onConnectionStateChanged(EAAccessory accessory, bool connected);
+  Future<void> onConnectionStateChanged(EAAccessory accessory, bool connected);
 
-  void onData(String protocolString, Uint8List data);
+  Future<void> onData(String protocolString, Uint8List data);
 
   static void setUp(
     ExternalAccessoryCallbackChannel? api, {
@@ -355,7 +355,7 @@ abstract class ExternalAccessoryCallbackChannel {
           final EAAccessory arg_accessory = args[0]! as EAAccessory;
           final bool arg_connected = args[1]! as bool;
           try {
-            api.onConnectionStateChanged(arg_accessory, arg_connected);
+            await api.onConnectionStateChanged(arg_accessory, arg_connected);
             return wrapResponse(empty: true);
           } on PlatformException catch (e) {
             return wrapResponse(error: e);
@@ -379,7 +379,7 @@ abstract class ExternalAccessoryCallbackChannel {
           final String arg_protocolString = args[0]! as String;
           final Uint8List arg_data = args[1]! as Uint8List;
           try {
-            api.onData(arg_protocolString, arg_data);
+            await api.onData(arg_protocolString, arg_data);
             return wrapResponse(empty: true);
           } on PlatformException catch (e) {
             return wrapResponse(error: e);

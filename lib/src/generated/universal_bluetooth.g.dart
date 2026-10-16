@@ -440,9 +440,9 @@ class FlutterAccessoryPlatformChannel {
 abstract class FlutterAccessoryCallbackChannel {
   static const MessageCodec<Object?> pigeonChannelCodec = _PigeonCodec();
 
-  void onDeviceDiscover(BluetoothDevice device);
+  Future<void> onDeviceDiscover(BluetoothDevice device);
 
-  void onDeviceRemoved(BluetoothDevice device);
+  Future<void> onDeviceRemoved(BluetoothDevice device);
 
   static void setUp(
     FlutterAccessoryCallbackChannel? api, {
@@ -463,7 +463,7 @@ abstract class FlutterAccessoryCallbackChannel {
           final List<Object?> args = message! as List<Object?>;
           final BluetoothDevice arg_device = args[0]! as BluetoothDevice;
           try {
-            api.onDeviceDiscover(arg_device);
+            await api.onDeviceDiscover(arg_device);
             return wrapResponse(empty: true);
           } on PlatformException catch (e) {
             return wrapResponse(error: e);
@@ -486,7 +486,7 @@ abstract class FlutterAccessoryCallbackChannel {
           final List<Object?> args = message! as List<Object?>;
           final BluetoothDevice arg_device = args[0]! as BluetoothDevice;
           try {
-            api.onDeviceRemoved(arg_device);
+            await api.onDeviceRemoved(arg_device);
             return wrapResponse(empty: true);
           } on PlatformException catch (e) {
             return wrapResponse(error: e);

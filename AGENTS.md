@@ -91,6 +91,8 @@ Converting a positional callback to a model object is a **breaking change**: onl
 
 Never hand-edit generated files (`*.g.dart`, `*.g.kt`, `*.g.swift`, `*.g.h`, `*.g.cpp`); the three definitions live in `pigeon/`. See [CONTRIBUTING.md](CONTRIBUTING.md#pigeon-and-generated-code) for the regeneration commands and the input-to-output mapping.
 
+Async Pigeon methods use `@asyncCallback`, not `@async`, on both `@HostApi` and `@FlutterApi` methods. `@async` (Pigeon 29) generates Kotlin `suspend` functions and Swift `async` / `@MainActor` methods, which would pull in `kotlinx-coroutines-android`, Swift concurrency, and an iOS 13 deployment-target requirement. The callback style keeps the hand-written native implementations callback-based and free of those dependencies.
+
 ## Documentation
 
 Keep `README.md` and `CHANGELOG.md` current with any API change. The README carries two tables: the platform × API matrix (every new or changed public API belongs there) and the platform × transport table (update it whenever a transport or a platform's default transport changes).

@@ -23,7 +23,7 @@ import 'package:pigeon/pigeon.dart';
 /// Flutter -> Native
 @HostApi()
 abstract class FlutterAccessoryPlatformChannel {
-  @async
+  @asyncCallback
   void showBluetoothAccessoryPicker(List<String> withNames);
 
   void startScan();
@@ -34,18 +34,20 @@ abstract class FlutterAccessoryPlatformChannel {
 
   List<BluetoothDevice> getPairedDevices();
 
-  @async
+  @asyncCallback
   bool pair(String address);
 
-  @async
+  @asyncCallback
   void unpair(String address);
 }
 
 /// Native -> Flutter
 @FlutterApi()
 abstract class FlutterAccessoryCallbackChannel {
+  @asyncCallback
   void onDeviceDiscover(BluetoothDevice device);
 
+  @asyncCallback
   void onDeviceRemoved(BluetoothDevice device);
 }
 

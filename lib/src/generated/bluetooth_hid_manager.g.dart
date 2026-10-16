@@ -293,13 +293,14 @@ class BluetoothHidManagerPlatformChannel {
 abstract class BluetoothHidManagerCallbackChannel {
   static const MessageCodec<Object?> pigeonChannelCodec = _PigeonCodec();
 
-  void onConnectionStateChanged(String deviceId, bool connected);
+  Future<void> onConnectionStateChanged(String deviceId, bool connected);
 
-  void onSdpServiceRegistrationUpdate(bool registered);
+  Future<void> onSdpServiceRegistrationUpdate(bool registered);
 
-  ReportReply? onGetReport(String deviceId, ReportType type, int bufferSize);
+  Future<ReportReply?> onGetReport(
+      String deviceId, ReportType type, int bufferSize);
 
-  void onData(String deviceId, Uint8List data);
+  Future<void> onData(String deviceId, Uint8List data);
 
   static void setUp(
     BluetoothHidManagerCallbackChannel? api, {
@@ -321,7 +322,7 @@ abstract class BluetoothHidManagerCallbackChannel {
           final String arg_deviceId = args[0]! as String;
           final bool arg_connected = args[1]! as bool;
           try {
-            api.onConnectionStateChanged(arg_deviceId, arg_connected);
+            await api.onConnectionStateChanged(arg_deviceId, arg_connected);
             return wrapResponse(empty: true);
           } on PlatformException catch (e) {
             return wrapResponse(error: e);
@@ -344,7 +345,7 @@ abstract class BluetoothHidManagerCallbackChannel {
           final List<Object?> args = message! as List<Object?>;
           final bool arg_registered = args[0]! as bool;
           try {
-            api.onSdpServiceRegistrationUpdate(arg_registered);
+            await api.onSdpServiceRegistrationUpdate(arg_registered);
             return wrapResponse(empty: true);
           } on PlatformException catch (e) {
             return wrapResponse(error: e);
@@ -370,7 +371,7 @@ abstract class BluetoothHidManagerCallbackChannel {
           final int arg_bufferSize = args[2]! as int;
           try {
             final ReportReply? output =
-                api.onGetReport(arg_deviceId, arg_type, arg_bufferSize);
+                await api.onGetReport(arg_deviceId, arg_type, arg_bufferSize);
             return wrapResponse(result: output);
           } on PlatformException catch (e) {
             return wrapResponse(error: e);
@@ -394,7 +395,7 @@ abstract class BluetoothHidManagerCallbackChannel {
           final String arg_deviceId = args[0]! as String;
           final Uint8List arg_data = args[1]! as Uint8List;
           try {
-            api.onData(arg_deviceId, arg_data);
+            await api.onData(arg_deviceId, arg_data);
             return wrapResponse(empty: true);
           } on PlatformException catch (e) {
             return wrapResponse(error: e);

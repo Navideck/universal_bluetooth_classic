@@ -63,7 +63,8 @@ class _CallbackHandler extends ExternalAccessoryCallbackChannel {
   final ExternalAccessory _owner;
 
   @override
-  void onConnectionStateChanged(EAAccessory accessory, bool connected) {
+  Future<void> onConnectionStateChanged(
+      EAAccessory accessory, bool connected) async {
     _owner.callbacks.onConnectionStateChanged?.call(
       BluetoothConnectionEvent(
         identifier: accessory.connectionID.toString(),
@@ -77,7 +78,7 @@ class _CallbackHandler extends ExternalAccessoryCallbackChannel {
   }
 
   @override
-  void onData(String protocolString, Uint8List data) {
+  Future<void> onData(String protocolString, Uint8List data) async {
     _owner.callbacks.onData?.call(protocolString, data);
   }
 }

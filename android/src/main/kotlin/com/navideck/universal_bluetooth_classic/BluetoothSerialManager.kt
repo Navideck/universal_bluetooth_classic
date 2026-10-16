@@ -8,7 +8,6 @@ import java.io.IOException
 import java.util.UUID
 import java.util.concurrent.Executors
 import java.util.concurrent.RejectedExecutionException
-import kotlinx.coroutines.CompletableDeferred
 
 private const val SERIAL_TAG = "BluetoothSerialManager"
 
@@ -43,34 +42,44 @@ class BluetoothSerialManager(
      */
     private val writeExecutor = Executors.newSingleThreadExecutor()
 
-    override suspend fun connect(deviceId: String, serviceUuid: String) {
+    override fun connect(
+        deviceId: String,
+        serviceUuid: String,
+        callback: (Result<Unit>) -> Unit,
+    ) {
         synchronized(connections) {
             if (connections.containsKey(deviceId)) {
                 Log.d(SERIAL_TAG, "Already connected to $deviceId")
                 onConnected(deviceId)
+                callback(Result.success(Unit))
                 return
             }
             if (!connecting.add(deviceId)) {
-                throw FlutterError(
-                    "InProgress",
-                    "A connection to $deviceId is already in progress"
+                callback(
+                    Result.failure(
+                        FlutterError(
+                            "InProgress",
+                            "A connection to $deviceId is already in progress"
+                        )
+                    )
                 )
+                return
             }
         }
 
         val adapter = bluetoothAdapter
         if (adapter == null) {
             synchronized(connections) { connecting.remove(deviceId) }
-            throw FlutterError("Failed", "Bluetooth adapter not available")
+            callback(Result.failure(FlutterError("Failed", "Bluetooth adapter not available")))
+            return
         }
 
-        val result = CompletableDeferred<Unit>()
         Thread {
             try {
                 val device: BluetoothDevice = try {
                     getBluetoothDeviceFromId(deviceId)
                 } catch (e: Exception) {
-                    result.completeExceptionally(FlutterError("NotFound", e.toString()))
+                    callback(Result.failure(FlutterError("NotFound", e.toString())))
                     return@Thread
                 }
 
@@ -84,7 +93,7 @@ class BluetoothSerialManager(
                 val socket: BluetoothSocket = try {
                     openSocket(device, UUID.fromString(serviceUuid))
                 } catch (e: Exception) {
-                    result.completeExceptionally(FlutterError("Failed", e.toString()))
+                    callback(Result.failure(FlutterError("Failed", e.toString())))
                     return@Thread
                 }
 
@@ -93,42 +102,48 @@ class BluetoothSerialManager(
                     connections[deviceId] = Connection(socket, readThread)
                 }
                 onConnected(deviceId)
-                result.complete(Unit)
+                callback(Result.success(Unit))
                 readThread.start()
             } finally {
                 // The connect is no longer pending, whether it succeeded or not.
                 synchronized(connections) { connecting.remove(deviceId) }
             }
         }.start()
-
-        result.await()
     }
 
-    override suspend fun disconnect(deviceId: String) {
+    override fun disconnect(deviceId: String, callback: (Result<Unit>) -> Unit) {
         closeConnection(deviceId, notify = true)
+        callback(Result.success(Unit))
     }
 
-    override suspend fun send(deviceId: String, data: ByteArray) {
+    override fun send(
+        deviceId: String,
+        data: ByteArray,
+        callback: (Result<Unit>) -> Unit,
+    ) {
         val connection = synchronized(connections) { connections[deviceId] }
-            ?: throw FlutterError("NotFound", "Device not connected")
+        if (connection == null) {
+            callback(Result.failure(FlutterError("NotFound", "Device not connected")))
+            return
+        }
 
-        val result = CompletableDeferred<Unit>()
         try {
             writeExecutor.execute {
                 try {
                     connection.socket.outputStream.write(data)
                     connection.socket.outputStream.flush()
-                    result.complete(Unit)
+                    callback(Result.success(Unit))
                 } catch (e: IOException) {
-                    result.completeExceptionally(
-                        FlutterError("Failed", "Failed to send data: ${e.message}")
+                    callback(
+                        Result.failure(
+                            FlutterError("Failed", "Failed to send data: ${e.message}")
+                        )
                     )
                 }
             }
         } catch (e: RejectedExecutionException) {
-            throw FlutterError("Failed", "Serial manager disposed")
+            callback(Result.failure(FlutterError("Failed", "Serial manager disposed")))
         }
-        result.await()
     }
 
     /** Closes every open connection, e.g. when the engine detaches. */
@@ -181,7 +196,7 @@ class BluetoothSerialManager(
                 val read = input.read(buffer)
                 if (read <= 0) break
                 val data = buffer.copyOf(read)
-                postCallback { callbackChannel.onData(deviceId, data) }
+                postCallback { callbackChannel.onData(deviceId, data) { _ -> } }
             }
         } catch (e: IOException) {
             Log.d(SERIAL_TAG, "Read loop ended for $deviceId: ${e.message}")
@@ -220,10 +235,10 @@ class BluetoothSerialManager(
     }
 
     private fun onConnected(deviceId: String) {
-        postCallback { callbackChannel.onConnectionStateChanged(deviceId, true) }
+        postCallback { callbackChannel.onConnectionStateChanged(deviceId, true) { _ -> } }
     }
 
     private fun onDisconnected(deviceId: String) {
-        postCallback { callbackChannel.onConnectionStateChanged(deviceId, false) }
+        postCallback { callbackChannel.onConnectionStateChanged(deviceId, false) { _ -> } }
     }
 }

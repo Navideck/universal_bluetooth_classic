@@ -57,86 +57,93 @@ extension UniversalBluetoothPlugin: BluetoothHidManagerPlatformChannel {
         sdpService = nil
         controlNotification = nil
         interruptNotification = nil
-        Task {
-            try? await hidCallbackChannel.onSdpServiceRegistrationUpdate(registered: false)
-        }
+        hidCallbackChannel.onSdpServiceRegistrationUpdate(registered: false) { _ in }
     }
 
-    func connect(deviceId: String) async throws {
+    func connect(deviceId: String, completion: @escaping (Result<Void, Error>) -> Void) {
         guard let device = IOBluetoothDevice(addressString: deviceId) else {
-            throw PigeonError(code: "Failed", message: "Device not found", details: nil)
+            completion(.failure(PigeonError(code: "Failed", message: "Device not found", details: nil)))
+            return
         }
 
-        if !device.isConnected() {
-            let ioReturn: IOReturn = await withCheckedContinuation { continuation in
-                DispatchQueue.global(qos: .userInitiated).async {
-                    guard let device = IOBluetoothDevice(addressString: deviceId) else {
-                        continuation.resume(returning: kIOReturnSuccess)
-                        return
-                    }
-                    let result = device.openConnection(
-                        nil,
-                        withPageTimeout: UInt16(round(2.0 * 1600)),
-                        authenticationRequired: true
-                    )
-                    continuation.resume(returning: result)
-                }
-            }
+        if device.isConnected() {
+            setupL2CAPChannels(device: device, deviceId: deviceId, completion: completion)
+            return
+        }
 
+        // Open the connection off the platform thread, since it can block while
+        // the page timeout elapses.
+        DispatchQueue.global(qos: .userInitiated).async {
+            let ioReturn = device.openConnection(
+                nil,
+                withPageTimeout: UInt16(round(2.0 * 1600)),
+                authenticationRequired: true
+            )
             if ioReturn != kIOReturnSuccess {
                 let errorString = String(cString: mach_error_string(Int32(ioReturn)))
-                throw PigeonError(code: "Failed", message: errorString, details: nil)
+                completion(.failure(PigeonError(code: "Failed", message: errorString, details: nil)))
+                return
+            }
+            DispatchQueue.main.async {
+                self.setupL2CAPChannels(device: device, deviceId: deviceId, completion: completion)
             }
         }
-
-        try await setupL2CAPChannels(device: device, deviceId: deviceId)
     }
-    
-    
-    @MainActor
-    private func setupL2CAPChannels(device: IOBluetoothDevice, deviceId: String) throws {
+
+    private func setupL2CAPChannels(
+        device: IOBluetoothDevice,
+        deviceId: String,
+        completion: @escaping (Result<Void, Error>) -> Void
+    ) {
         let btDevice = delegateMap[deviceId] ?? BTDevice()
-        
+
         if btDevice.interruptChannel != nil && btDevice.controlChannel != nil {
             print("Channel already opened")
             onConnectionUpdate(deviceId: deviceId, connected: true)
+            completion(.success(()))
             return
         }
-        
+
         btDevice.device = device
         device.performSDPQuery(self)
-        
+
         var result = device.openL2CAPChannelSync(&btDevice.controlChannel, withPSM: BTChannels.Control, delegate: self)
         if result != kIOReturnSuccess {
             let errorString = String(cString: mach_error_string(Int32(result)))
-            throw PigeonError(code: "Failed", message: "Failed to open ControlChannel \(result) \(errorString)", details: nil)
+            completion(.failure(PigeonError(code: "Failed", message: "Failed to open ControlChannel \(result) \(errorString)", details: nil)))
+            return
         }
 
         result = device.openL2CAPChannelSync(&btDevice.interruptChannel, withPSM: BTChannels.Interrupt, delegate: self)
         if result != kIOReturnSuccess {
             let errorString = String(cString: mach_error_string(Int32(result)))
-            throw PigeonError(code: "Failed", message: "Failed to open Interrupt \(result) \(errorString)", details: nil)
+            completion(.failure(PigeonError(code: "Failed", message: "Failed to open Interrupt \(result) \(errorString)", details: nil)))
+            return
         }
 
         self.delegateMap[device.addressString] = btDevice
+        completion(.success(()))
     }
 
 
-    func disconnect(deviceId: String) async throws {
+    func disconnect(deviceId: String, completion: @escaping (Result<Void, Error>) -> Void) {
         guard let device = IOBluetoothDevice(addressString: deviceId) else {
-            throw PigeonError(code: "Failed", message: "Device not found", details: nil)
+            completion(.failure(PigeonError(code: "Failed", message: "Device not found", details: nil)))
+            return
         }
         // Close connection
         let ioReturn: IOReturn = device.closeConnection()
         if ioReturn != kIOReturnSuccess {
             let errorString = String(cString: mach_error_string(Int32(ioReturn)))
-            throw PigeonError(code: "Failed", message: errorString, details: nil)
+            completion(.failure(PigeonError(code: "Failed", message: errorString, details: nil)))
+            return
         }
         // Close channels
         if let btDevice = delegateMap[deviceId] {
             btDevice.interruptChannel?.close()
             btDevice.controlChannel?.close()
         }
+        completion(.success(()))
     }
 
     func send(deviceId: String, data: FlutterStandardTypedData) throws {
@@ -172,62 +179,62 @@ extension UniversalBluetoothPlugin: FlutterAccessoryPlatformChannel {
         }.flatMap { $0 }
     }
 
-    func showBluetoothAccessoryPicker(withNames _: [String]) async throws {
-        await MainActor.run {
-            pairingController.performSelector(
-                onMainThread: #selector(IOBluetoothPairingController.runModal),
-                with: nil,
-                waitUntilDone: false
-            )
-        }
+    func showBluetoothAccessoryPicker(withNames _: [String], completion: @escaping (Result<Void, Error>) -> Void) {
+        pairingController.performSelector(
+            onMainThread: #selector(IOBluetoothPairingController.runModal),
+            with: nil,
+            waitUntilDone: false
+        )
+        completion(.success(()))
     }
 
-    func pair(address: String) async throws -> Bool {
+    func pair(address: String, completion: @escaping (Result<Bool, Error>) -> Void) {
         // Open the connection off the platform thread, since it can block while
         // the page timeout elapses.
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Bool, any Error>) in
-            DispatchQueue.global(qos: .background).async {
-                guard let device = IOBluetoothDevice(addressString: address) else {
-                    continuation.resume(throwing: PigeonError(code: "Failed", message: "Device not found", details: nil))
-                    return
-                }
-
-                if device.isConnected() {
-                    print("Already connected \(address)")
-                    continuation.resume(returning: true)
-                    return
-                }
-
-                let ioReturn: IOReturn = device.openConnection(
-                    nil,
-                    withPageTimeout: UInt16(round(2.0 * 1600)),
-                    authenticationRequired: true
-                )
-
-                if ioReturn == kIOReturnSuccess {
-                    continuation.resume(returning: true)
-                    return
-                }
-
-                let errorString = String(cString: mach_error_string(Int32(ioReturn)))
-                continuation.resume(throwing: PigeonError(code: "Failed", message: errorString, details: nil))
+        DispatchQueue.global(qos: .background).async {
+            guard let device = IOBluetoothDevice(addressString: address) else {
+                completion(.failure(PigeonError(code: "Failed", message: "Device not found", details: nil)))
+                return
             }
+
+            if device.isConnected() {
+                print("Already connected \(address)")
+                completion(.success(true))
+                return
+            }
+
+            let ioReturn: IOReturn = device.openConnection(
+                nil,
+                withPageTimeout: UInt16(round(2.0 * 1600)),
+                authenticationRequired: true
+            )
+
+            if ioReturn == kIOReturnSuccess {
+                completion(.success(true))
+                return
+            }
+
+            let errorString = String(cString: mach_error_string(Int32(ioReturn)))
+            completion(.failure(PigeonError(code: "Failed", message: errorString, details: nil)))
         }
     }
-    
-    func unpair(address: String) async throws {
+
+    func unpair(address: String, completion: @escaping (Result<Void, Error>) -> Void) {
         guard let device = IOBluetoothDevice(addressString: address) else {
-            throw PigeonError(code: "DeviceNotFound", message: "Device not found", details: nil)
+            completion(.failure(PigeonError(code: "DeviceNotFound", message: "Device not found", details: nil)))
+            return
         }
-        
+
         // There is no public API for unPairing, so we need this ugly hack with a custom selector
         let selector = Selector(("remove"))
         if device.responds(to: selector) {
             device.perform(selector)
         }
-        
+
         if (device.isPaired()) {
-            throw PigeonError(code: "Failed", message: "Failed to unpair", details: nil)
+            completion(.failure(PigeonError(code: "Failed", message: "Failed to unpair", details: nil)))
+        } else {
+            completion(.success(()))
         }
     }
 }
@@ -263,11 +270,7 @@ extension UniversalBluetoothPlugin: IOBluetoothDeviceInquiryDelegate {
     }
 
     @objc public func deviceInquiryDeviceFound(_: IOBluetoothDeviceInquiry, device: IOBluetoothDevice) {
-        Task {
-            try? await accessoryManagerCallbackChannel.onDeviceDiscover(
-                device: device.toBLuetoothDevice(delegateMap)
-            )
-        }
+        accessoryManagerCallbackChannel.onDeviceDiscover(device: device.toBLuetoothDevice(delegateMap)) { _ in }
     }
 
     @objc public func deviceInquiryUpdatingDeviceNamesStarted(_: IOBluetoothDeviceInquiry, devicesRemaining: UInt32) {
@@ -335,9 +338,7 @@ extension UniversalBluetoothPlugin: IOBluetoothL2CAPChannelDelegate {
         interruptNotification = interruptChannel
 
         // Send Sdp registered
-        Task {
-            try? await hidCallbackChannel.onSdpServiceRegistrationUpdate(registered: true)
-        }
+        hidCallbackChannel.onSdpServiceRegistrationUpdate(registered: true) { _ in }
         // TODO: Check if we have Callback when Sdp Unregister
     }
 
@@ -357,9 +358,7 @@ extension UniversalBluetoothPlugin: IOBluetoothL2CAPChannelDelegate {
 
     // Triggers when Interrupt Channel will be connected/disconnected from device
     private func onConnectionUpdate(deviceId: String, connected: Bool) {
-        Task {
-            try? await hidCallbackChannel.onConnectionStateChanged(deviceId: deviceId, connected: connected)
-        }
+        hidCallbackChannel.onConnectionStateChanged(deviceId: deviceId, connected: connected) { _ in }
     }
 
     @objc public func l2capChannelOpenComplete(_ channel: IOBluetoothL2CAPChannel, status: IOReturn) {
@@ -416,9 +415,7 @@ extension UniversalBluetoothPlugin: IOBluetoothL2CAPChannelDelegate {
             // Data arriving on the interrupt channel is forwarded as-is.
             guard dataLength > 0, let deviceId = channel.device?.addressString else { return }
             let payload = FlutterStandardTypedData(bytes: Data(buffer: data))
-            Task {
-                try? await hidCallbackChannel.onData(deviceId: deviceId, data: payload)
-            }
+            hidCallbackChannel.onData(deviceId: deviceId, data: payload) { _ in }
             return
         }
         if channel.psm == BTChannels.Control {

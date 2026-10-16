@@ -28,7 +28,7 @@ public class UniversalBluetoothPlugin: NSObject, FlutterPlugin, ExternalAccessor
     ExternalAccessoryChannelSetup.setUp(binaryMessenger: messenger, api: instance)
   }
 
-  func showBluetoothAccessoryPicker(withNames: [String]) async throws {
+  func showBluetoothAccessoryPicker(withNames: [String], completion: @escaping (Result<Void, Error>) -> Void) {
     var compoundPredicate: NSCompoundPredicate? = nil
     if !withNames.isEmpty {
       // Matches strings that start with the specified value. [c] makes the comparison case-insensitive.
@@ -38,37 +38,37 @@ public class UniversalBluetoothPlugin: NSObject, FlutterPlugin, ExternalAccessor
     // The system picker does not present under the UIScene lifecycle. See
     // EABluetoothAccessoryPickerWorkaround for details.
     let pickerSession = EABluetoothAccessoryPickerWorkaround.begin()
-    try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
-      manager.showBluetoothAccessoryPicker(withNameFilter: compoundPredicate) { error in
-        EABluetoothAccessoryPickerWorkaround.end(pickerSession)
-        if let error = error {
-          // Error Codes:
-          // alreadyConnected = 0
-          // resultNotFound = 1
-          // resultCancelled = 2
-          // resultFailed = 3
-          var code = "-1"
-          if let error = error as? EABluetoothAccessoryPickerError {
-            code = "\(error.code.rawValue)"
-          }
-          continuation.resume(throwing: PigeonError(code: code, message: error.localizedDescription, details: nil))
-        } else {
-          continuation.resume()
+    manager.showBluetoothAccessoryPicker(withNameFilter: compoundPredicate) { error in
+      EABluetoothAccessoryPickerWorkaround.end(pickerSession)
+      if let error = error {
+        // Error Codes:
+        // alreadyConnected = 0
+        // resultNotFound = 1
+        // resultCancelled = 2
+        // resultFailed = 3
+        var code = "-1"
+        if let error = error as? EABluetoothAccessoryPickerError {
+          code = "\(error.code.rawValue)"
         }
+        completion(.failure(PigeonError(code: code, message: error.localizedDescription, details: nil)))
+      } else {
+        completion(.success(()))
       }
     }
   }
 
-  func openSession(protocolString: String) async throws {
+  func openSession(protocolString: String, completion: @escaping (Result<Void, Error>) -> Void) {
     guard sessionControllers[protocolString] == nil else {
-      throw ExternalAccessorySessionError.sessionAlreadyOpen
+      completion(.failure(ExternalAccessorySessionError.sessionAlreadyOpen))
+      return
     }
 
     // Find the connected accessory that advertises this protocol.
     guard let accessory = manager.connectedAccessories.first(where: {
       $0.protocolStrings.contains(protocolString)
     }) else {
-      throw ExternalAccessorySessionError.accessoryNotFound
+      completion(.failure(ExternalAccessorySessionError.accessoryNotFound))
+      return
     }
 
     // Opening a session for the accessory starts a new connection episode, so
@@ -76,7 +76,8 @@ public class UniversalBluetoothPlugin: NSObject, FlutterPlugin, ExternalAccessor
     reportedDisconnected.remove(accessory.connectionID)
 
     guard let controller = EASessionController(accessory: accessory, protocolString: protocolString) else {
-      throw ExternalAccessorySessionError.sessionCreationFailed
+      completion(.failure(ExternalAccessorySessionError.sessionCreationFailed))
+      return
     }
 
     controller.onData = { [weak self] data in
@@ -88,32 +89,34 @@ public class UniversalBluetoothPlugin: NSObject, FlutterPlugin, ExternalAccessor
 
     sessionControllers[protocolString] = controller
     controller.open()
+    completion(.success(()))
   }
 
-  func send(protocolString: String, data: FlutterStandardTypedData) async throws {
+  func send(protocolString: String, data: FlutterStandardTypedData, completion: @escaping (Result<Void, Error>) -> Void) {
     guard let controller = sessionControllers[protocolString] else {
-      throw ExternalAccessorySessionError.sessionNotOpen
+      completion(.failure(ExternalAccessorySessionError.sessionNotOpen))
+      return
     }
     controller.write(data.data)
+    completion(.success(()))
   }
 
-  func closeSession(protocolString: String?) async throws {
+  func closeSession(protocolString: String?, completion: @escaping (Result<Void, Error>) -> Void) {
     // An explicit protocol string closes that session; omitting it closes every
     // open session. Closing an already-closed session is a no-op.
     let protocols = protocolString.map { [$0] } ?? Array(sessionControllers.keys)
     for protocolString in protocols {
       sessionControllers.removeValue(forKey: protocolString)?.close()
     }
+    completion(.success(()))
   }
 
   /// Forwards bytes from a session's input stream to Flutter.
   private func sendData(protocolString: String, data: Data) {
-    Task {
-      try? await callbackChannel.onData(
-        protocolString: protocolString,
-        data: FlutterStandardTypedData(bytes: data)
-      )
-    }
+    callbackChannel.onData(
+      protocolString: protocolString,
+      data: FlutterStandardTypedData(bytes: data)
+    ) { _ in }
   }
 
   /// Handles a session whose streams ended on their own.
@@ -155,12 +158,10 @@ public class UniversalBluetoothPlugin: NSObject, FlutterPlugin, ExternalAccessor
     connected: Bool
   ) {
     let accessoryObject = accessory.toEAAccessoryObject()
-    Task {
-      try? await callbackChannel.onConnectionStateChanged(
-        accessory: accessoryObject,
-        connected: connected
-      )
-    }
+    callbackChannel.onConnectionStateChanged(
+      accessory: accessoryObject,
+      connected: connected
+    ) { _ in }
   }
 }
 

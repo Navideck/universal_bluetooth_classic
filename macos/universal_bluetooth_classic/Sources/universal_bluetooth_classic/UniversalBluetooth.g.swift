@@ -359,13 +359,13 @@ class UniversalBluetoothPigeonCodec: FlutterStandardMessageCodec, @unchecked Sen
 ///
 /// Generated protocol from Pigeon that represents a handler of messages from Flutter.
 protocol FlutterAccessoryPlatformChannel {
-  func showBluetoothAccessoryPicker(withNames: [String]) async throws
+  func showBluetoothAccessoryPicker(withNames: [String], completion: @escaping (Result<Void, Error>) -> Void)
   func startScan() throws
   func stopScan() throws
   func isScanning() throws -> Bool
   func getPairedDevices() throws -> [BluetoothDevice]
-  func pair(address: String) async throws -> Bool
-  func unpair(address: String) async throws
+  func pair(address: String, completion: @escaping (Result<Bool, Error>) -> Void)
+  func unpair(address: String, completion: @escaping (Result<Void, Error>) -> Void)
 }
 
 /// Generated setup class from Pigeon to handle messages through the `binaryMessenger`.
@@ -379,11 +379,11 @@ class FlutterAccessoryPlatformChannelSetup {
       showBluetoothAccessoryPickerChannel.setMessageHandler { message, reply in
         let args = message as! [Any?]
         let withNamesArg = args[0] as! [String]
-        Task { @MainActor in
-          do {
-            try await api.showBluetoothAccessoryPicker(withNames: withNamesArg)
+        api.showBluetoothAccessoryPicker(withNames: withNamesArg) { result in
+          switch result {
+          case .success:
             reply(wrapResult(nil))
-          } catch {
+          case .failure(let error):
             reply(wrapError(error))
           }
         }
@@ -448,11 +448,11 @@ class FlutterAccessoryPlatformChannelSetup {
       pairChannel.setMessageHandler { message, reply in
         let args = message as! [Any?]
         let addressArg = args[0] as! String
-        Task { @MainActor in
-          do {
-            let result = try await api.pair(address: addressArg)
-            reply(wrapResult(result))
-          } catch {
+        api.pair(address: addressArg) { result in
+          switch result {
+          case .success(let res):
+            reply(wrapResult(res))
+          case .failure(let error):
             reply(wrapError(error))
           }
         }
@@ -465,11 +465,11 @@ class FlutterAccessoryPlatformChannelSetup {
       unpairChannel.setMessageHandler { message, reply in
         let args = message as! [Any?]
         let addressArg = args[0] as! String
-        Task { @MainActor in
-          do {
-            try await api.unpair(address: addressArg)
+        api.unpair(address: addressArg) { result in
+          switch result {
+          case .success:
             reply(wrapResult(nil))
-          } catch {
+          case .failure(let error):
             reply(wrapError(error))
           }
         }
@@ -484,8 +484,8 @@ class FlutterAccessoryPlatformChannelSetup {
 ///
 /// Generated protocol from Pigeon that represents Flutter messages that can be called from Swift.
 protocol FlutterAccessoryCallbackChannelProtocol {
-  @MainActor func onDeviceDiscover(device deviceArg: BluetoothDevice) async throws
-  @MainActor func onDeviceRemoved(device deviceArg: BluetoothDevice) async throws
+  func onDeviceDiscover(device deviceArg: BluetoothDevice, completion: @escaping (Result<Void, PigeonError>) -> Void)
+  func onDeviceRemoved(device deviceArg: BluetoothDevice, completion: @escaping (Result<Void, PigeonError>) -> Void)
 }
 class FlutterAccessoryCallbackChannel: FlutterAccessoryCallbackChannelProtocol {
   private let binaryMessenger: FlutterBinaryMessenger
@@ -497,43 +497,39 @@ class FlutterAccessoryCallbackChannel: FlutterAccessoryCallbackChannelProtocol {
   var codec: UniversalBluetoothPigeonCodec {
     return UniversalBluetoothPigeonCodec.shared
   }
-  @MainActor func onDeviceDiscover(device deviceArg: BluetoothDevice) async throws {
-    return try await withCheckedThrowingContinuation { continuation in
-      let channelName: String = "dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryCallbackChannel.onDeviceDiscover\(messageChannelSuffix)"
-      let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
-      channel.sendMessage([deviceArg] as [Any?]) { response in
-        guard let listResponse = response as? [Any?] else {
-          continuation.resume(throwing: createConnectionError(withChannelName: channelName))
-          return
-        }
-        if listResponse.count > 1 {
-          let code: String = listResponse[0] as! String
-          let message: String? = nilOrValue(listResponse[1])
-          let details: String? = nilOrValue(listResponse[2])
-          continuation.resume(throwing: PigeonError(code: code, message: message, details: details))
-        } else {
-          continuation.resume()
-        }
+  func onDeviceDiscover(device deviceArg: BluetoothDevice, completion: @escaping (Result<Void, PigeonError>) -> Void) {
+    let channelName: String = "dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryCallbackChannel.onDeviceDiscover\(messageChannelSuffix)"
+    let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
+    channel.sendMessage([deviceArg] as [Any?]) { response in
+      guard let listResponse = response as? [Any?] else {
+        completion(.failure(createConnectionError(withChannelName: channelName)))
+        return
+      }
+      if listResponse.count > 1 {
+        let code: String = listResponse[0] as! String
+        let message: String? = nilOrValue(listResponse[1])
+        let details: String? = nilOrValue(listResponse[2])
+        completion(.failure(PigeonError(code: code, message: message, details: details)))
+      } else {
+        completion(.success(()))
       }
     }
   }
-  @MainActor func onDeviceRemoved(device deviceArg: BluetoothDevice) async throws {
-    return try await withCheckedThrowingContinuation { continuation in
-      let channelName: String = "dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryCallbackChannel.onDeviceRemoved\(messageChannelSuffix)"
-      let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
-      channel.sendMessage([deviceArg] as [Any?]) { response in
-        guard let listResponse = response as? [Any?] else {
-          continuation.resume(throwing: createConnectionError(withChannelName: channelName))
-          return
-        }
-        if listResponse.count > 1 {
-          let code: String = listResponse[0] as! String
-          let message: String? = nilOrValue(listResponse[1])
-          let details: String? = nilOrValue(listResponse[2])
-          continuation.resume(throwing: PigeonError(code: code, message: message, details: details))
-        } else {
-          continuation.resume()
-        }
+  func onDeviceRemoved(device deviceArg: BluetoothDevice, completion: @escaping (Result<Void, PigeonError>) -> Void) {
+    let channelName: String = "dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryCallbackChannel.onDeviceRemoved\(messageChannelSuffix)"
+    let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
+    channel.sendMessage([deviceArg] as [Any?]) { response in
+      guard let listResponse = response as? [Any?] else {
+        completion(.failure(createConnectionError(withChannelName: channelName)))
+        return
+      }
+      if listResponse.count > 1 {
+        let code: String = listResponse[0] as! String
+        let message: String? = nilOrValue(listResponse[1])
+        let details: String? = nilOrValue(listResponse[2])
+        completion(.failure(PigeonError(code: code, message: message, details: details)))
+      } else {
+        completion(.success(()))
       }
     }
   }

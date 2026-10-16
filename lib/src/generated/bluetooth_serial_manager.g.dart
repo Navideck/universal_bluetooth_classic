@@ -151,9 +151,9 @@ class BluetoothSerialPlatformChannel {
 abstract class BluetoothSerialCallbackChannel {
   static const MessageCodec<Object?> pigeonChannelCodec = _PigeonCodec();
 
-  void onConnectionStateChanged(String deviceId, bool connected);
+  Future<void> onConnectionStateChanged(String deviceId, bool connected);
 
-  void onData(String deviceId, Uint8List data);
+  Future<void> onData(String deviceId, Uint8List data);
 
   static void setUp(
     BluetoothSerialCallbackChannel? api, {
@@ -175,7 +175,7 @@ abstract class BluetoothSerialCallbackChannel {
           final String arg_deviceId = args[0]! as String;
           final bool arg_connected = args[1]! as bool;
           try {
-            api.onConnectionStateChanged(arg_deviceId, arg_connected);
+            await api.onConnectionStateChanged(arg_deviceId, arg_connected);
             return wrapResponse(empty: true);
           } on PlatformException catch (e) {
             return wrapResponse(error: e);
@@ -199,7 +199,7 @@ abstract class BluetoothSerialCallbackChannel {
           final String arg_deviceId = args[0]! as String;
           final Uint8List arg_data = args[1]! as Uint8List;
           try {
-            api.onData(arg_deviceId, arg_data);
+            await api.onData(arg_deviceId, arg_data);
             return wrapResponse(empty: true);
           } on PlatformException catch (e) {
             return wrapResponse(error: e);
