@@ -149,7 +149,10 @@ class BluetoothSerialManager(
         try {
             secure.connect()
             return secure
-        } catch (e: IOException) {
+        } catch (e: Exception) {
+            // Catch any failure, not just IOException: a SecurityException or
+            // other runtime failure must still close the socket before the
+            // insecure fallback, otherwise the failed socket leaks.
             Log.d(SERIAL_TAG, "Secure RFCOMM connect failed, retrying insecure: ${e.message}")
             try {
                 secure.close()
@@ -161,7 +164,7 @@ class BluetoothSerialManager(
         try {
             insecure.connect()
             return insecure
-        } catch (e: IOException) {
+        } catch (e: Exception) {
             try {
                 insecure.close()
             } catch (_: IOException) {

@@ -222,7 +222,8 @@ UniversalBluetooth.onGetReport =
 };
 ```
 
-HID reports are available on Android, macOS, and Windows.
+HID reports are available on Android and macOS. Windows implements the serial
+(SPP/RFCOMM) transport instead; see [Serial (SPP/RFCOMM)](#serial-spprfcomm).
 
 ## Serial (SPP/RFCOMM)
 

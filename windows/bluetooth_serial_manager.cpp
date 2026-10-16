@@ -25,8 +25,14 @@ namespace universal_bluetooth_classic
         {
             uint64_t mac_address_number = 0;
             uint8_t *mac_ptr = reinterpret_cast<uint8_t *>(&mac_address_number);
-            sscanf_s(mac_str.c_str(), "%02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx",
-                     &mac_ptr[5], &mac_ptr[4], &mac_ptr[3], &mac_ptr[2], &mac_ptr[1], &mac_ptr[0]);
+            int matched = sscanf_s(mac_str.c_str(), "%02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx",
+                                   &mac_ptr[5], &mac_ptr[4], &mac_ptr[3], &mac_ptr[2], &mac_ptr[1], &mac_ptr[0]);
+            if (matched != 6)
+            {
+                // Without this check a malformed address silently becomes 0 (the
+                // all-zero address) and is reported as "device not found".
+                throw serial::FlutterError("InvalidAddress", "Invalid device address: " + mac_str);
+            }
             return mac_address_number;
         }
 
@@ -148,13 +154,53 @@ namespace universal_bluetooth_classic
         }
 
         // The write can block, so it is performed off the platform thread.
-        SendAsync(socket, std::vector<uint8_t>(data), std::move(result));
+        // Writes are queued and run one at a time so the bytes of overlapping
+        // send() calls cannot interleave on the socket.
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            write_queue_.push_back(WriteRequest{socket, std::vector<uint8_t>(data), std::move(result)});
+        }
+        PumpWrites();
+    }
+
+    void BluetoothSerialManager::PumpWrites()
+    {
+        // Hold a reference for the whole write (and its continuation) so the
+        // manager cannot be destroyed while a queued write is still pending.
+        auto self = weak_from_this().lock();
+        if (self == nullptr)
+        {
+            return;
+        }
+
+        WriteRequest request;
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            if (writing_ || write_queue_.empty())
+            {
+                return;
+            }
+            writing_ = true;
+            request = std::move(write_queue_.front());
+            write_queue_.pop_front();
+        }
+        SendAsync(std::move(request.socket), std::move(request.data), std::move(request.result), std::move(self));
+    }
+
+    void BluetoothSerialManager::OnWriteComplete()
+    {
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            writing_ = false;
+        }
+        PumpWrites();
     }
 
     winrt::fire_and_forget BluetoothSerialManager::SendAsync(
         StreamSocket socket,
         std::vector<uint8_t> data,
-        std::function<void(std::optional<serial::FlutterError> reply)> result)
+        std::function<void(std::optional<serial::FlutterError> reply)> result,
+        std::shared_ptr<BluetoothSerialManager> self)
     {
         try
         {
@@ -173,6 +219,8 @@ namespace universal_bluetooth_classic
         {
             result(serial::FlutterError("Failed", "Failed to send data"));
         }
+
+        self->OnWriteComplete();
     }
 
     void BluetoothSerialManager::Dispose()
@@ -181,6 +229,8 @@ namespace universal_bluetooth_classic
         {
             std::lock_guard<std::mutex> lock(mutex_);
             sockets.swap(sockets_);
+            // Drop any writes that have not started yet; the engine is going away.
+            write_queue_.clear();
         }
         for (auto &entry : sockets)
         {

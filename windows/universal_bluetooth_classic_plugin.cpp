@@ -24,9 +24,6 @@ namespace universal_bluetooth_classic
   const auto signalStrengthKey = L"System.Devices.Aep.SignalStrength";
 
   std::unique_ptr<FlutterAccessoryCallbackChannel> callbackChannel;
-  // Shared: BluetoothSerialManager hands out references to itself to its
-  // in-flight coroutines and posted callbacks.
-  std::shared_ptr<BluetoothSerialManager> serialManager;
 
   void UniversalBluetoothPlugin::RegisterWithRegistrar(
       flutter::PluginRegistrarWindows *registrar)
@@ -35,18 +32,25 @@ namespace universal_bluetooth_classic
     FlutterAccessoryPlatformChannel::SetUp(registrar->messenger(), plugin.get());
     callbackChannel = std::make_unique<FlutterAccessoryCallbackChannel>(registrar->messenger());
 
-    serialManager = std::make_shared<BluetoothSerialManager>(registrar);
-    serial::BluetoothSerialPlatformChannel::SetUp(registrar->messenger(), serialManager.get());
+    serial::BluetoothSerialPlatformChannel::SetUp(registrar->messenger(), plugin->serialManager_.get());
 
     registrar->AddPlugin(std::move(plugin));
   }
 
   UniversalBluetoothPlugin::UniversalBluetoothPlugin(flutter::PluginRegistrarWindows *registrar)
-      : uiThreadHandler_(registrar)
+      : uiThreadHandler_(registrar),
+        serialManager_(std::make_shared<BluetoothSerialManager>(registrar))
   {
   }
 
-  UniversalBluetoothPlugin::~UniversalBluetoothPlugin() {}
+  UniversalBluetoothPlugin::~UniversalBluetoothPlugin()
+  {
+    // Close any open serial connections while the registrar is still alive.
+    if (serialManager_)
+    {
+      serialManager_->Dispose();
+    }
+  }
 
   void UniversalBluetoothPlugin::ShowBluetoothAccessoryPicker(
       const flutter::EncodableList &with_names,

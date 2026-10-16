@@ -11,10 +11,18 @@ import IOBluetooth
 public class BluetoothSerialManager: NSObject, BluetoothSerialPlatformChannel {
     private let callbackChannel: BluetoothSerialCallbackChannel
 
-    /// Pending connect requests, keyed by device address. The RFCOMM channel can
-    /// only be opened once the SDP query for the service UUID has completed.
+    /// Serial queue for RFCOMM writes. `writeSync` blocks until the peer accepts
+    /// the bytes, and a serial queue keeps the bytes of overlapping `send` calls
+    /// in order instead of letting them interleave on the channel.
+    private let writeQueue = DispatchQueue(
+        label: "com.navideck.universal_bluetooth_classic.serial.write"
+    )
+
+    /// Pending connect requests, keyed by canonical device address. The RFCOMM
+    /// channel can only be opened once the SDP query for the service UUID has
+    /// completed.
     private var pendingConnects: [String: PendingConnect] = [:]
-    /// Open RFCOMM channels, keyed by device address.
+    /// Open RFCOMM channels, keyed by canonical device address.
     private var rfcommChannels: [String: IOBluetoothRFCOMMChannel] = [:]
 
     init(callbackChannel: BluetoothSerialCallbackChannel) {
@@ -30,16 +38,26 @@ public class BluetoothSerialManager: NSObject, BluetoothSerialPlatformChannel {
     }
 
     func connect(deviceId: String, serviceUuid: String) async throws {
-        if rfcommChannels[deviceId] != nil {
-            onConnectionUpdate(deviceId: deviceId, connected: true)
+        // Resolve the device up front so every map is keyed by IOBluetooth's
+        // canonical address. The caller's string may differ in case or separator
+        // style, and `sdpQueryComplete` reports the canonical `addressString`;
+        // keying on the same value is what stops a pending connect from being
+        // looked up under a different string and left hanging forever.
+        guard let device = IOBluetoothDevice(addressString: deviceId),
+              let address = device.addressString else {
+            throw PigeonError(code: "Failed", message: "Device not found", details: nil)
+        }
+
+        if rfcommChannels[address] != nil {
+            onConnectionUpdate(deviceId: address, connected: true)
             return
         }
         // A second connect while the SDP query is still running would overwrite
         // the pending continuation and leave the first caller waiting forever.
-        if pendingConnects[deviceId] != nil {
+        if pendingConnects[address] != nil {
             throw PigeonError(
                 code: "InProgress",
-                message: "A connection to \(deviceId) is already in progress",
+                message: "A connection to \(address) is already in progress",
                 details: nil
             )
         }
@@ -47,18 +65,13 @@ public class BluetoothSerialManager: NSObject, BluetoothSerialPlatformChannel {
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
             // Reserve the slot before the async work so a concurrent connect is
             // rejected rather than replacing this one.
-            pendingConnects[deviceId] = PendingConnect(
-                deviceId: deviceId,
+            pendingConnects[address] = PendingConnect(
+                deviceId: address,
                 serviceUuid: serviceUuid,
                 continuation: continuation
             )
 
             DispatchQueue.global(qos: .userInitiated).async {
-                guard let device = IOBluetoothDevice(addressString: deviceId) else {
-                    self.failPending(deviceId, PigeonError(code: "Failed", message: "Device not found", details: nil))
-                    return
-                }
-
                 if !device.isConnected() {
                     let ioReturn = device.openConnection(
                         nil,
@@ -67,7 +80,7 @@ public class BluetoothSerialManager: NSObject, BluetoothSerialPlatformChannel {
                     )
                     if ioReturn != kIOReturnSuccess {
                         let errorString = String(cString: mach_error_string(Int32(ioReturn)))
-                        self.failPending(deviceId, PigeonError(code: "Failed", message: errorString, details: nil))
+                        self.failPending(address, PigeonError(code: "Failed", message: errorString, details: nil))
                         return
                     }
                 }
@@ -75,7 +88,7 @@ public class BluetoothSerialManager: NSObject, BluetoothSerialPlatformChannel {
                 DispatchQueue.main.async {
                     let status = device.performSDPQuery(self)
                     if status != kIOReturnSuccess {
-                        self.failPending(deviceId, PigeonError(
+                        self.failPending(address, PigeonError(
                             code: "SDPFailed",
                             message: "Failed to start SDP query",
                             details: nil
@@ -87,22 +100,24 @@ public class BluetoothSerialManager: NSObject, BluetoothSerialPlatformChannel {
     }
 
     func disconnect(deviceId: String) async throws {
-        guard let channel = rfcommChannels.removeValue(forKey: deviceId) else {
+        let address = canonicalAddress(deviceId)
+        guard let channel = rfcommChannels.removeValue(forKey: address) else {
             return
         }
         channel.close()
-        onConnectionUpdate(deviceId: deviceId, connected: false)
+        onConnectionUpdate(deviceId: address, connected: false)
     }
 
     func send(deviceId: String, data: FlutterStandardTypedData) async throws {
-        guard let channel = rfcommChannels[deviceId] else {
+        guard let channel = rfcommChannels[canonicalAddress(deviceId)] else {
             throw PigeonError(code: "NotFound", message: "No serial connection for \(deviceId)", details: nil)
         }
         let bytes = [UInt8](data.data)
         // writeSync blocks until the peer accepts the bytes, so keep it off the
-        // platform thread.
+        // platform thread. The serial writeQueue also keeps concurrent sends in
+        // order.
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
-            DispatchQueue.global(qos: .userInitiated).async {
+            writeQueue.async {
                 do {
                     try Self.write(bytes, to: channel)
                     continuation.resume()
@@ -111,6 +126,13 @@ public class BluetoothSerialManager: NSObject, BluetoothSerialPlatformChannel {
                 }
             }
         }
+    }
+
+    /// Maps a caller-supplied identifier to the canonical address IOBluetooth
+    /// uses for `addressString`, so `connect` / `disconnect` / `send` and the SDP
+    /// and stream callbacks all agree on the dictionary key.
+    private func canonicalAddress(_ deviceId: String) -> String {
+        IOBluetoothDevice(addressString: deviceId)?.addressString ?? deviceId
     }
 
     /// Fails the pending connect for [deviceId], if one is still registered.

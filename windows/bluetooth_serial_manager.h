@@ -9,6 +9,7 @@
 #include <winrt/Windows.Storage.Streams.h>
 
 #include <cstdint>
+#include <deque>
 #include <functional>
 #include <memory>
 #include <mutex>
@@ -66,7 +67,8 @@ namespace universal_bluetooth_classic
         winrt::fire_and_forget SendAsync(
             winrt::Windows::Networking::Sockets::StreamSocket socket,
             std::vector<uint8_t> data,
-            std::function<void(std::optional<universal_bluetooth_classic_serial::FlutterError> reply)> result);
+            std::function<void(std::optional<universal_bluetooth_classic_serial::FlutterError> reply)> result,
+            std::shared_ptr<BluetoothSerialManager> self);
 
         winrt::fire_and_forget ReadLoop(
             winrt::Windows::Networking::Sockets::StreamSocket socket,
@@ -77,6 +79,12 @@ namespace universal_bluetooth_classic
 
         void PostData(const std::string &device_id, std::vector<uint8_t> data);
 
+        /// Starts the next queued write if none is running.
+        void PumpWrites();
+
+        /// Marks the running write finished and starts the next one.
+        void OnWriteComplete();
+
         /// A connected socket together with the id of the connect that opened
         /// it, so a stale read loop cannot tear down a newer connection.
         struct SocketEntry
@@ -85,9 +93,20 @@ namespace universal_bluetooth_classic
             uint64_t generation;
         };
 
+        /// A send() waiting to run. Writes are queued and run one at a time so
+        /// the bytes of overlapping sends cannot interleave on the socket.
+        struct WriteRequest
+        {
+            winrt::Windows::Networking::Sockets::StreamSocket socket;
+            std::vector<uint8_t> data;
+            std::function<void(std::optional<universal_bluetooth_classic_serial::FlutterError> reply)> result;
+        };
+
         UiThreadHandler uiThreadHandler_;
         std::unique_ptr<universal_bluetooth_classic_serial::BluetoothSerialCallbackChannel> callbackChannel_;
         std::unordered_map<std::string, SocketEntry> sockets_;
+        std::deque<WriteRequest> write_queue_;
+        bool writing_ = false;
         uint64_t next_generation_ = 0;
         std::mutex mutex_;
     };
