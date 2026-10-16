@@ -1,3 +1,17 @@
+## Unreleased
+
+* Migrate the Pigeon definitions and generated bindings to Pigeon 29.0.10. The
+  generated Kotlin and Swift host APIs and Flutter callbacks are now suspending
+  / `async`, so the hand-written native implementations were updated to match.
+  Android now depends on `kotlinx-coroutines-android`, and the minimum iOS
+  deployment target is raised to 13.0 because the generated Swift uses Swift
+  concurrency.
+* Rename `AndroidSdpConfig.description` to
+  `AndroidSdpConfig.serviceDescription`. Pigeon's generated Swift data classes
+  now conform to `CustomStringConvertible`, so a field named `description` is
+  rejected. This is a source-breaking change for callers that build an
+  `AndroidSdpConfig`.
+
 ## 1.2.0
 
 * Add a generic serial (SPP/RFCOMM) transport on Android, macOS, and Windows.

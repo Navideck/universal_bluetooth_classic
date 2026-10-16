@@ -78,14 +78,20 @@ class MacSdpConfig {
 
 class AndroidSdpConfig {
   String name;
-  String description;
+
+  /// The service description advertised in the SDP record.
+  ///
+  /// Named `serviceDescription` because Pigeon's generated Swift classes
+  /// conform to `CustomStringConvertible`, so a field named `description`
+  /// collides with the generated `description` property.
+  String serviceDescription;
   String provider;
   int subclass;
   Uint8List descriptors;
 
   AndroidSdpConfig({
     required this.name,
-    required this.description,
+    required this.serviceDescription,
     required this.provider,
     required this.subclass,
     required this.descriptors,

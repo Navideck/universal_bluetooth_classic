@@ -293,7 +293,7 @@ final config = SdpConfig(
   ),
   androidSdpConfig: AndroidSdpConfig(
     name: 'My HID Service',
-    description: 'HID Service Description',
+    serviceDescription: 'HID Service Description',
     provider: 'My Company',
     subclass: 0x2540,
     descriptors: Uint8List.fromList([
@@ -443,7 +443,7 @@ defaulting to the well-known `sppServiceUuid`.
 
 - `SdpConfig` holds the platform-specific `MacSdpConfig` and `AndroidSdpConfig` values used for service registration.
   - `MacSdpConfig` takes an optional `sdpPlistFile` path and a `data` map of SDP properties.
-  - `AndroidSdpConfig` requires `name`, `description`, `provider`, `subclass`, and `descriptors`.
+  - `AndroidSdpConfig` requires `name`, `serviceDescription`, `provider`, `subclass`, and `descriptors`.
 - `ReportReply` returns optional report `data` or an optional HID `error` code from `onGetReport`.
 - `ReportType` identifies `input`, `output`, and `feature` reports.
 
@@ -484,6 +484,9 @@ Declare every External Accessory protocol supported by your accessory in `ios/Ru
     <string>com.yourcompany.yourapp.protocol</string>
 </array>
 ```
+
+Set the iOS deployment target to 13.0 or newer. The generated Pigeon code uses
+Swift concurrency (`async` / `await`), which is only available from iOS 13.
 
 ### macOS
 

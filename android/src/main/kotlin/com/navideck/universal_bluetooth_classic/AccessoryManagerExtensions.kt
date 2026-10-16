@@ -8,11 +8,40 @@ import android.bluetooth.BluetoothHidDevice
 import android.bluetooth.BluetoothProfile
 import android.os.Build
 import android.os.Handler
+import android.util.Log
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 // Public reusable variables
 internal var accessoryManagerThreadHandler: Handler? = null
 internal var btHidProxy: BluetoothHidDevice? = null
 internal var bluetoothAdapter: BluetoothAdapter? = null
+
+/**
+ * Scope for the suspending Pigeon callbacks into Flutter. They must not run on
+ * a Bluetooth callback thread, so they are dispatched on the main thread.
+ */
+private val callbackScope: CoroutineScope by lazy {
+    CoroutineScope(SupervisorJob() + Dispatchers.Main)
+}
+
+/**
+ * Runs the suspending [block] on the main thread unless the engine has already
+ * detached, in which case the callback is dropped.
+ */
+internal fun postCallback(block: suspend CoroutineScope.() -> Unit) {
+    accessoryManagerThreadHandler?.post {
+        callbackScope.launch {
+            try {
+                block()
+            } catch (e: Exception) {
+                Log.e("UniversalBluetoothPlugin", "Failed to deliver callback to Flutter", e)
+            }
+        }
+    }
+}
 
 @SuppressLint("MissingPermission")
 internal fun BluetoothDevice.toFlutter(rssi: Long?): com.navideck.universal_bluetooth_classic.BluetoothDevice {

@@ -145,7 +145,7 @@ class _MyAppState extends State<MyApp> {
           ),
           androidSdpConfig: AndroidSdpConfig(
             name: "BlueHID",
-            description: "Android HID",
+            serviceDescription: "Android HID",
             provider: "Android",
             subclass: 0x00,
             descriptors: Uint8List.fromList(androidDescriptor),

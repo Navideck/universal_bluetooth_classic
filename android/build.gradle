@@ -50,6 +50,9 @@ android {
     }
 
     dependencies {
+        // Pigeon generates suspending host APIs and coroutine-based message
+        // handlers, so the coroutines runtime is required.
+        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
         testImplementation("org.jetbrains.kotlin:kotlin-test")
         testImplementation("org.mockito:mockito-core:5.2.0")
     }
