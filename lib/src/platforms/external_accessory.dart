@@ -8,7 +8,7 @@ class ExternalAccessory extends UniversalBluetoothInterface {
   static ExternalAccessory get instance => _instance ??= ExternalAccessory._();
 
   ExternalAccessory._() {
-    ExternalAccessoryCallbackChannel.setUp(_CallbackHandler());
+    ExternalAccessoryCallbackChannel.setUp(_CallbackHandler(this));
   }
 
   static final _channel = ExternalAccessoryChannel();
@@ -21,7 +21,31 @@ class ExternalAccessory extends UniversalBluetoothInterface {
   }
 
   @override
-  Future<void> connect(String deviceId) => _channel.openSession(deviceId);
+  Future<void> connect(
+    String deviceId, {
+    BluetoothTransport? transport,
+    String? serviceUuid,
+  }) async {
+    switch (transport) {
+      case null:
+      case BluetoothTransport.externalAccessory:
+        return _channel.openSession(deviceId);
+      case BluetoothTransport.hid:
+        throw UnsupportedError(
+          'Bluetooth HID is not supported on iOS: the app cannot act as a HID '
+          'host or device. Use the default (or BluetoothTransport.'
+          'externalAccessory), which opens an External Accessory session for '
+          'the protocol string.',
+        );
+      case BluetoothTransport.spp:
+        throw UnsupportedError(
+          'Serial (SPP/RFCOMM) connections are not supported on iOS: Apple '
+          'exposes no RFCOMM socket or SDP API. MFi/iAP2 accessories carry data '
+          'over RFCOMM, but are reached through their External Accessory protocol '
+          'string, which uses the same send/onData byte-stream API.',
+        );
+    }
+  }
 
   @override
   Future<void> send(String deviceId, Uint8List data) =>
@@ -34,9 +58,14 @@ class ExternalAccessory extends UniversalBluetoothInterface {
 
 // Handle callbacks from Native to Flutter
 class _CallbackHandler extends ExternalAccessoryCallbackChannel {
+  _CallbackHandler(this._owner);
+
+  final ExternalAccessory _owner;
+
   @override
-  void onConnectionStateChanged(EAAccessory accessory, bool connected) {
-    UniversalBluetoothInterface.onConnectionStateChanged?.call(
+  Future<void> onConnectionStateChanged(
+      EAAccessory accessory, bool connected) async {
+    _owner.callbacks.onConnectionStateChanged?.call(
       BluetoothConnectionEvent(
         identifier: accessory.connectionID.toString(),
         state: connected
@@ -49,7 +78,7 @@ class _CallbackHandler extends ExternalAccessoryCallbackChannel {
   }
 
   @override
-  void onData(String protocolString, Uint8List data) {
-    UniversalBluetoothInterface.onData?.call(protocolString, data);
+  Future<void> onData(String protocolString, Uint8List data) async {
+    _owner.callbacks.onData?.call(protocolString, data);
   }
 }

@@ -17,26 +17,28 @@ import 'package:pigeon/pigeon.dart';
 /// Flutter -> Native
 @HostApi()
 abstract class ExternalAccessoryChannel {
-  @async
+  @asyncCallback
   void showBluetoothAccessoryPicker(
     List<String> withNames,
   );
 
-  @async
+  @asyncCallback
   void openSession(String protocolString);
 
-  @async
+  @asyncCallback
   void send(String protocolString, Uint8List data);
 
-  @async
+  @asyncCallback
   void closeSession(String? protocolString);
 }
 
 /// Native -> Flutter
 @FlutterApi()
 abstract class ExternalAccessoryCallbackChannel {
+  @asyncCallback
   void onConnectionStateChanged(EAAccessory accessory, bool connected);
 
+  @asyncCallback
   void onData(String protocolString, Uint8List data);
 }
 

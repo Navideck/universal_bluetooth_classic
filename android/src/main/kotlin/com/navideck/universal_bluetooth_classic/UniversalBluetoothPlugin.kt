@@ -26,7 +26,8 @@ private const val TAG = "UniversalBluetoothPlugin"
 class UniversalBluetoothPlugin : FlutterAccessoryPlatformChannel, FlutterPlugin,
     ActivityAware {
     private var callbackChannel: FlutterAccessoryCallbackChannel? = null
-    private val pairResultFutures = mutableMapOf<String, (Result<Boolean>) -> Unit>()
+    private var serialManager: BluetoothSerialManager? = null
+    private val pairResultCallbacks = mutableMapOf<String, (Result<Boolean>) -> Unit>()
     private var activity: Activity? = null
     private val actionBluetoothSelected =
         "android.bluetooth.devicepicker.action.DEVICE_SELECTED"
@@ -48,12 +49,22 @@ class UniversalBluetoothPlugin : FlutterAccessoryPlatformChannel, FlutterPlugin,
                 flutterPluginBinding.binaryMessenger,
                 bluetoothHidManager,
             )
+            AndroidSdpChannel.setUp(
+                flutterPluginBinding.binaryMessenger,
+                bluetoothHidManager,
+            )
         } else {
             Log.e(TAG, "BluetoothHidManager not initialized")
         }
 
         callbackChannel = FlutterAccessoryCallbackChannel(flutterPluginBinding.binaryMessenger)
         FlutterAccessoryPlatformChannel.setUp(flutterPluginBinding.binaryMessenger, this)
+
+        val serial = BluetoothSerialManager(
+            BluetoothSerialCallbackChannel(flutterPluginBinding.binaryMessenger)
+        )
+        serialManager = serial
+        BluetoothSerialPlatformChannel.setUp(flutterPluginBinding.binaryMessenger, serial)
 
 
         val intentFilter = IntentFilter(BluetoothDevice.ACTION_FOUND)
@@ -69,6 +80,8 @@ class UniversalBluetoothPlugin : FlutterAccessoryPlatformChannel, FlutterPlugin,
         accessoryManagerThreadHandler = null
         callbackChannel = null
         bluetoothAdapter = null
+        serialManager?.dispose()
+        serialManager = null
         binding.applicationContext.unregisterReceiver(broadcastReceiver)
     }
 
@@ -132,45 +145,35 @@ class UniversalBluetoothPlugin : FlutterAccessoryPlatformChannel, FlutterPlugin,
     }
 
     override fun pair(address: String, callback: (Result<Boolean>) -> Unit) {
-        try {
-            val remoteDevice = getBluetoothDeviceFromId(address)
-
-            val pendingFuture = pairResultFutures.remove(address)
-
-            // If already paired, return and complete pending futures
-            if (remoteDevice.bondState == BOND_BONDED) {
-                pendingFuture?.let { it(Result.success(true)) }
-                callback(Result.success(true))
-                return
-            }
-
-            // throw error if we already have a pending future
-            if (pendingFuture != null) {
-                callback(
-                    Result.failure(
-                        FlutterError(
-                            "InProgress",
-                            "Pairing already in progress",
-                            null
-                        )
-                    )
-                )
-                return
-            }
-
-            // Make a Pair request and complete future from Pair Update intent
-            if (remoteDevice.createBond()) {
-                pairResultFutures[address] = callback
-            } else {
-                callback(Result.failure(FlutterError("Failed", "Failed to pair", null)))
-            }
+        val remoteDevice = try {
+            getBluetoothDeviceFromId(address)
         } catch (e: Exception) {
-            callback(
-                Result.failure(
-                    FlutterError("Failed", e.toString(), null)
-                )
-            )
+            callback(Result.failure(FlutterError("Failed", e.toString(), null)))
+            return
         }
+
+        // If already paired, resolve any pending request and succeed immediately.
+        if (remoteDevice.bondState == BOND_BONDED) {
+            pairResultCallbacks.remove(address)?.invoke(Result.success(true))
+            callback(Result.success(true))
+            return
+        }
+
+        // Reject a second pairing request for the same device.
+        if (pairResultCallbacks.containsKey(address)) {
+            callback(
+                Result.failure(FlutterError("InProgress", "Pairing already in progress", null))
+            )
+            return
+        }
+
+        // Make a Pair request and resolve the callback from the Pair Update intent.
+        if (!remoteDevice.createBond()) {
+            callback(Result.failure(FlutterError("Failed", "Failed to pair", null)))
+            return
+        }
+
+        pairResultCallbacks[address] = callback
     }
 
     override fun unpair(address: String, callback: (Result<Unit>) -> Unit) {
@@ -185,9 +188,8 @@ class UniversalBluetoothPlugin : FlutterAccessoryPlatformChannel, FlutterPlugin,
         }
     }
 
-    private fun onBondStateUpdate(deviceId: String, bonded: Boolean, error: String? = null) {
-        val future = pairResultFutures.remove(deviceId)
-        future?.let { it(Result.success(bonded)) }
+    private fun onBondStateUpdate(deviceId: String, bonded: Boolean) {
+        pairResultCallbacks.remove(deviceId)?.invoke(Result.success(bonded))
     }
 
     private fun onBluetoothDeviceSelectFromPicker(device: BluetoothDevice) {
@@ -224,8 +226,10 @@ class UniversalBluetoothPlugin : FlutterAccessoryPlatformChannel, FlutterPlugin,
                     if (device.type == BluetoothDevice.DEVICE_TYPE_LE) return
                     val rssi = intent.getShortExtra(BluetoothDevice.EXTRA_RSSI, Short.MIN_VALUE)
                     // Cache the result
-                    accessoryManagerThreadHandler?.post {
-                        callbackChannel?.onDeviceDiscover(deviceArg = device.toFlutter(rssi.toLong())) {}
+                    postCallback {
+                        callbackChannel?.onDeviceDiscover(
+                            deviceArg = device.toFlutter(rssi.toLong())
+                        ) { _ -> }
                     }
                 }
 
@@ -243,7 +247,7 @@ class UniversalBluetoothPlugin : FlutterAccessoryPlatformChannel, FlutterPlugin,
                         }
 
                         BluetoothDevice.ERROR -> {
-                            onBondStateUpdate(device.address, false, "Failed to Pair")
+                            onBondStateUpdate(device.address, false)
                         }
 
                         BluetoothDevice.BOND_NONE -> {

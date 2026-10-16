@@ -9,10 +9,13 @@
 
 #include <memory>
 #include <sstream>
+#include "bluetooth_serial_manager.h"
 #include "pin_entry.h"
 
 namespace universal_bluetooth_classic
 {
+  namespace serial = universal_bluetooth_classic_serial;
+
   const auto isConnectableKey = L"System.Devices.Aep.Bluetooth.Le.IsConnectable";
   const auto isConnectedKey = L"System.Devices.Aep.IsConnected";
   const auto isPairedKey = L"System.Devices.Aep.IsPaired";
@@ -28,15 +31,26 @@ namespace universal_bluetooth_classic
     auto plugin = std::make_unique<UniversalBluetoothPlugin>(registrar);
     FlutterAccessoryPlatformChannel::SetUp(registrar->messenger(), plugin.get());
     callbackChannel = std::make_unique<FlutterAccessoryCallbackChannel>(registrar->messenger());
+
+    serial::BluetoothSerialPlatformChannel::SetUp(registrar->messenger(), plugin->serialManager_.get());
+
     registrar->AddPlugin(std::move(plugin));
   }
 
   UniversalBluetoothPlugin::UniversalBluetoothPlugin(flutter::PluginRegistrarWindows *registrar)
-      : uiThreadHandler_(registrar)
+      : uiThreadHandler_(registrar),
+        serialManager_(std::make_shared<BluetoothSerialManager>(registrar))
   {
   }
 
-  UniversalBluetoothPlugin::~UniversalBluetoothPlugin() {}
+  UniversalBluetoothPlugin::~UniversalBluetoothPlugin()
+  {
+    // Close any open serial connections while the registrar is still alive.
+    if (serialManager_)
+    {
+      serialManager_->Dispose();
+    }
+  }
 
   void UniversalBluetoothPlugin::ShowBluetoothAccessoryPicker(
       const flutter::EncodableList &with_names,

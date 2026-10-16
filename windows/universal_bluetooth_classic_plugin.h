@@ -4,6 +4,7 @@
 #include <flutter/method_channel.h>
 #include <flutter/plugin_registrar_windows.h>
 #include "UniversalBluetooth.g.h"
+#include "bluetooth_serial_manager.h"
 
 #include <winrt/Windows.Devices.Bluetooth.h>
 #include <winrt/Windows.Devices.Bluetooth.Advertisement.h>
@@ -57,6 +58,11 @@ namespace universal_bluetooth_classic
         UniversalBluetoothPlugin &operator=(const UniversalBluetoothPlugin &) = delete;
 
         UiThreadHandler uiThreadHandler_;
+        // Owned by the plugin (and therefore by the engine's registrar) so it is
+        // torn down with the engine instead of living in a file-scope global.
+        // In-flight coroutines and posted callbacks hold a shared reference, so a
+        // teardown cannot destroy it mid-write.
+        std::shared_ptr<BluetoothSerialManager> serialManager_;
         DeviceWatcher deviceWatcher{nullptr};
         bool restartEnumeration = false;
         winrt::event_token deviceWatcherAddedToken;

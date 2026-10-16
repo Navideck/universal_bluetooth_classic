@@ -8,11 +8,26 @@ import android.bluetooth.BluetoothHidDevice
 import android.bluetooth.BluetoothProfile
 import android.os.Build
 import android.os.Handler
+import android.util.Log
 
 // Public reusable variables
 internal var accessoryManagerThreadHandler: Handler? = null
 internal var btHidProxy: BluetoothHidDevice? = null
 internal var bluetoothAdapter: BluetoothAdapter? = null
+
+/**
+ * Runs the [block] on the main thread unless the engine has already detached,
+ * in which case the callback is dropped.
+ */
+internal fun postCallback(block: () -> Unit) {
+    accessoryManagerThreadHandler?.post {
+        try {
+            block()
+        } catch (e: Exception) {
+            Log.e("UniversalBluetoothPlugin", "Failed to deliver callback to Flutter", e)
+        }
+    }
+}
 
 @SuppressLint("MissingPermission")
 internal fun BluetoothDevice.toFlutter(rssi: Long?): com.navideck.universal_bluetooth_classic.BluetoothDevice {

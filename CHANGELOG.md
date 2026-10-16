@@ -1,3 +1,43 @@
+## 1.2.0
+
+* Add a generic serial (SPP/RFCOMM) transport on Android, macOS, and Windows.
+  `connect` takes an optional `BluetoothTransport` and an optional `serviceUuid`;
+  bytes are exchanged through the existing `send` / `onData` API. The
+  `BluetoothTransport` enum has `hid`, `spp`, and `externalAccessory` members;
+  omitting `transport` selects the platform default — HID on Android and macOS,
+  serial (SPP/RFCOMM) on Windows, and an External Accessory session on iOS.
+  Windows gains data-transport support (`connect` / `send` / `onData` /
+  `disconnect`) through this transport; Bluetooth HID remains unimplemented
+  there, so the default resolves to the serial transport on Windows.
+* Connection state events for the serial transport carry the new
+  `BluetoothConnectionSource.spp` value.
+* `connect` rejects a second concurrent connection to the same device with a
+  `StateError` instead of overwriting the transport the first one recorded, and
+  `disconnect` waits for an in-flight connect so the connection it opens is
+  actually closed. `closeSdp` now throws `UnsupportedError` on platforms
+  without SDP registration (Windows) instead of reaching an unregistered
+  channel.
+* Add an optional `bluez` dependency lower bound of `^0.9.0` for the Linux
+  implementation.
+* Note that adding the optional `transport` and `serviceUuid` parameters to
+  `connect` is a source-breaking change for custom `UniversalBluetoothInterface`
+  implementations.
+* Migrate the Pigeon definitions and generated bindings to Pigeon 29.0.10.
+  Because this plugin targets long-established platform APIs, the host and
+  callback methods use Pigeon's `@asyncCallback` style: the native side stays
+  callback-based, so no Kotlin coroutines dependency and no Swift concurrency
+  (and no iOS deployment-target bump) are required.
+* Replace the `static` callback fields on `UniversalBluetoothInterface` with a
+  per-implementation `UniversalBluetoothCallbacks` registry. The
+  `UniversalBluetooth.onXxx` setters are unchanged, but a custom
+  `UniversalBluetoothInterface` implementation must now forward its events to
+  `callbacks` instead of the removed statics. This is a source-breaking change
+  for custom implementations.
+* Give Android and macOS SDP registration their own Pigeon channels
+  (`AndroidSdpChannel`, `MacSdpChannel`) so each platform's generated code
+  carries only its own config. The public `SdpConfig` / `MacSdpConfig` /
+  `AndroidSdpConfig` API is unchanged.
+
 ## 1.1.0
 
 * Add a unified byte-stream API. `connect`, `send`, and the new `onData`

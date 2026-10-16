@@ -14,20 +14,19 @@ import androidx.annotation.RequiresApi
 
 private const val TAG = "UniversalBluetoothPlugin"
 
-typealias ConnectionFuture = (Result<Unit>) -> Unit
+typealias ConnectionCallback = (Result<Unit>) -> Unit
 
 @RequiresApi(Build.VERSION_CODES.P)
 @SuppressLint("MissingPermission")
 class BluetoothHidManager(
     private val context: Context,
     private val callbackChannel: BluetoothHidManagerCallbackChannel,
-) : BluetoothHidManagerPlatformChannel, BluetoothHidDevice.Callback() {
+) : BluetoothHidManagerPlatformChannel, AndroidSdpChannel, BluetoothHidDevice.Callback() {
     private var initialized = false
-    private var connectionFuture = mutableMapOf<String, ConnectionFuture>()
-    private var disconnectionFuture = mutableMapOf<String, ConnectionFuture>()
+    private val connectionCallbacks = mutableMapOf<String, ConnectionCallback>()
+    private val disconnectionCallbacks = mutableMapOf<String, ConnectionCallback>()
 
-    override fun setupSdp(config: SdpConfig) {
-        val androidConfig = config.androidSdpConfig ?: throw FlutterError("InvalidAndroidConfig")
+    override fun setupSdp(config: AndroidSdpConfig) {
         if (initialized) {
             throw FlutterError("AlreadyInitialized", "BluetoothProxyProfile already initialized")
         }
@@ -39,7 +38,7 @@ class BluetoothHidManager(
                     Log.d(TAG, "Got HID device")
                     btHidProxy = proxy as BluetoothHidDevice
                     btHidProxy?.registerApp(
-                        androidConfig.toSdp(),
+                        config.toSdp(),
                         null,
                         BluetoothHidDeviceAppQosSettings(
                             BluetoothHidDeviceAppQosSettings.SERVICE_BEST_EFFORT,
@@ -80,14 +79,21 @@ class BluetoothHidManager(
     }
 
 
-    override fun connect(deviceId: String, callback: (Result<Unit>) -> Unit) {
+    override fun connect(deviceId: String, callback: ConnectionCallback) {
         try {
-            val btHidProxy = btHidProxy;
+            val btHidProxy = btHidProxy
             if (btHidProxy == null) {
                 callback(Result.failure(FlutterError("Failed", "BluetoothProxy not available")))
                 return
             }
-            val bluetoothDevice = getBluetoothDeviceFromId(deviceId)
+
+            val bluetoothDevice = try {
+                getBluetoothDeviceFromId(deviceId)
+            } catch (e: Exception) {
+                callback(Result.failure(FlutterError(code = "Error", message = e.toString())))
+                return
+            }
+
             // Check if already connected
             val state = btHidProxy.getConnectionState(bluetoothDevice)
             if (state == BluetoothProfile.STATE_CONNECTING || state == BluetoothProfile.STATE_CONNECTED) {
@@ -96,15 +102,13 @@ class BluetoothHidManager(
                 callback(Result.success(Unit))
                 return
             }
-            if (connectionFuture[deviceId] != null) {
+            if (connectionCallbacks.containsKey(deviceId)) {
                 callback(Result.failure(FlutterError("Failed", "Connection already in progress")))
                 return
             }
 
             // Make connection request
-            val result = btHidProxy.connect(bluetoothDevice)
-
-            if (!result) {
+            if (!btHidProxy.connect(bluetoothDevice)) {
                 callback(Result.failure(FlutterError("Failed", "Failed to connect")))
                 return
             }
@@ -120,22 +124,31 @@ class BluetoothHidManager(
             }
 
             Log.d(TAG, "Waiting for connection result of $deviceId")
-            // Save future to wait for connection confirmation
-            connectionFuture[deviceId] = callback
+            // Wait for the connection confirmation
+            connectionCallbacks[deviceId] = callback
         } catch (e: Exception) {
+            // The BluetoothHidDevice proxy calls above can throw (for example a
+            // SecurityException when BLUETOOTH_CONNECT is not granted). Convert
+            // that into a failure reply so the caller does not wait forever.
             callback(Result.failure(FlutterError(code = "Error", message = e.toString())))
         }
     }
 
 
-    override fun disconnect(deviceId: String, callback: (Result<Unit>) -> Unit) {
+    override fun disconnect(deviceId: String, callback: ConnectionCallback) {
         try {
-            val btHidProxy = btHidProxy;
+            val btHidProxy = btHidProxy
             if (btHidProxy == null) {
                 callback(Result.failure(FlutterError("Failed", "BluetoothProxy not available")))
                 return
             }
-            val bluetoothDevice = getBluetoothDeviceFromId(deviceId)
+
+            val bluetoothDevice = try {
+                getBluetoothDeviceFromId(deviceId)
+            } catch (e: Exception) {
+                callback(Result.failure(FlutterError(code = "Error", message = e.toString())))
+                return
+            }
 
             // Check if already disconnected
             val state = btHidProxy.getConnectionState(bluetoothDevice)
@@ -148,28 +161,21 @@ class BluetoothHidManager(
                 return
             }
 
-            if (disconnectionFuture[deviceId] != null) {
-                callback(
-                    Result.failure(
-                        FlutterError(
-                            "Failed",
-                            "Disconnection already in progress"
-                        )
-                    )
-                )
+            if (disconnectionCallbacks.containsKey(deviceId)) {
+                callback(Result.failure(FlutterError("Failed", "Disconnection already in progress")))
                 return
             }
 
             // Make disconnection request
-            val result = btHidProxy.disconnect(bluetoothDevice)
-            if (!result) {
+            if (!btHidProxy.disconnect(bluetoothDevice)) {
                 callback(Result.failure(FlutterError("Failed", "Failed to disconnect")))
                 return
             }
 
-            // Save future to wait for disconnection confirmation
-            disconnectionFuture[deviceId] = callback
+            // Wait for the disconnection confirmation
+            disconnectionCallbacks[deviceId] = callback
         } catch (e: Exception) {
+            // See connect: a proxy exception must still complete the callback.
             callback(Result.failure(FlutterError(code = "Error", message = e.toString())))
         }
     }
@@ -185,45 +191,40 @@ class BluetoothHidManager(
 
     private fun onConnectionResult(deviceId: String, connected: Boolean) {
         // Update Flutter
-        accessoryManagerThreadHandler?.post {
-            callbackChannel.onConnectionStateChanged(deviceId, connected) {}
-        }
-        // Complete Future
-        connectionFuture[deviceId]?.let {
+        postCallback { callbackChannel.onConnectionStateChanged(deviceId, connected) { _ -> } }
+        // Complete connection callback
+        connectionCallbacks.remove(deviceId)?.let {
             if (connected) {
                 it(Result.success(Unit))
             } else {
                 it(Result.failure(FlutterError("Disconnected", "Device Disconnected")))
             }
-            connectionFuture.remove(deviceId)
         }
-        // Complete Disconnection Future
-        disconnectionFuture[deviceId]?.let {
+        // Complete disconnection callback
+        disconnectionCallbacks.remove(deviceId)?.let {
             if (connected) {
                 it(Result.failure(FlutterError("Failed", "Device Connected")))
             } else {
                 it(Result.success(Unit))
             }
-            disconnectionFuture.remove(deviceId)
         }
     }
 
     /// ---- BluetoothHidDeviceCallback ----
     override fun onGetReport(device: BluetoothDevice, type: Byte, id: Byte, bufferSize: Int) {
         Log.d(TAG, "onGetReport: device=$device type=$type id=$id bufferSize=$bufferSize")
-        accessoryManagerThreadHandler?.post {
-            callbackChannel.onGetReport(device.address, type.toReportType(), bufferSize.toLong()) {
-                val reply: ReportReply? = it.getOrNull()
+        postCallback {
+            callbackChannel.onGetReport(device.address, type.toReportType(), bufferSize.toLong()) { result ->
+                val reply: ReportReply? = result.getOrNull()
                 if (reply == null) {
                     btHidProxy?.reportError(device, BluetoothHidDevice.ERROR_RSP_UNSUPPORTED_REQ)
                 } else if (reply.error != null) {
                     btHidProxy?.reportError(device, reply.error.toByte())
                 } else if (reply.data != null) {
-                    btHidProxy?.replyReport(device, type, id, reply.data);
+                    btHidProxy?.replyReport(device, type, id, reply.data)
                 } else {
                     btHidProxy?.reportError(device, BluetoothHidDevice.ERROR_RSP_UNKNOWN)
                 }
-
             }
         }
     }
@@ -242,9 +243,7 @@ class BluetoothHidManager(
 
     override fun onAppStatusChanged(pluggedDevice: BluetoothDevice?, registered: Boolean) {
         Log.d(TAG, "onAppStatusChanged $pluggedDevice $registered")
-        accessoryManagerThreadHandler?.post {
-            callbackChannel.onSdpServiceRegistrationUpdate(registered) {}
-        }
+        postCallback { callbackChannel.onSdpServiceRegistrationUpdate(registered) { _ -> } }
     }
 
     override fun onSetReport(device: BluetoothDevice?, type: Byte, id: Byte, data: ByteArray?) {
@@ -252,9 +251,7 @@ class BluetoothHidManager(
         // The host sent us a report. Forward the payload; the HID type/id are
         // not part of the unified data API.
         if (device != null && data != null) {
-            accessoryManagerThreadHandler?.post {
-                callbackChannel.onData(device.address, data) {}
-            }
+            postCallback { callbackChannel.onData(device.address, data) { _ -> } }
         }
         btHidProxy?.reportError(device, BluetoothHidDevice.ERROR_RSP_SUCCESS);
     }
@@ -271,9 +268,7 @@ class BluetoothHidManager(
     override fun onInterruptData(device: BluetoothDevice?, reportId: Byte, data: ByteArray?) {
         Log.d(TAG, "onInterruptData $device $reportId $data")
         if (device != null && data != null) {
-            accessoryManagerThreadHandler?.post {
-                callbackChannel.onData(device.address, data) {}
-            }
+            postCallback { callbackChannel.onData(device.address, data) { _ -> } }
         }
     }
 

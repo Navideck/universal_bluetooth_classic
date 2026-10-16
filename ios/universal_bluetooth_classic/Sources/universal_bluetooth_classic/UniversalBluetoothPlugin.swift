@@ -28,7 +28,7 @@ public class UniversalBluetoothPlugin: NSObject, FlutterPlugin, ExternalAccessor
     ExternalAccessoryChannelSetup.setUp(binaryMessenger: messenger, api: instance)
   }
 
-  func showBluetoothAccessoryPicker(withNames: [String], completion: @escaping (Result<Void, any Error>) -> Void) {
+  func showBluetoothAccessoryPicker(withNames: [String], completion: @escaping (Result<Void, Error>) -> Void) {
     var compoundPredicate: NSCompoundPredicate? = nil
     if !withNames.isEmpty {
       // Matches strings that start with the specified value. [c] makes the comparison case-insensitive.
@@ -57,7 +57,7 @@ public class UniversalBluetoothPlugin: NSObject, FlutterPlugin, ExternalAccessor
     }
   }
 
-  func openSession(protocolString: String, completion: @escaping (Result<Void, any Error>) -> Void) {
+  func openSession(protocolString: String, completion: @escaping (Result<Void, Error>) -> Void) {
     guard sessionControllers[protocolString] == nil else {
       completion(.failure(ExternalAccessorySessionError.sessionAlreadyOpen))
       return
@@ -81,10 +81,7 @@ public class UniversalBluetoothPlugin: NSObject, FlutterPlugin, ExternalAccessor
     }
 
     controller.onData = { [weak self] data in
-      self?.callbackChannel.onData(
-        protocolString: protocolString,
-        data: FlutterStandardTypedData(bytes: data)
-      ) { _ in }
+      self?.sendData(protocolString: protocolString, data: data)
     }
     controller.onFinished = { [weak self] in
       self?.sessionDidFinish(protocolString: protocolString, accessory: accessory)
@@ -95,7 +92,7 @@ public class UniversalBluetoothPlugin: NSObject, FlutterPlugin, ExternalAccessor
     completion(.success(()))
   }
 
-  func send(protocolString: String, data: FlutterStandardTypedData, completion: @escaping (Result<Void, any Error>) -> Void) {
+  func send(protocolString: String, data: FlutterStandardTypedData, completion: @escaping (Result<Void, Error>) -> Void) {
     guard let controller = sessionControllers[protocolString] else {
       completion(.failure(ExternalAccessorySessionError.sessionNotOpen))
       return
@@ -104,7 +101,7 @@ public class UniversalBluetoothPlugin: NSObject, FlutterPlugin, ExternalAccessor
     completion(.success(()))
   }
 
-  func closeSession(protocolString: String?, completion: @escaping (Result<Void, any Error>) -> Void) {
+  func closeSession(protocolString: String?, completion: @escaping (Result<Void, Error>) -> Void) {
     // An explicit protocol string closes that session; omitting it closes every
     // open session. Closing an already-closed session is a no-op.
     let protocols = protocolString.map { [$0] } ?? Array(sessionControllers.keys)
@@ -112,6 +109,14 @@ public class UniversalBluetoothPlugin: NSObject, FlutterPlugin, ExternalAccessor
       sessionControllers.removeValue(forKey: protocolString)?.close()
     }
     completion(.success(()))
+  }
+
+  /// Forwards bytes from a session's input stream to Flutter.
+  private func sendData(protocolString: String, data: Data) {
+    callbackChannel.onData(
+      protocolString: protocolString,
+      data: FlutterStandardTypedData(bytes: data)
+    ) { _ in }
   }
 
   /// Handles a session whose streams ended on their own.
@@ -124,19 +129,13 @@ public class UniversalBluetoothPlugin: NSObject, FlutterPlugin, ExternalAccessor
     let connectionID = accessory.connectionID
     guard accessory.isConnected, !reportedDisconnected.contains(connectionID) else { return }
     reportedDisconnected.insert(connectionID)
-    callbackChannel.onConnectionStateChanged(
-      accessory: accessory.toEAAccessoryObject(),
-      connected: false
-    ) { _ in }
+    notifyConnectionStateChanged(accessory: accessory, connected: false)
   }
 
   @objc private func accessoryConnected(_ notification: NSNotification) {
     guard let connectedAccessory = notification.userInfo?[EAAccessoryKey] as? ExternalAccessory.EAAccessory else { return }
     reportedDisconnected.remove(connectedAccessory.connectionID)
-    callbackChannel.onConnectionStateChanged(
-      accessory: connectedAccessory.toEAAccessoryObject(),
-      connected: true
-    ) { _ in }
+    notifyConnectionStateChanged(accessory: connectedAccessory, connected: true)
   }
 
   @objc private func accessoryDisconnected(_ notification: NSNotification) {
@@ -150,9 +149,18 @@ public class UniversalBluetoothPlugin: NSObject, FlutterPlugin, ExternalAccessor
     let connectionID = connectedAccessory.connectionID
     guard !reportedDisconnected.contains(connectionID) else { return }
     reportedDisconnected.insert(connectionID)
+    notifyConnectionStateChanged(accessory: connectedAccessory, connected: false)
+  }
+
+  /// Reports an accessory connect/disconnect to Flutter.
+  private func notifyConnectionStateChanged(
+    accessory: ExternalAccessory.EAAccessory,
+    connected: Bool
+  ) {
+    let accessoryObject = accessory.toEAAccessoryObject()
     callbackChannel.onConnectionStateChanged(
-      accessory: connectedAccessory.toEAAccessoryObject(),
-      connected: false
+      accessory: accessoryObject,
+      connected: connected
     ) { _ in }
   }
 }

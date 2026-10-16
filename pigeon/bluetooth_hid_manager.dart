@@ -26,14 +26,12 @@ import 'package:pigeon/pigeon.dart';
 /// Flutter -> Native
 @HostApi()
 abstract class BluetoothHidManagerPlatformChannel {
-  void setupSdp(SdpConfig config);
-
   void closeSdp();
 
-  @async
+  @asyncCallback
   void connect(String deviceId);
 
-  @async
+  @asyncCallback
   void disconnect(String deviceId);
 
   void send(String deviceId, Uint8List data);
@@ -42,12 +40,16 @@ abstract class BluetoothHidManagerPlatformChannel {
 /// Native -> Flutter
 @FlutterApi()
 abstract class BluetoothHidManagerCallbackChannel {
+  @asyncCallback
   void onConnectionStateChanged(String deviceId, bool connected);
 
+  @asyncCallback
   void onSdpServiceRegistrationUpdate(bool registered);
 
+  @asyncCallback
   ReportReply? onGetReport(String deviceId, ReportType type, int bufferSize);
 
+  @asyncCallback
   void onData(String deviceId, Uint8List data);
 }
 
@@ -58,36 +60,3 @@ class ReportReply {
 }
 
 enum ReportType { input, output, feature }
-
-class SdpConfig {
-  MacSdpConfig? macSdpConfig;
-  AndroidSdpConfig? androidSdpConfig;
-
-  SdpConfig({
-    required this.macSdpConfig,
-    required this.androidSdpConfig,
-  });
-}
-
-class MacSdpConfig {
-  String? sdpPlistFile;
-  Map<String, Object>? data;
-
-  MacSdpConfig({this.data});
-}
-
-class AndroidSdpConfig {
-  String name;
-  String description;
-  String provider;
-  int subclass;
-  Uint8List descriptors;
-
-  AndroidSdpConfig({
-    required this.name,
-    required this.description,
-    required this.provider,
-    required this.subclass,
-    required this.descriptors,
-  });
-}
