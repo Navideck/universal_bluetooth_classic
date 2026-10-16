@@ -52,13 +52,12 @@ All APIs are called through the same `UniversalBluetooth` class. Platform differ
 A ✔️ means the API is available. Which transport (if any) carries the bytes is a
 separate axis:
 
-| Platform | HID | Serial (SPP/RFCOMM) | External Accessory | `BluetoothTransport.auto` resolves to |
-| :-- | :--: | :--: | :--: | :-- |
-| Android | ✔️ | ✔️ | — | HID |
-| iOS | — | — | ✔️ | External Accessory |
-| macOS | ✔️ | ✔️ | — | HID |
-| Windows | — | ✔️ | — | Serial (SPP) |
-| Linux | — | — | — | — (no data transport) |
+| Transport | Android | iOS | macOS | Windows | Linux |
+| :-- | :--: | :--: | :--: | :--: | :--: |
+| Bluetooth HID | ✔️ | — | ✔️ | — | — |
+| Serial (SPP/RFCOMM) | ✔️ | — | ✔️ | ✔️ | — |
+| External Accessory | — | ✔️ | — | — | — |
+| `BluetoothTransport.auto` default | HID | External Accessory | HID | Serial (SPP) | — |
 
 `BluetoothTransport.auto` is the default for `connect`; pass
 `BluetoothTransport.hid` or `BluetoothTransport.spp` to force one (see
