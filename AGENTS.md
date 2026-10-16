@@ -19,7 +19,7 @@ Do not add platform checks outside `_defaultPlatform()` and the platform classes
 
 `TransportRouter` (`lib/src/transport_router.dart`) holds `AccessoryManager`'s routing rules and takes the `TargetPlatform` as a constructor argument precisely so it contains no platform check of its own; the platform class supplies `defaultTargetPlatform`. Keep it that way when adding transports.
 
-Note: `AccessoryManager` handles the HID channel, the serial channel, and the per-platform SDP channels (`AndroidSdpChannel` / `MacSdpChannel`). The Windows plugin implements the accessory channel (discovery, pairing, picker) and the serial (SPP/RFCOMM) channel, but not the HID channel: `BluetoothTransport.auto` resolves to the serial transport on Windows (see `TransportRouter`), while `setupSdp` / `closeSdp` and HID connections are unsupported there (`AccessoryManager.setupSdp` throws `UnsupportedError`). Keep the README matrix accurate.
+Note: `AccessoryManager` handles the HID channel, the serial channel, and the per-platform SDP channels (`AndroidSdpChannel` / `MacSdpChannel`). The Windows plugin implements the accessory channel (discovery, pairing, picker) and the serial (SPP/RFCOMM) channel, but not the HID channel: the platform default resolves to the serial transport on Windows (see `TransportRouter`), while `setupSdp` / `closeSdp` and HID connections are unsupported there (`AccessoryManager.setupSdp` throws `UnsupportedError`). Keep the README matrix accurate.
 
 ## SDP configuration is split per platform
 
@@ -74,7 +74,7 @@ Preserve these semantics when changing the session code.
 
 ## iOS: no RFCOMM or SDP (critical)
 
-iOS exposes no RFCOMM socket API and no SDP query API, and `IOBluetooth` (which the macOS serial manager uses) is macOS-only. Do not add an iOS serial/RFCOMM implementation, and do not route `BluetoothTransport.spp` to the External Accessory channel: `ExternalAccessory.connect` throws `UnsupportedError` for `spp`. It rejects `BluetoothTransport.hid` the same way (iOS cannot act as a HID host or device); only `auto` is accepted and opens an `EASession`.
+iOS exposes no RFCOMM socket API and no SDP query API, and `IOBluetooth` (which the macOS serial manager uses) is macOS-only. Do not add an iOS serial/RFCOMM implementation, and do not route `BluetoothTransport.spp` to the External Accessory channel: `ExternalAccessory.connect` throws `UnsupportedError` for `spp`. It rejects `BluetoothTransport.hid` the same way (iOS cannot act as a HID host or device); only `externalAccessory` (or the omitted default) is accepted and opens an `EASession`.
 
 MFi/iAP2 accessories do carry their data channel over RFCOMM, and `EASession` surfaces that stream, so iOS is not without a byte pipe — but Apple's stack selects the channel from the accessory's advertised protocol string. On iOS the identifier is therefore always a protocol string, and there is no way to pass a device address or a service UUID. Keep that distinction when describing iOS in the README.
 
@@ -93,4 +93,4 @@ Never hand-edit generated files (`*.g.dart`, `*.g.kt`, `*.g.swift`, `*.g.h`, `*.
 
 ## Documentation
 
-Keep `README.md` and `CHANGELOG.md` current with any API change. The README carries two tables: the platform × API matrix (every new or changed public API belongs there) and the platform × transport table (update it whenever a transport or a platform's `BluetoothTransport.auto` default changes).
+Keep `README.md` and `CHANGELOG.md` current with any API change. The README carries two tables: the platform × API matrix (every new or changed public API belongs there) and the platform × transport table (update it whenever a transport or a platform's default transport changes).

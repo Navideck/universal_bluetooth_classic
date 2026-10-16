@@ -40,7 +40,7 @@ void main() {
 
     expect(platform.pickerNames, ['Keyboard']);
     expect(platform.connectedDeviceId, 'device-id');
-    expect(platform.connectedTransport, BluetoothTransport.auto);
+    expect(platform.connectedTransport, isNull);
     expect(platform.connectedServiceUuid, isNull);
     expect(platform.disconnectCalled, isTrue);
     expect(platform.disconnectedIdentifier, isNull);
@@ -161,7 +161,7 @@ class _FakeUniversalBluetooth extends UniversalBluetoothInterface {
   @override
   Future<void> connect(
     String deviceId, {
-    BluetoothTransport transport = BluetoothTransport.auto,
+    BluetoothTransport? transport,
     String? serviceUuid,
   }) async {
     connectedDeviceId = deviceId;

@@ -17,23 +17,18 @@ class TransportRouter {
   final TargetPlatform _platform;
   final Map<String, BluetoothTransport> _active = {};
 
-  /// Resolves a [BluetoothTransport.auto] request to the transport that
-  /// platform actually implements.
+  /// Resolves an omitted (`null`) transport request to the transport that
+  /// platform actually implements by default.
   ///
-  /// Windows has no Bluetooth HID implementation, so `auto` maps to the serial
-  /// transport there; every other platform keeps HID as the default.
-  /// Explicit [BluetoothTransport.hid] / [BluetoothTransport.spp] requests are
-  /// returned unchanged.
-  BluetoothTransport resolveConnect(BluetoothTransport requested) {
-    switch (requested) {
-      case BluetoothTransport.hid:
-      case BluetoothTransport.spp:
-        return requested;
-      case BluetoothTransport.auto:
-        return _platform == TargetPlatform.windows
+  /// Windows has no Bluetooth HID implementation, so the default maps to the
+  /// serial transport there; every other platform defaults to HID. Explicit
+  /// [BluetoothTransport.hid] / [BluetoothTransport.spp] /
+  /// [BluetoothTransport.externalAccessory] requests are returned unchanged.
+  BluetoothTransport resolveConnect(BluetoothTransport? requested) {
+    return requested ??
+        (_platform == TargetPlatform.windows
             ? BluetoothTransport.spp
-            : BluetoothTransport.hid;
-    }
+            : BluetoothTransport.hid);
   }
 
   /// Records that [deviceId] is connected over [transport].

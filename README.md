@@ -30,6 +30,8 @@ Looking for Bluetooth Low Energy? Check [universal_ble](https://pub.dev/packages
 
 All APIs are called through the same `UniversalBluetooth` class. Platform differences are handled by the plugin; APIs that are not implemented on a platform throw `UnimplementedError`.
 
+**Legend:** ✔️ supported, — not supported, 🚧 work in progress (possible on the platform, not implemented yet).
+
 | API | Android | iOS | macOS | Windows | Linux |
 | :-- | :--: | :--: | :--: | :--: | :--: |
 | `showBluetoothAccessoryPicker` | ✔️ | ✔️ | ✔️ | ✔️ | — |
@@ -47,29 +49,28 @@ All APIs are called through the same `UniversalBluetooth` class. Platform differ
 | `onGetReport` | ✔️ | — | ✔️ | — | — |
 | `onSdpServiceRegistrationUpdate` | ✔️ | — | ✔️ | — | — |
 
-**Legend:** ✔️ supported, — not supported.
-
 A ✔️ means the API is available. Which transport (if any) carries the bytes is a
 separate axis:
 
 | Transport | Android | iOS | macOS | Windows | Linux |
 | :-- | :--: | :--: | :--: | :--: | :--: |
-| Bluetooth HID | ✔️ | — | ✔️ | — | — |
-| Serial (SPP/RFCOMM) | ✔️ | — | ✔️ | ✔️ | — |
+| Bluetooth HID | ✔️ | — | ✔️ | 🚧 | 🚧 |
+| Serial (SPP/RFCOMM) | ✔️ | — | ✔️ | ✔️ | 🚧 |
 | External Accessory | — | ✔️ | — | — | — |
-| `BluetoothTransport.auto` default | HID | External Accessory | HID | Serial (SPP) | — |
 
-`BluetoothTransport.auto` is the default for `connect`; pass
-`BluetoothTransport.hid` or `BluetoothTransport.spp` to force one (see
-[`BluetoothTransport`](#bluetoothtransport)).
+Omit `transport` for the platform default: HID on Android and macOS, serial
+(SPP/RFCOMM) on Windows, and an External Accessory session on iOS. On iOS `hid`
+and `spp` throw `UnsupportedError`.
 
-Two details the tables cannot show:
+Three details the tables cannot show:
 
 - On iOS the identifier is an External Accessory protocol string: `connect`
   opens an `EASession` for it and `disconnect` closes it, closing every open
   session when the identifier is omitted. On every other platform the
   identifier is the device address.
 - On Linux only a basic `disconnect` is implemented.
+- The 🚧 cells are possible on their platform but not implemented yet: Bluetooth
+  HID on Windows and Linux, and serial (SPP/RFCOMM) on Linux.
 
 ## Getting Started
 
@@ -440,14 +441,16 @@ is the External Accessory protocol string on iOS and the device ID elsewhere.
 
 `connect` accepts a `transport` argument:
 
-- `BluetoothTransport.auto` (the default) picks the platform's natural
-  transport: HID on Android and macOS, serial (SPP/RFCOMM) on Windows, and an
-  External Accessory session on iOS.
+- Omitting it (or passing `null`) picks the platform's natural transport: HID
+  on Android and macOS, serial (SPP/RFCOMM) on Windows, and an External
+  Accessory session on iOS.
 - `BluetoothTransport.hid` connects over Bluetooth HID. It is available on
   Android and macOS; iOS and Linux reject it.
-- `BluetoothTransport.spp` opens a serial (SPP/RFCOMM) connection. It is not
-  available on iOS, where the External Accessory iAP2 byte channel plays that
-  role instead.
+- `BluetoothTransport.spp` opens a serial (SPP/RFCOMM) connection. It is
+  available on Android, macOS, and Windows; iOS rejects it, where the External
+  Accessory iAP2 byte channel plays that role instead.
+- `BluetoothTransport.externalAccessory` opens an External Accessory session.
+  It is iOS-only; every other platform rejects it.
 
 For `BluetoothTransport.spp`, `connect` also accepts an optional `serviceUuid`,
 defaulting to the well-known `sppServiceUuid`.

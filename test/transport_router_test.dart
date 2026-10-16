@@ -5,26 +5,27 @@ import 'package:universal_bluetooth_classic/universal_bluetooth_classic.dart';
 
 void main() {
   group('TransportRouter.resolveConnect', () {
-    test('auto resolves to HID on Android and macOS', () {
+    test('the default resolves to HID on Android and macOS', () {
       expect(
         TransportRouter(
           platform: TargetPlatform.android,
-        ).resolveConnect(BluetoothTransport.auto),
+        ).resolveConnect(null),
         BluetoothTransport.hid,
       );
       expect(
         TransportRouter(
           platform: TargetPlatform.macOS,
-        ).resolveConnect(BluetoothTransport.auto),
+        ).resolveConnect(null),
         BluetoothTransport.hid,
       );
     });
 
-    test('auto resolves to serial on Windows (no HID implementation)', () {
+    test('the default resolves to serial on Windows (no HID implementation)',
+        () {
       expect(
         TransportRouter(
           platform: TargetPlatform.windows,
-        ).resolveConnect(BluetoothTransport.auto),
+        ).resolveConnect(null),
         BluetoothTransport.spp,
       );
     });
@@ -39,6 +40,10 @@ void main() {
         expect(
           router.resolveConnect(BluetoothTransport.spp),
           BluetoothTransport.spp,
+        );
+        expect(
+          router.resolveConnect(BluetoothTransport.externalAccessory),
+          BluetoothTransport.externalAccessory,
         );
       }
     });

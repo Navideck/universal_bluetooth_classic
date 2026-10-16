@@ -28,18 +28,20 @@ abstract class UniversalBluetoothInterface {
   ///
   /// [transport] selects the Bluetooth Classic transport:
   ///
-  /// * [BluetoothTransport.auto] (the default) picks the platform's natural
-  ///   data transport: Bluetooth HID on Android and macOS, serial (SPP/RFCOMM)
-  ///   on Windows, and an External Accessory session on iOS.
+  /// * Omitted or `null` (the default) picks the platform's natural data
+  ///   transport: Bluetooth HID on Android and macOS, serial (SPP/RFCOMM) on
+  ///   Windows, and an External Accessory session on iOS.
   /// * [BluetoothTransport.hid] connects over Bluetooth HID.
   /// * [BluetoothTransport.spp] opens a serial (SPP/RFCOMM) connection. When
   ///   [serviceUuid] is omitted, the well-known [sppServiceUuid] is used.
+  /// * [BluetoothTransport.externalAccessory] opens an External Accessory
+  ///   session. It is iOS-only.
   ///
   /// [serviceUuid] is only meaningful for [BluetoothTransport.spp]; it lets a
   /// serial accessory advertise a custom service UUID instead of the SPP one.
   Future<void> connect(
     String deviceId, {
-    BluetoothTransport transport = BluetoothTransport.auto,
+    BluetoothTransport? transport,
     String? serviceUuid,
   }) {
     throw UnimplementedError();
@@ -123,17 +125,19 @@ enum BluetoothConnectionSource { hid, externalAccessory, spp, system }
 /// The Bluetooth Classic transport used to reach a device.
 ///
 /// Not every transport is available on every platform; see the README support
-/// matrix for the per-platform details.
+/// matrix for the per-platform details. There is no default member: passing
+/// `null` (or omitting the `transport` argument of `connect`) selects the
+/// platform's natural transport instead.
 enum BluetoothTransport {
-  /// The platform default: Bluetooth HID on Android and macOS, serial
-  /// (SPP/RFCOMM) on Windows, and an External Accessory session on iOS.
-  auto,
-
-  /// Bluetooth HID.
+  /// Bluetooth HID. Available on Android and macOS.
   hid,
 
-  /// Serial Port Profile (SPP) over RFCOMM.
+  /// Serial Port Profile (SPP) over RFCOMM. Available on Android, macOS, and
+  /// Windows.
   spp,
+
+  /// An Apple External Accessory session. Available on iOS only.
+  externalAccessory,
 }
 
 /// The well-known Serial Port Profile (SPP) service UUID.

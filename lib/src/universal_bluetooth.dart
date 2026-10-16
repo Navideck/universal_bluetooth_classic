@@ -53,20 +53,20 @@ class UniversalBluetooth {
 
   /// Connects to the device with the given [identifier].
   ///
-  /// [transport] selects the Bluetooth Classic transport. [BluetoothTransport.auto]
-  /// (the default) picks the platform's natural data transport: on iOS
-  /// [identifier] is an External Accessory protocol string and this opens an
-  /// `EASession` for it, on Android and macOS it is the device ID of the HID
-  /// device to connect, and on Windows it opens a serial (SPP/RFCOMM)
-  /// connection. Pass [BluetoothTransport.spp] to force a serial connection on
-  /// the other platforms, or [BluetoothTransport.hid] to force HID.
+  /// [transport] selects the Bluetooth Classic transport; when omitted or
+  /// `null`, the platform's natural data transport is used: on iOS [identifier]
+  /// is an External Accessory protocol string and this opens an `EASession` for
+  /// it, on Android and macOS it is the device ID of the HID device to connect,
+  /// and on Windows it opens a serial (SPP/RFCOMM) connection. Pass
+  /// [BluetoothTransport.spp] to force a serial connection, or
+  /// [BluetoothTransport.hid] to force HID.
   ///
   /// [serviceUuid] is only used for [BluetoothTransport.spp] and defaults to
   /// the well-known [sppServiceUuid]. Pass a custom UUID for accessories that
   /// advertise one.
   static Future<void> connect(
     String deviceId, {
-    BluetoothTransport transport = BluetoothTransport.auto,
+    BluetoothTransport? transport,
     String? serviceUuid,
   }) =>
       _platform.connect(

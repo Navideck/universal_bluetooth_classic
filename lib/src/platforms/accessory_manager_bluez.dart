@@ -106,18 +106,25 @@ class AccessoryManagerBluez extends UniversalBluetoothInterface {
   @override
   Future<void> connect(
     String deviceId, {
-    BluetoothTransport transport = BluetoothTransport.auto,
+    BluetoothTransport? transport,
     String? serviceUuid,
   }) {
-    if (transport == BluetoothTransport.spp) {
-      throw UnsupportedError(
-        'Serial (SPP/RFCOMM) connections are not supported on Linux: the '
-        'BlueZ Dart bindings expose no RFCOMM socket API.',
-      );
+    switch (transport) {
+      case BluetoothTransport.spp:
+        throw UnsupportedError(
+          'Serial (SPP/RFCOMM) connections are not supported on Linux: the '
+          'BlueZ Dart bindings expose no RFCOMM socket API.',
+        );
+      case BluetoothTransport.externalAccessory:
+        throw UnsupportedError(
+          'BluetoothTransport.externalAccessory is only supported on iOS.',
+        );
+      case BluetoothTransport.hid:
+      case null:
+        // Neither is HID: keep the base class's unsupported-operation error
+        // rather than blaming the serial transport for a HID request.
+        throw UnimplementedError();
     }
-    // Neither is HID: keep the base class's unsupported-operation error rather
-    // than blaming the serial transport for a HID or auto request.
-    throw UnimplementedError();
   }
 
   void _onDeviceAdd(BlueZDevice device) {

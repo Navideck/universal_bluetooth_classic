@@ -23,17 +23,19 @@ class ExternalAccessory extends UniversalBluetoothInterface {
   @override
   Future<void> connect(
     String deviceId, {
-    BluetoothTransport transport = BluetoothTransport.auto,
+    BluetoothTransport? transport,
     String? serviceUuid,
   }) {
     switch (transport) {
-      case BluetoothTransport.auto:
+      case null:
+      case BluetoothTransport.externalAccessory:
         return _channel.openSession(deviceId);
       case BluetoothTransport.hid:
         throw UnsupportedError(
           'Bluetooth HID is not supported on iOS: the app cannot act as a HID '
-          'host or device. Use BluetoothTransport.auto, which opens an External '
-          'Accessory session for the protocol string.',
+          'host or device. Use the default (or BluetoothTransport.'
+          'externalAccessory), which opens an External Accessory session for '
+          'the protocol string.',
         );
       case BluetoothTransport.spp:
         throw UnsupportedError(

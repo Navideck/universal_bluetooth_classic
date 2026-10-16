@@ -80,16 +80,21 @@ class AccessoryManager extends UniversalBluetoothInterface {
   @override
   Future<void> connect(
     String deviceId, {
-    BluetoothTransport transport = BluetoothTransport.auto,
+    BluetoothTransport? transport,
     String? serviceUuid,
   }) async {
     final resolved = _router.resolveConnect(transport);
     _router.record(deviceId, resolved);
     try {
-      if (resolved == BluetoothTransport.spp) {
-        await _serialChannel.connect(deviceId, serviceUuid ?? sppServiceUuid);
-      } else {
-        await _hidManagerChannel.connect(deviceId);
+      switch (resolved) {
+        case BluetoothTransport.hid:
+          await _hidManagerChannel.connect(deviceId);
+        case BluetoothTransport.spp:
+          await _serialChannel.connect(deviceId, serviceUuid ?? sppServiceUuid);
+        case BluetoothTransport.externalAccessory:
+          throw UnsupportedError(
+            'BluetoothTransport.externalAccessory is only supported on iOS.',
+          );
       }
     } catch (_) {
       // A failed connect must not leave a transport behind, otherwise a later
