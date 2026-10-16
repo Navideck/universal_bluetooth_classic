@@ -108,7 +108,7 @@ class AccessoryManagerBluez extends UniversalBluetoothInterface {
     String deviceId, {
     BluetoothTransport? transport,
     String? serviceUuid,
-  }) {
+  }) async {
     switch (transport) {
       case BluetoothTransport.spp:
         throw UnsupportedError(

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -111,5 +113,75 @@ void main() {
       '$hidBase.send',
       '$hidBase.disconnect',
     ]);
+  });
+
+  test('rejects a second connect while the first is in flight', () async {
+    final manager = AccessoryManager.instance;
+    const id = '22:33:44:55:66:77';
+    final gate = Completer<ByteData?>();
+
+    messenger.setMockMessageHandler('$serialBase.connect', (message) {
+      calls.add('$serialBase.connect');
+      return gate.future;
+    });
+
+    final first = manager.connect(id, transport: BluetoothTransport.spp);
+    await Future<void>.delayed(Duration.zero);
+
+    await expectLater(
+      manager.connect(id, transport: BluetoothTransport.spp),
+      throwsA(isA<StateError>()),
+    );
+
+    // The rejected duplicate did not clear the transport the first connect
+    // recorded, so the later disconnect still goes to the serial channel.
+    gate.complete(codec.encodeMessage(<Object?>[null]));
+    await first;
+    await manager.disconnect(id);
+
+    expect(calls, <String>[
+      '$serialBase.connect',
+      '$serialBase.disconnect',
+    ]);
+  });
+
+  test('waits for a pending connect before disconnecting', () async {
+    final manager = AccessoryManager.instance;
+    const id = '33:44:55:66:77:88';
+    final gate = Completer<ByteData?>();
+
+    messenger.setMockMessageHandler('$serialBase.connect', (message) {
+      calls.add('$serialBase.connect');
+      return gate.future;
+    });
+
+    final connecting = manager.connect(id, transport: BluetoothTransport.spp);
+    await Future<void>.delayed(Duration.zero);
+
+    final disconnecting = manager.disconnect(id);
+    await Future<void>.delayed(Duration.zero);
+
+    // The disconnect has not reached the channel yet: it is waiting for the
+    // connect to settle so the close lands on the socket the connect opens.
+    expect(calls, <String>['$serialBase.connect']);
+
+    gate.complete(codec.encodeMessage(<Object?>[null]));
+    await connecting;
+    await disconnecting;
+
+    expect(calls, <String>[
+      '$serialBase.connect',
+      '$serialBase.disconnect',
+    ]);
+  });
+
+  test('closeSdp fails clearly where SDP registration is unsupported', () {
+    final manager = AccessoryManager.instance;
+    debugDefaultTargetPlatformOverride = TargetPlatform.windows;
+    addTearDown(
+      () => debugDefaultTargetPlatformOverride = TargetPlatform.android,
+    );
+
+    expect(() => manager.closeSdp(), throwsA(isA<UnsupportedError>()));
   });
 }

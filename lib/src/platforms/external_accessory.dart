@@ -25,7 +25,7 @@ class ExternalAccessory extends UniversalBluetoothInterface {
     String deviceId, {
     BluetoothTransport? transport,
     String? serviceUuid,
-  }) {
+  }) async {
     switch (transport) {
       case null:
       case BluetoothTransport.externalAccessory:

@@ -38,6 +38,16 @@ class AccessoryManager extends UniversalBluetoothInterface {
     platform: defaultTargetPlatform,
   );
 
+  /// Connects that have not settled yet, keyed by device ID.
+  ///
+  /// A second [connect] for a device that already has one in flight is rejected
+  /// rather than started: starting it would overwrite the transport the first
+  /// connect recorded, and a later [send] / [disconnect] would then be routed
+  /// to the wrong channel (the platforms reject the duplicate anyway with an
+  /// "in progress" error). [disconnect] waits for a pending connect so its
+  /// close lands after the socket the connect leaves behind exists.
+  final Map<String, Future<void>> _pendingConnects = {};
+
   @override
   Future<void> showBluetoothAccessoryPicker({
     List<String>? withNames,
@@ -47,9 +57,22 @@ class AccessoryManager extends UniversalBluetoothInterface {
   }
 
   @override
-  Future<void> disconnect([String? identifier]) {
+  Future<void> disconnect([String? identifier]) async {
     final deviceId = _requireIdentifier(identifier);
+    // Capture the transport before waiting: a concurrent connect that fails
+    // clears the recorded transport, and this close still has to reach the
+    // channel the connect started on.
     final transport = _router.transportFor(deviceId);
+    final pending = _pendingConnects[deviceId];
+    if (pending != null) {
+      // Disconnecting while a connect is in flight would otherwise be a no-op,
+      // leaving the connection the connect opens behind. Let it settle first.
+      try {
+        await pending;
+      } catch (_) {
+        // The connect failed, so there is nothing to close.
+      }
+    }
     _router.forget(deviceId);
     if (transport == BluetoothTransport.spp) {
       return _serialChannel.disconnect(deviceId);
@@ -79,6 +102,29 @@ class AccessoryManager extends UniversalBluetoothInterface {
 
   @override
   Future<void> connect(
+    String deviceId, {
+    BluetoothTransport? transport,
+    String? serviceUuid,
+  }) {
+    if (_pendingConnects.containsKey(deviceId)) {
+      return Future<void>.error(
+        StateError('A connection to $deviceId is already in progress'),
+      );
+    }
+    final future = _connect(
+      deviceId,
+      transport: transport,
+      serviceUuid: serviceUuid,
+    );
+    _pendingConnects[deviceId] = future;
+    return future.whenComplete(() {
+      if (identical(_pendingConnects[deviceId], future)) {
+        _pendingConnects.remove(deviceId);
+      }
+    });
+  }
+
+  Future<void> _connect(
     String deviceId, {
     BluetoothTransport? transport,
     String? serviceUuid,
@@ -139,7 +185,21 @@ class AccessoryManager extends UniversalBluetoothInterface {
   }
 
   @override
-  Future<void> closeSdp() => _hidManagerChannel.closeSdp();
+  Future<void> closeSdp() {
+    // Mirrors [setupSdp]: the HID channel that owns the SDP service only exists
+    // on Android and macOS, so fail clearly elsewhere instead of reaching an
+    // unregistered channel.
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+      case TargetPlatform.macOS:
+        return _hidManagerChannel.closeSdp();
+      default:
+        throw UnsupportedError(
+          'SDP service registration is not supported on '
+          '${defaultTargetPlatform.name}.',
+        );
+    }
+  }
 }
 
 String _requireIdentifier(String? identifier) =>

@@ -11,6 +11,12 @@
   there, so the default resolves to the serial transport on Windows.
 * Connection state events for the serial transport carry the new
   `BluetoothConnectionSource.spp` value.
+* `connect` rejects a second concurrent connection to the same device with a
+  `StateError` instead of overwriting the transport the first one recorded, and
+  `disconnect` waits for an in-flight connect so the connection it opens is
+  actually closed. `closeSdp` now throws `UnsupportedError` on platforms
+  without SDP registration (Windows) instead of reaching an unregistered
+  channel.
 * Add an optional `bluez` dependency lower bound of `^0.9.0` for the Linux
   implementation.
 * Note that adding the optional `transport` and `serviceUuid` parameters to

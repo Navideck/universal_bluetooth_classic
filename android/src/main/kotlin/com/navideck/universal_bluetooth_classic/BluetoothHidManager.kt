@@ -80,92 +80,104 @@ class BluetoothHidManager(
 
 
     override fun connect(deviceId: String, callback: ConnectionCallback) {
-        val btHidProxy = btHidProxy
-        if (btHidProxy == null) {
-            callback(Result.failure(FlutterError("Failed", "BluetoothProxy not available")))
-            return
-        }
+        try {
+            val btHidProxy = btHidProxy
+            if (btHidProxy == null) {
+                callback(Result.failure(FlutterError("Failed", "BluetoothProxy not available")))
+                return
+            }
 
-        val bluetoothDevice = try {
-            getBluetoothDeviceFromId(deviceId)
+            val bluetoothDevice = try {
+                getBluetoothDeviceFromId(deviceId)
+            } catch (e: Exception) {
+                callback(Result.failure(FlutterError(code = "Error", message = e.toString())))
+                return
+            }
+
+            // Check if already connected
+            val state = btHidProxy.getConnectionState(bluetoothDevice)
+            if (state == BluetoothProfile.STATE_CONNECTING || state == BluetoothProfile.STATE_CONNECTED) {
+                Log.d(TAG, "Already Connected")
+                onConnectionResult(deviceId, true)
+                callback(Result.success(Unit))
+                return
+            }
+            if (connectionCallbacks.containsKey(deviceId)) {
+                callback(Result.failure(FlutterError("Failed", "Connection already in progress")))
+                return
+            }
+
+            // Make connection request
+            if (!btHidProxy.connect(bluetoothDevice)) {
+                callback(Result.failure(FlutterError("Failed", "Failed to connect")))
+                return
+            }
+
+            val currentState = btHidProxy.getConnectionState(bluetoothDevice)
+            Log.d(TAG, "Current $deviceId state: ${currentState.toConnectionStateString()}")
+
+            if (currentState == BluetoothProfile.STATE_CONNECTED) {
+                Log.d(TAG, "Connected Already, no need to wait")
+                onConnectionResult(deviceId, true)
+                callback(Result.success(Unit))
+                return
+            }
+
+            Log.d(TAG, "Waiting for connection result of $deviceId")
+            // Wait for the connection confirmation
+            connectionCallbacks[deviceId] = callback
         } catch (e: Exception) {
+            // The BluetoothHidDevice proxy calls above can throw (for example a
+            // SecurityException when BLUETOOTH_CONNECT is not granted). Convert
+            // that into a failure reply so the caller does not wait forever.
             callback(Result.failure(FlutterError(code = "Error", message = e.toString())))
-            return
         }
-
-        // Check if already connected
-        val state = btHidProxy.getConnectionState(bluetoothDevice)
-        if (state == BluetoothProfile.STATE_CONNECTING || state == BluetoothProfile.STATE_CONNECTED) {
-            Log.d(TAG, "Already Connected")
-            onConnectionResult(deviceId, true)
-            callback(Result.success(Unit))
-            return
-        }
-        if (connectionCallbacks.containsKey(deviceId)) {
-            callback(Result.failure(FlutterError("Failed", "Connection already in progress")))
-            return
-        }
-
-        // Make connection request
-        if (!btHidProxy.connect(bluetoothDevice)) {
-            callback(Result.failure(FlutterError("Failed", "Failed to connect")))
-            return
-        }
-
-        val currentState = btHidProxy.getConnectionState(bluetoothDevice)
-        Log.d(TAG, "Current $deviceId state: ${currentState.toConnectionStateString()}")
-
-        if (currentState == BluetoothProfile.STATE_CONNECTED) {
-            Log.d(TAG, "Connected Already, no need to wait")
-            onConnectionResult(deviceId, true)
-            callback(Result.success(Unit))
-            return
-        }
-
-        Log.d(TAG, "Waiting for connection result of $deviceId")
-        // Wait for the connection confirmation
-        connectionCallbacks[deviceId] = callback
     }
 
 
     override fun disconnect(deviceId: String, callback: ConnectionCallback) {
-        val btHidProxy = btHidProxy
-        if (btHidProxy == null) {
-            callback(Result.failure(FlutterError("Failed", "BluetoothProxy not available")))
-            return
-        }
+        try {
+            val btHidProxy = btHidProxy
+            if (btHidProxy == null) {
+                callback(Result.failure(FlutterError("Failed", "BluetoothProxy not available")))
+                return
+            }
 
-        val bluetoothDevice = try {
-            getBluetoothDeviceFromId(deviceId)
+            val bluetoothDevice = try {
+                getBluetoothDeviceFromId(deviceId)
+            } catch (e: Exception) {
+                callback(Result.failure(FlutterError(code = "Error", message = e.toString())))
+                return
+            }
+
+            // Check if already disconnected
+            val state = btHidProxy.getConnectionState(bluetoothDevice)
+            if (state == BluetoothProfile.STATE_DISCONNECTING || state == BluetoothProfile.STATE_DISCONNECTED) {
+                Log.d(TAG, "Already Disconnected")
+                // Call disconnect to release resources
+                btHidProxy.disconnect(bluetoothDevice)
+                onConnectionResult(deviceId, false)
+                callback(Result.success(Unit))
+                return
+            }
+
+            if (disconnectionCallbacks.containsKey(deviceId)) {
+                callback(Result.failure(FlutterError("Failed", "Disconnection already in progress")))
+                return
+            }
+
+            // Make disconnection request
+            if (!btHidProxy.disconnect(bluetoothDevice)) {
+                callback(Result.failure(FlutterError("Failed", "Failed to disconnect")))
+                return
+            }
+
+            // Wait for the disconnection confirmation
+            disconnectionCallbacks[deviceId] = callback
         } catch (e: Exception) {
+            // See connect: a proxy exception must still complete the callback.
             callback(Result.failure(FlutterError(code = "Error", message = e.toString())))
-            return
         }
-
-        // Check if already disconnected
-        val state = btHidProxy.getConnectionState(bluetoothDevice)
-        if (state == BluetoothProfile.STATE_DISCONNECTING || state == BluetoothProfile.STATE_DISCONNECTED) {
-            Log.d(TAG, "Already Disconnected")
-            // Call disconnect to release resources
-            btHidProxy.disconnect(bluetoothDevice)
-            onConnectionResult(deviceId, false)
-            callback(Result.success(Unit))
-            return
-        }
-
-        if (disconnectionCallbacks.containsKey(deviceId)) {
-            callback(Result.failure(FlutterError("Failed", "Disconnection already in progress")))
-            return
-        }
-
-        // Make disconnection request
-        if (!btHidProxy.disconnect(bluetoothDevice)) {
-            callback(Result.failure(FlutterError("Failed", "Failed to disconnect")))
-            return
-        }
-
-        // Wait for the disconnection confirmation
-        disconnectionCallbacks[deviceId] = callback
     }
 
     override fun send(deviceId: String, data: ByteArray) {

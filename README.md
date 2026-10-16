@@ -456,6 +456,10 @@ is the External Accessory protocol string on iOS and the device ID elsewhere.
 For `BluetoothTransport.spp`, `connect` also accepts an optional `serviceUuid`,
 defaulting to the well-known `sppServiceUuid`.
 
+A second `connect` for a device that already has one in flight throws a
+`StateError`; a `disconnect` issued while a connect is in flight waits for it to
+settle and then closes the connection.
+
 ### HID configuration
 
 - `SdpConfig` holds the platform-specific `MacSdpConfig` and `AndroidSdpConfig` values used for service registration.
