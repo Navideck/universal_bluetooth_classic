@@ -5,8 +5,8 @@
 </div>
 
 [![pub package](https://img.shields.io/pub/v/universal_bluetooth_classic?label=universal_bluetooth_classic&color=blue)](https://pub.dev/packages/universal_bluetooth_classic)
-[![Platform](https://img.shields.io/badge/platform-Android%20%7C%20iOS%20%7C%20macOS%20%7C%20Windows%20%7C%20Linux-lightgrey)](https://github.com/Navideck/universal_bluetooth_classic)
-[![GitHub stars](https://img.shields.io/github/stars/Navideck/universal_bluetooth_classic?style=social)](https://github.com/Navideck/universal_bluetooth_classic)
+[![Platform](https://img.shields.io/badge/platform-Android%20%7C%20iOS%20%7C%20macOS%20%7C%20Windows%20%7C%20Linux-lightgrey)](https://github.com/Navideck/universal_bluetooth)
+[![GitHub stars](https://img.shields.io/github/stars/Navideck/universal_bluetooth?style=social)](https://github.com/Navideck/universal_bluetooth)
 [![pub points](https://img.shields.io/pub/points/universal_bluetooth_classic?color=2E7D32)](https://pub.dev/packages/universal_bluetooth_classic/score)
 [![Flutter](https://img.shields.io/badge/Flutter-%3E%3D3.3.0-blue.svg?logo=flutter)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/Dart-%3E%3D3.1.3-blue.svg?logo=dart)](https://dart.dev)
@@ -165,13 +165,13 @@ await UniversalBluetooth.connect(deviceId);
 await UniversalBluetooth.disconnect(deviceId);
 ```
 
-HID connections are available on Android, macOS, and Windows. On iOS,
-`connect` takes an External Accessory protocol string and opens an `EASession`,
-which lets you exchange bytes with the accessory (see
-[iOS External Accessory](#ios-external-accessory)). Pass
+HID connections are available on Android and macOS. Windows implements the
+serial transport only. On iOS, `connect` takes an External Accessory protocol
+string and opens an `EASession`, which lets you exchange bytes with the
+accessory (see [iOS External Accessory](#ios-external-accessory)). Pass
 `transport: BluetoothTransport.spp` to open a serial (SPP/RFCOMM) connection
-instead (see [Serial (SPP/RFCOMM)](#serial-spprfcomm)); this is the only data
-transport on Windows. Linux supports only the basic `disconnect` operation.
+instead (see [Serial (SPP/RFCOMM)](#serial-spprfcomm)). Linux supports only the
+basic `disconnect` operation.
 
 ## Sending and receiving data
 
@@ -431,7 +431,8 @@ is the External Accessory protocol string on iOS and the device ID elsewhere.
 - `BluetoothTransport.auto` (the default) picks the platform's natural
   transport: HID on Android and macOS, serial (SPP/RFCOMM) on Windows, and an
   External Accessory session on iOS.
-- `BluetoothTransport.hid` connects over Bluetooth HID.
+- `BluetoothTransport.hid` connects over Bluetooth HID. It is available on
+  Android and macOS; iOS and Linux reject it.
 - `BluetoothTransport.spp` opens a serial (SPP/RFCOMM) connection. It is not
   available on iOS, where the External Accessory iAP2 byte channel plays that
   role instead.

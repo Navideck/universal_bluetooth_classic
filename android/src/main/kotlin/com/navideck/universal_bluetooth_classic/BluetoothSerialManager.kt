@@ -29,6 +29,14 @@ class BluetoothSerialManager(
     private val connections = mutableMapOf<String, Connection>()
 
     /**
+     * Device IDs with a connect in flight. The socket is opened on a background
+     * thread and only recorded in [connections] once it is up, so this flag
+     * stops a second overlapping connect from opening (and later leaking) a
+     * second socket for the same device.
+     */
+    private val connecting = mutableSetOf<String>()
+
+    /**
      * Socket writes block until the peer accepts the bytes, so they are kept off
      * the platform thread. A single worker also keeps the bytes of concurrent
      * sends in order.
@@ -42,41 +50,55 @@ class BluetoothSerialManager(
                 onConnected(deviceId)
                 return
             }
+            if (!connecting.add(deviceId)) {
+                throw FlutterError(
+                    "InProgress",
+                    "A connection to $deviceId is already in progress"
+                )
+            }
         }
 
         val adapter = bluetoothAdapter
-            ?: throw FlutterError("Failed", "Bluetooth adapter not available")
+        if (adapter == null) {
+            synchronized(connections) { connecting.remove(deviceId) }
+            throw FlutterError("Failed", "Bluetooth adapter not available")
+        }
 
         val result = CompletableDeferred<Unit>()
         Thread {
-            val device: BluetoothDevice = try {
-                getBluetoothDeviceFromId(deviceId)
-            } catch (e: Exception) {
-                result.completeExceptionally(FlutterError("NotFound", e.toString()))
-                return@Thread
-            }
-
-            // Discovery interferes with an RFCOMM connect request.
             try {
-                adapter.cancelDiscovery()
-            } catch (e: Exception) {
-                Log.d(SERIAL_TAG, "cancelDiscovery failed: ${e.message}")
-            }
+                val device: BluetoothDevice = try {
+                    getBluetoothDeviceFromId(deviceId)
+                } catch (e: Exception) {
+                    result.completeExceptionally(FlutterError("NotFound", e.toString()))
+                    return@Thread
+                }
 
-            val socket: BluetoothSocket = try {
-                openSocket(device, UUID.fromString(serviceUuid))
-            } catch (e: Exception) {
-                result.completeExceptionally(FlutterError("Failed", e.toString()))
-                return@Thread
-            }
+                // Discovery interferes with an RFCOMM connect request.
+                try {
+                    adapter.cancelDiscovery()
+                } catch (e: Exception) {
+                    Log.d(SERIAL_TAG, "cancelDiscovery failed: ${e.message}")
+                }
 
-            val readThread = Thread { readLoop(deviceId, socket) }
-            synchronized(connections) {
-                connections[deviceId] = Connection(socket, readThread)
+                val socket: BluetoothSocket = try {
+                    openSocket(device, UUID.fromString(serviceUuid))
+                } catch (e: Exception) {
+                    result.completeExceptionally(FlutterError("Failed", e.toString()))
+                    return@Thread
+                }
+
+                val readThread = Thread { readLoop(deviceId, socket) }
+                synchronized(connections) {
+                    connections[deviceId] = Connection(socket, readThread)
+                }
+                onConnected(deviceId)
+                result.complete(Unit)
+                readThread.start()
+            } finally {
+                // The connect is no longer pending, whether it succeeded or not.
+                synchronized(connections) { connecting.remove(deviceId) }
             }
-            onConnected(deviceId)
-            result.complete(Unit)
-            readThread.start()
         }.start()
 
         result.await()

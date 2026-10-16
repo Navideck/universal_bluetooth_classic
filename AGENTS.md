@@ -74,7 +74,7 @@ Preserve these semantics when changing the session code.
 
 ## iOS: no RFCOMM or SDP (critical)
 
-iOS exposes no RFCOMM socket API and no SDP query API, and `IOBluetooth` (which the macOS serial manager uses) is macOS-only. Do not add an iOS serial/RFCOMM implementation, and do not route `BluetoothTransport.spp` to the External Accessory channel: `ExternalAccessory.connect` throws `UnsupportedError` for `spp`.
+iOS exposes no RFCOMM socket API and no SDP query API, and `IOBluetooth` (which the macOS serial manager uses) is macOS-only. Do not add an iOS serial/RFCOMM implementation, and do not route `BluetoothTransport.spp` to the External Accessory channel: `ExternalAccessory.connect` throws `UnsupportedError` for `spp`. It rejects `BluetoothTransport.hid` the same way (iOS cannot act as a HID host or device); only `auto` is accepted and opens an `EASession`.
 
 MFi/iAP2 accessories do carry their data channel over RFCOMM, and `EASession` surfaces that stream, so iOS is not without a byte pipe — but Apple's stack selects the channel from the accessory's advertised protocol string. On iOS the identifier is therefore always a protocol string, and there is no way to pass a device address or a service UUID. Keep that distinction when describing iOS in the README.
 

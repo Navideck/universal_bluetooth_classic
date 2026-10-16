@@ -26,15 +26,23 @@ class ExternalAccessory extends UniversalBluetoothInterface {
     BluetoothTransport transport = BluetoothTransport.auto,
     String? serviceUuid,
   }) {
-    if (transport == BluetoothTransport.spp) {
-      throw UnsupportedError(
-        'Serial (SPP/RFCOMM) connections are not supported on iOS: Apple '
-        'exposes no RFCOMM socket or SDP API. MFi/iAP2 accessories carry data '
-        'over RFCOMM, but are reached through their External Accessory protocol '
-        'string, which uses the same send/onData byte-stream API.',
-      );
+    switch (transport) {
+      case BluetoothTransport.auto:
+        return _channel.openSession(deviceId);
+      case BluetoothTransport.hid:
+        throw UnsupportedError(
+          'Bluetooth HID is not supported on iOS: the app cannot act as a HID '
+          'host or device. Use BluetoothTransport.auto, which opens an External '
+          'Accessory session for the protocol string.',
+        );
+      case BluetoothTransport.spp:
+        throw UnsupportedError(
+          'Serial (SPP/RFCOMM) connections are not supported on iOS: Apple '
+          'exposes no RFCOMM socket or SDP API. MFi/iAP2 accessories carry data '
+          'over RFCOMM, but are reached through their External Accessory protocol '
+          'string, which uses the same send/onData byte-stream API.',
+        );
     }
-    return _channel.openSession(deviceId);
   }
 
   @override
