@@ -37,6 +37,8 @@
   (`AndroidSdpChannel`, `MacSdpChannel`) so each platform's generated code
   carries only its own config. The public `SdpConfig` / `MacSdpConfig` /
   `AndroidSdpConfig` API is unchanged.
+* Add a `meta` dependency, which the Pigeon 29 generated Dart bindings import
+  for their `@immutable` / `@protected` / `@visibleForTesting` annotations.
 
 ## 1.1.0
 
