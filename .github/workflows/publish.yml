@@ -16,6 +16,9 @@ jobs:
   publish:
     permissions:
       id-token: write # Required for authentication using OIDC
+    # Must match the GitHub Actions environment configured under
+    # "Require GitHub Actions environment" on pub.dev for this package.
+    environment: pub.dev
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
