@@ -134,7 +134,16 @@ This plugin spans four native transports: Apple External Accessory (iOS), Blueto
 
 ## Releases
 
-Maintainers handle releases. A release bumps the version in [pubspec.yaml](pubspec.yaml), [ios/universal_bluetooth_classic.podspec](ios/universal_bluetooth_classic.podspec), and [macos/universal_bluetooth_classic.podspec](macos/universal_bluetooth_classic.podspec), adds a `CHANGELOG.md` entry, and publishes to pub.dev.
+Maintainers handle releases. A release bumps the version in [pubspec.yaml](pubspec.yaml), [ios/universal_bluetooth_classic.podspec](ios/universal_bluetooth_classic.podspec), and [macos/universal_bluetooth_classic.podspec](macos/universal_bluetooth_classic.podspec), and adds a `CHANGELOG.md` entry.
+
+Publishing to pub.dev is automated by [`.github/workflows/publish.yml`](.github/workflows/publish.yml), which runs on a version tag push and uses the [`dart-lang/setup-dart` publish workflow](https://dart.dev/tools/pub/automated-publishing). To cut a release, push a tag equal to the `version` in `pubspec.yaml` (no `v` prefix), e.g.:
+
+```
+git tag 1.2.0
+git push origin 1.2.0
+```
+
+This requires automated publishing to be enabled on pub.dev for the package, with repository `Navideck/universal_bluetooth_classic`, tag pattern `{{version}}`, and the required GitHub Actions environment `pub.dev`.
 
 ## License
 

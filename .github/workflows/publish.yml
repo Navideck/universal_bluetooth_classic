@@ -3,39 +3,19 @@ name: Publish to pub.dev
 on:
   push:
     tags:
-    # must align with the tag-pattern configured on pub.dev, often just replace
-    #  with [0-9]+.[0-9]+.[0-9]+*
-    - '[0-9]+.[0-9]+.[0-9]+*' # tag-pattern on pub.dev: ''
-    # If you prefer tags like '1.2.3', without the 'v' prefix, then use:
-    # - '[0-9]+.[0-9]+.[0-9]+*' # tag-pattern on pub.dev: ''
-    # If your repository contains multiple packages consider a pattern like:
-    # - 'my_package_name-v[0-9]+.[0-9]+.[0-9]+*'
+    # Must align with the tag-pattern configured on pub.dev for this package.
+    # If you prefer tags like 'v1.2.3', prefix the pattern with 'v'.
+    - '[0-9]+.[0-9]+.[0-9]+*' # tag-pattern on pub.dev: '{{version}}'
 
-# Publish using the reusable workflow from dart-lang.
+# Publish using the reusable workflow from dart-lang, which sets up Flutter
+# (the package depends on the Flutter SDK), runs a dry-run check, and publishes.
 jobs:
   publish:
     permissions:
       id-token: write # Required for authentication using OIDC
-    # Must match the GitHub Actions environment configured under
-    # "Require GitHub Actions environment" on pub.dev for this package.
-    environment: pub.dev
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Get flutter version
-        run: echo "flutter_version=`cat .flutter_version`" >> $GITHUB_ENV
-        id: flutter_version
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: "stable"
-          cache: true
-          flutter-version: ${{ env.flutter_version }}
-      - run: flutter pub get
-      - name: Create publishing token (flutter)
-        run: |
-          set -eo pipefail
-          PUB_TOKEN=$(curl --retry 5 --retry-connrefused -sLS "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=https://pub.dev" -H "User-Agent: actions/oidc-client" -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" | jq -r '.value')
-          echo "PUB_TOKEN=${PUB_TOKEN}" >> $GITHUB_ENV
-          export PUB_TOKEN
-          flutter pub token add https://pub.dev --env-var PUB_TOKEN
-      - run: flutter pub publish --force # --force because of the web dependency
+    uses: dart-lang/setup-dart/.github/workflows/publish.yml@v1
+    with:
+      # Must match the environment name configured under "Require GitHub Actions
+      # environment" on pub.dev for this package.
+      environment: 'pub.dev'
+      # working-directory: path/to/package/within/repository
