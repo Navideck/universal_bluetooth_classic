@@ -18,14 +18,7 @@ public class UniversalBluetoothPlugin: NSObject, FlutterPlugin {
     var interruptNotification: IOBluetoothUserNotification?
 
     var delegateMap: [String: BTDevice] = [:]
-    lazy var inquiry: IOBluetoothDeviceInquiry = .init(delegate: self)
-    private var scanRequested = false
-    private var scanGeneration = 0
-    private var isInquiryRunning = false
-    private var pendingNameRequests: Set<String> = []
-    private let inquiryLengthSeconds: UInt8 = 5
-    private let inquiryRestartDelay: TimeInterval = 1
-    private let nameRequestTimeout: TimeInterval = 8
+    private lazy var inquiryScanner = MacInquiryScanner()
 
     // We initialize IOBluetoothPairingController in ObjC because in Swift no modal is shown
     // This also does not work on native apps
@@ -35,6 +28,12 @@ public class UniversalBluetoothPlugin: NSObject, FlutterPlugin {
         accessoryManagerCallbackChannel = callbackChannel
         hidCallbackChannel = hidCallback
         super.init()
+        inquiryScanner.onDeviceFound = { [weak self] device in
+            guard let self else { return }
+            self.accessoryManagerCallbackChannel.onDeviceDiscover(
+                device: device.toBLuetoothDevice(self.delegateMap)
+            ) { _ in }
+        }
     }
 
     public static func register(with registrar: FlutterPluginRegistrar) {
@@ -164,97 +163,23 @@ extension UniversalBluetoothPlugin: BluetoothHidManagerPlatformChannel {
 
 extension UniversalBluetoothPlugin: FlutterAccessoryPlatformChannel {
     func startScan() throws {
-        guard !scanRequested else { return }
-        scanRequested = true
-        invalidatePendingInquiryRestart()
         do {
-            try startInquiry()
-        } catch {
-            scanRequested = false
-            throw error
+            try inquiryScanner.start()
+        } catch MacInquiryError.failedToStart(let code) {
+            throw PigeonError(
+                code: "Failed",
+                message: "Failed to start inquiry: \(code)",
+                details: nil
+            )
         }
     }
 
     func stopScan() throws {
-        scanRequested = false
-        isInquiryRunning = false
-        invalidatePendingInquiryRestart()
-        inquiry.stop()
+        inquiryScanner.stop()
     }
 
     func isScanning() throws -> Bool {
-        return scanRequested
-    }
-
-    /// Starts one inquiry round. `IOBluetoothDeviceInquiry` only runs for
-    /// `inquiryLength` seconds, so the plugin restarts it while a scan is
-    /// requested. macOS throttles back-to-back inquiries, so a failed restart
-    /// is retried instead of ending the scan.
-    private func startInquiry() throws {
-        inquiry.updateNewDeviceNames = false
-        inquiry.inquiryLength = inquiryLengthSeconds
-        let result = inquiry.start()
-        guard result == kIOReturnSuccess else {
-            isInquiryRunning = false
-            throw PigeonError(
-                code: "Failed",
-                message: "Failed to start inquiry: \(result)",
-                details: nil
-            )
-        }
-        isInquiryRunning = true
-    }
-
-    private func scheduleInquiryRestart(after delay: TimeInterval? = nil) {
-        scanGeneration += 1
-        let generation = scanGeneration
-        let restartDelay = delay ?? inquiryRestartDelay
-        DispatchQueue.main.asyncAfter(deadline: .now() + restartDelay) { [weak self] in
-            guard let self, self.scanRequested, self.scanGeneration == generation else {
-                return
-            }
-            do {
-                try self.startInquiry()
-            } catch {
-                print("Failed to restart inquiry: \(error)")
-                self.scheduleInquiryRestart()
-            }
-        }
-    }
-
-    private func invalidatePendingInquiryRestart() {
-        scanGeneration += 1
-    }
-
-    /// macOS reports devices before it resolves their names, and sometimes the
-    /// name stays equal to the address for the whole inquiry. Request names once
-    /// the inquiry has stopped (remote name requests must not run while an
-    /// inquiry is active), then let [remoteNameRequestComplete] report them.
-    private func requestNamesForUnresolvedDevices() {
-        guard let devices = inquiry.foundDevices() as? [IOBluetoothDevice] else {
-            return
-        }
-        for device in devices where !Self.hasResolvedName(device) {
-            guard let address = device.addressString else { continue }
-            pendingNameRequests.insert(address)
-            let result = device.remoteNameRequest(self)
-            if result != kIOReturnSuccess {
-                pendingNameRequests.remove(address)
-            }
-        }
-    }
-
-    private static func hasResolvedName(_ device: IOBluetoothDevice) -> Bool {
-        guard let name = device.name, !name.isEmpty, let address = device.addressString else {
-            return false
-        }
-        let normalizedName = name
-            .replacingOccurrences(of: ":", with: "")
-            .replacingOccurrences(of: "-", with: "")
-        let normalizedAddress = address
-            .replacingOccurrences(of: ":", with: "")
-            .replacingOccurrences(of: "-", with: "")
-        return normalizedName.caseInsensitiveCompare(normalizedAddress) != .orderedSame
+        inquiryScanner.isScanning
     }
 
     func getPairedDevices() throws -> [BluetoothDevice] {
@@ -275,40 +200,17 @@ extension UniversalBluetoothPlugin: FlutterAccessoryPlatformChannel {
     }
 
     func pair(address: String, completion: @escaping (Result<Bool, Error>) -> Void) {
-        // Open the connection off the platform thread, since it can block while
-        // the page timeout elapses.
-        DispatchQueue.global(qos: .background).async {
-            guard let device = IOBluetoothDevice(addressString: address) else {
-                completion(.failure(PigeonError(code: "Failed", message: "Device not found", details: nil)))
-                return
+        MacPairer.pair(address: address) { result in
+            switch result {
+            case .success(let paired):
+                completion(.success(paired))
+            case .failure(let error):
+                completion(.failure(PigeonError(
+                    code: "Failed",
+                    message: String(describing: error),
+                    details: nil
+                )))
             }
-
-            let maxAttempts = 3
-            var lastError = ""
-            for attempt in 1...maxAttempts {
-                if device.isConnected() {
-                    print("Already connected \(address)")
-                    completion(.success(true))
-                    return
-                }
-
-                let ioReturn: IOReturn = device.openConnection(
-                    nil,
-                    withPageTimeout: UInt16(round(10.0 * 1600)),
-                    authenticationRequired: true
-                )
-                if ioReturn == kIOReturnSuccess {
-                    completion(.success(true))
-                    return
-                }
-
-                lastError = String(cString: mach_error_string(Int32(ioReturn)))
-                print("Pair attempt \(attempt) for \(address) failed: \(ioReturn) \(lastError)")
-                if attempt < maxAttempts {
-                    Thread.sleep(forTimeInterval: 1)
-                }
-            }
-            completion(.failure(PigeonError(code: "Failed", message: lastError, details: nil)))
         }
     }
 
@@ -335,14 +237,6 @@ extension UniversalBluetoothPlugin: FlutterAccessoryPlatformChannel {
 extension UniversalBluetoothPlugin: IOBluetoothDeviceAsyncCallbacks {
     public func remoteNameRequestComplete(_ device: IOBluetoothDevice, status: IOReturn) {
         print("RemoteNameRequestComplete \(String(describing: device.addressString)) \(status)")
-        guard let address = device.addressString else { return }
-        pendingNameRequests.remove(address)
-        if status == kIOReturnSuccess {
-            accessoryManagerCallbackChannel.onDeviceDiscover(device: device.toBLuetoothDevice(delegateMap)) { _ in }
-        }
-        if scanRequested, !isInquiryRunning, pendingNameRequests.isEmpty {
-            scheduleInquiryRestart()
-        }
     }
 
     public func connectionComplete(_ device: IOBluetoothDevice, status: IOReturn) {
@@ -355,36 +249,6 @@ extension UniversalBluetoothPlugin: IOBluetoothDeviceAsyncCallbacks {
         } else {
             print("SDP query failed with status: \(status)")
         }
-    }
-}
-
-extension UniversalBluetoothPlugin: IOBluetoothDeviceInquiryDelegate {
-    @objc public func deviceInquiryComplete(_: IOBluetoothDeviceInquiry, error: IOReturn, aborted: Bool) {
-        isInquiryRunning = false
-        if error != kIOReturnSuccess && !aborted {
-            print("Inquiry failed with error: \(error)")
-        }
-        guard scanRequested, !aborted else { return }
-        requestNamesForUnresolvedDevices()
-        scheduleInquiryRestart(
-            after: pendingNameRequests.isEmpty ? nil : nameRequestTimeout
-        )
-    }
-
-    @objc public func deviceInquiryDeviceFound(_: IOBluetoothDeviceInquiry, device: IOBluetoothDevice) {
-        accessoryManagerCallbackChannel.onDeviceDiscover(device: device.toBLuetoothDevice(delegateMap)) { _ in }
-    }
-
-    @objc public func deviceInquiryUpdatingDeviceNamesStarted(_: IOBluetoothDeviceInquiry, devicesRemaining: UInt32) {
-        print("Updating device names started: devicesRemaining = \(devicesRemaining)")
-    }
-
-    @objc public func deviceInquiryDeviceNameUpdated(_: IOBluetoothDeviceInquiry, device: IOBluetoothDevice, devicesRemaining: UInt32) {
-        print("Device name updated: devicesRemaining = \(devicesRemaining), name = \(String(describing: device.nameOrAddress))")
-        // Devices are first reported as soon as they are found, before macOS
-        // resolves their name. Re-emit the device so listeners that filter by
-        // name can act on it once the name is available.
-        accessoryManagerCallbackChannel.onDeviceDiscover(device: device.toBLuetoothDevice(delegateMap)) { _ in }
     }
 }
 
