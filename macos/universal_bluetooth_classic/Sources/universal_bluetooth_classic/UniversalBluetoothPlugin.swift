@@ -19,7 +19,9 @@ public class UniversalBluetoothPlugin: NSObject, FlutterPlugin {
 
     var delegateMap: [String: BTDevice] = [:]
     lazy var inquiry: IOBluetoothDeviceInquiry = .init(delegate: self)
-    private var isInquiryStarted = false
+    private var scanRequested = false
+    private let inquiryLengthSeconds: UInt8 = 3
+    private let inquiryRestartDelay: TimeInterval = 1
 
     // We initialize IOBluetoothPairingController in ObjC because in Swift no modal is shown
     // This also does not work on native apps
@@ -158,17 +160,39 @@ extension UniversalBluetoothPlugin: BluetoothHidManagerPlatformChannel {
 
 extension UniversalBluetoothPlugin: FlutterAccessoryPlatformChannel {
     func startScan() throws {
-        inquiry.updateNewDeviceNames = true
-        inquiry.inquiryLength = 3
-        inquiry.start()
+        guard !scanRequested else { return }
+        scanRequested = true
+        do {
+            try startInquiry()
+        } catch {
+            scanRequested = false
+            throw error
+        }
     }
 
     func stopScan() throws {
+        scanRequested = false
         inquiry.stop()
     }
 
     func isScanning() throws -> Bool {
-        return isInquiryStarted
+        return scanRequested
+    }
+
+    /// Starts one inquiry round. `IOBluetoothDeviceInquiry` only runs for
+    /// `inquiryLength` seconds, so [deviceInquiryComplete] restarts it while a
+    /// scan is still requested.
+    private func startInquiry() throws {
+        inquiry.updateNewDeviceNames = true
+        inquiry.inquiryLength = inquiryLengthSeconds
+        let result = inquiry.start()
+        guard result == kIOReturnSuccess else {
+            throw PigeonError(
+                code: "Failed",
+                message: "Failed to start inquiry: \(result)",
+                details: nil
+            )
+        }
     }
 
     func getPairedDevices() throws -> [BluetoothDevice] {
@@ -258,14 +282,18 @@ extension UniversalBluetoothPlugin: IOBluetoothDeviceAsyncCallbacks {
 }
 
 extension UniversalBluetoothPlugin: IOBluetoothDeviceInquiryDelegate {
-    @objc public func deviceInquiryStarted(_: IOBluetoothDeviceInquiry) {
-        isInquiryStarted = true
-    }
-
-    @objc public func deviceInquiryComplete(_: IOBluetoothDeviceInquiry, error: IOReturn, aborted _: Bool) {
-        isInquiryStarted = false
+    @objc public func deviceInquiryComplete(_: IOBluetoothDeviceInquiry, error: IOReturn, aborted: Bool) {
         if error != kIOReturnSuccess {
             print("Inquiry failed with error: \(error)")
+        }
+        guard scanRequested, !aborted else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + inquiryRestartDelay) { [weak self] in
+            guard let self, self.scanRequested else { return }
+            do {
+                try self.startInquiry()
+            } catch {
+                print("Failed to restart inquiry: \(error)")
+            }
         }
     }
 
@@ -279,6 +307,10 @@ extension UniversalBluetoothPlugin: IOBluetoothDeviceInquiryDelegate {
 
     @objc public func deviceInquiryDeviceNameUpdated(_: IOBluetoothDeviceInquiry, device: IOBluetoothDevice, devicesRemaining: UInt32) {
         print("Device name updated: devicesRemaining = \(devicesRemaining), name = \(String(describing: device.nameOrAddress))")
+        // Devices are first reported as soon as they are found, before macOS
+        // resolves their name. Re-emit the device so listeners that filter by
+        // name can act on it once the name is available.
+        accessoryManagerCallbackChannel.onDeviceDiscover(device: device.toBLuetoothDevice(delegateMap)) { _ in }
     }
 }
 
