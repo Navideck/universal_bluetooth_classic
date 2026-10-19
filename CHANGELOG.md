@@ -1,4 +1,4 @@
-## Unreleased
+## 1.3.0
 
 * macOS: keep a requested scan running. `IOBluetoothDeviceInquiry` only runs
   for `inquiryLength` seconds, so the plugin restarts it after a short delay
