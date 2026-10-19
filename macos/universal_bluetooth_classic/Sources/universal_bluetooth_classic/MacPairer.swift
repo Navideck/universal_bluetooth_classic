@@ -6,7 +6,9 @@ import IOBluetooth
 ///
 /// The first page right after discovery can time out, especially when a device
 /// has just switched from BLE to classic discoverable mode, so the page uses a
-/// generous timeout and is retried.
+/// generous timeout and a timeout is retried. Other failures (a rejected
+/// pairing, an unreachable device) are reported immediately, since retrying
+/// them only re-prompts the user or delays the error.
 enum MacPairer {
     static let maxAttempts = 3
     static let pageTimeoutSeconds = 10.0
@@ -44,12 +46,16 @@ enum MacPairer {
                     String(cString: mach_error_string(Int32(result)))
                 )
                 print("Pair attempt \(attempt) for \(address) failed: \(lastError)")
-                if attempt < maxAttempts {
-                    Thread.sleep(forTimeInterval: retryDelay)
-                }
+                guard isRetryable(result), attempt < maxAttempts else { break }
+                Thread.sleep(forTimeInterval: retryDelay)
             }
             completion(.failure(lastError))
         }
+    }
+
+    /// Only a page timeout or a busy controller are worth another attempt.
+    private static func isRetryable(_ result: IOReturn) -> Bool {
+        result == kIOReturnTimeout || result == kIOReturnBusy
     }
 }
 

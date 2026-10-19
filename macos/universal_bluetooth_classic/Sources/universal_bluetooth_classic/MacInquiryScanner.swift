@@ -6,7 +6,8 @@ import IOBluetooth
 /// `IOBluetoothDeviceInquiry` only runs for `inquiryLength` seconds and macOS
 /// reports devices before their names are known. This scanner keeps a scan
 /// requested across inquiry rounds, resolves names between rounds, and reports
-/// each device once its name is available.
+/// a device when it is first seen and again when its name changes, so
+/// name-filtered listeners receive the device once the name is available.
 final class MacInquiryScanner: NSObject {
     typealias DeviceHandler = (IOBluetoothDevice) -> Void
 
@@ -15,17 +16,33 @@ final class MacInquiryScanner: NSObject {
     private lazy var inquiry: IOBluetoothDeviceInquiry = .init(delegate: self)
     private(set) var isScanning = false
 
-    private var scanGeneration = 0
+    /// Bumped whenever a scan session starts or stops, so completions that
+    /// belong to a previous session can be ignored.
+    private var sessionGeneration = 0
+    /// Bumped whenever a restart is scheduled; older timers are discarded.
+    private var restartGeneration = 0
+    /// Session that started the inquiry currently in flight.
+    private var inquirySession = 0
     private var isInquiryRunning = false
     private var pendingNameRequests: Set<String> = []
+    /// Last name reported per address, so a device is not reported again on
+    /// every inquiry round.
+    private var reportedNames: [String: String] = [:]
 
     private let inquiryLengthSeconds: UInt8 = 5
     private let inquiryRestartDelay: TimeInterval = 1
+    /// Page timeout for remote name requests, kept well below
+    /// `nameRequestTimeout` so a request finishes before the inquiry restarts.
+    private let nameRequestPageTimeoutSeconds: TimeInterval = 3
+    /// Upper bound for waiting on name requests before restarting the inquiry.
     private let nameRequestTimeout: TimeInterval = 8
 
     func start() throws {
         guard !isScanning else { return }
+        sessionGeneration += 1
         isScanning = true
+        pendingNameRequests.removeAll()
+        reportedNames.removeAll()
         invalidatePendingRestart()
         do {
             try startInquiry()
@@ -36,13 +53,18 @@ final class MacInquiryScanner: NSObject {
     }
 
     func stop() {
+        sessionGeneration += 1
         isScanning = false
         isInquiryRunning = false
+        pendingNameRequests.removeAll()
         invalidatePendingRestart()
         inquiry.stop()
     }
 
     private func startInquiry() throws {
+        // Requests that are still pending when the next round starts will not
+        // be reported; the next round looks the devices up again.
+        pendingNameRequests.removeAll()
         inquiry.updateNewDeviceNames = false
         inquiry.inquiryLength = inquiryLengthSeconds
         let result = inquiry.start()
@@ -50,15 +72,16 @@ final class MacInquiryScanner: NSObject {
             isInquiryRunning = false
             throw MacInquiryError.failedToStart(result)
         }
+        inquirySession = sessionGeneration
         isInquiryRunning = true
     }
 
     private func scheduleRestart(after delay: TimeInterval? = nil) {
-        scanGeneration += 1
-        let generation = scanGeneration
+        restartGeneration += 1
+        let generation = restartGeneration
         let restartDelay = delay ?? inquiryRestartDelay
         DispatchQueue.main.asyncAfter(deadline: .now() + restartDelay) { [weak self] in
-            guard let self, self.isScanning, self.scanGeneration == generation else {
+            guard let self, self.isScanning, self.restartGeneration == generation else {
                 return
             }
             do {
@@ -71,7 +94,7 @@ final class MacInquiryScanner: NSObject {
     }
 
     private func invalidatePendingRestart() {
-        scanGeneration += 1
+        restartGeneration += 1
     }
 
     /// macOS reports devices before it resolves their names, and sometimes the
@@ -82,10 +105,13 @@ final class MacInquiryScanner: NSObject {
         guard let devices = inquiry.foundDevices() as? [IOBluetoothDevice] else {
             return
         }
+        let pageTimeout = UInt16(round(nameRequestPageTimeoutSeconds * 1600))
         for device in devices where !Self.hasResolvedName(device) {
             guard let address = device.addressString else { continue }
-            pendingNameRequests.insert(address)
-            if device.remoteNameRequest(self) != kIOReturnSuccess {
+            // A request for this address is already outstanding; issuing a
+            // second one would produce duplicate callbacks.
+            guard pendingNameRequests.insert(address).inserted else { continue }
+            if device.remoteNameRequest(self, withPageTimeout: pageTimeout) != kIOReturnSuccess {
                 pendingNameRequests.remove(address)
             }
         }
@@ -105,6 +131,10 @@ final class MacInquiryScanner: NSObject {
     }
 
     private func report(_ device: IOBluetoothDevice) {
+        guard let address = device.addressString else { return }
+        let name = device.name ?? ""
+        guard reportedNames[address] != name else { return }
+        reportedNames[address] = name
         onDeviceFound?(device)
     }
 }
@@ -115,6 +145,11 @@ extension MacInquiryScanner: IOBluetoothDeviceInquiryDelegate {
         error: IOReturn,
         aborted: Bool
     ) {
+        // A completion for an inquiry from a stopped (or restarted) session
+        // must not overwrite the state of the inquiry that replaced it.
+        if aborted, inquirySession != sessionGeneration {
+            return
+        }
         isInquiryRunning = false
         if error != kIOReturnSuccess && !aborted {
             print("Inquiry failed with error: \(error)")
@@ -135,11 +170,13 @@ extension MacInquiryScanner: IOBluetoothDeviceInquiryDelegate {
 extension MacInquiryScanner: IOBluetoothDeviceAsyncCallbacks {
     func remoteNameRequestComplete(_ device: IOBluetoothDevice, status: IOReturn) {
         guard let address = device.addressString else { return }
-        pendingNameRequests.remove(address)
+        // A request that belongs to a stopped or restarted scan is no longer
+        // tracked; ignoring it keeps discovery from firing after `stopScan()`.
+        guard pendingNameRequests.remove(address) != nil, isScanning else { return }
         if status == kIOReturnSuccess {
             report(device)
         }
-        if isScanning, !isInquiryRunning, pendingNameRequests.isEmpty {
+        if !isInquiryRunning, pendingNameRequests.isEmpty {
             scheduleRestart()
         }
     }
