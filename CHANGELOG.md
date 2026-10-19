@@ -2,8 +2,9 @@
 
 * macOS: keep a requested scan running. `IOBluetoothDeviceInquiry` only runs
   for `inquiryLength` seconds, so the plugin restarts it after a short delay
-  until `stopScan` is called. `isScanning` now reports whether a scan was
-  requested, including the restart delay.
+  until `stopScan` is called. Restarts that macOS throttles are retried, and
+  `isScanning` reports whether a scan was requested, including the restart
+  delay.
 * macOS: report devices again from `deviceInquiryDeviceNameUpdated`, so
   listeners that filter by device name no longer miss devices that were first
   discovered before macOS resolved their name.

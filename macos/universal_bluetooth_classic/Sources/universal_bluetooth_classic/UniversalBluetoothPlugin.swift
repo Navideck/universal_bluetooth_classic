@@ -20,7 +20,8 @@ public class UniversalBluetoothPlugin: NSObject, FlutterPlugin {
     var delegateMap: [String: BTDevice] = [:]
     lazy var inquiry: IOBluetoothDeviceInquiry = .init(delegate: self)
     private var scanRequested = false
-    private let inquiryLengthSeconds: UInt8 = 3
+    private var scanGeneration = 0
+    private let inquiryLengthSeconds: UInt8 = 5
     private let inquiryRestartDelay: TimeInterval = 1
 
     // We initialize IOBluetoothPairingController in ObjC because in Swift no modal is shown
@@ -162,6 +163,7 @@ extension UniversalBluetoothPlugin: FlutterAccessoryPlatformChannel {
     func startScan() throws {
         guard !scanRequested else { return }
         scanRequested = true
+        invalidatePendingInquiryRestart()
         do {
             try startInquiry()
         } catch {
@@ -172,6 +174,7 @@ extension UniversalBluetoothPlugin: FlutterAccessoryPlatformChannel {
 
     func stopScan() throws {
         scanRequested = false
+        invalidatePendingInquiryRestart()
         inquiry.stop()
     }
 
@@ -180,8 +183,9 @@ extension UniversalBluetoothPlugin: FlutterAccessoryPlatformChannel {
     }
 
     /// Starts one inquiry round. `IOBluetoothDeviceInquiry` only runs for
-    /// `inquiryLength` seconds, so [deviceInquiryComplete] restarts it while a
-    /// scan is still requested.
+    /// `inquiryLength` seconds, so the plugin restarts it while a scan is
+    /// requested. macOS throttles back-to-back inquiries, so a failed restart
+    /// is retried instead of ending the scan.
     private func startInquiry() throws {
         inquiry.updateNewDeviceNames = true
         inquiry.inquiryLength = inquiryLengthSeconds
@@ -193,6 +197,26 @@ extension UniversalBluetoothPlugin: FlutterAccessoryPlatformChannel {
                 details: nil
             )
         }
+    }
+
+    private func scheduleInquiryRestart() {
+        scanGeneration += 1
+        let generation = scanGeneration
+        DispatchQueue.main.asyncAfter(deadline: .now() + inquiryRestartDelay) { [weak self] in
+            guard let self, self.scanRequested, self.scanGeneration == generation else {
+                return
+            }
+            do {
+                try self.startInquiry()
+            } catch {
+                print("Failed to restart inquiry: \(error)")
+                self.scheduleInquiryRestart()
+            }
+        }
+    }
+
+    private func invalidatePendingInquiryRestart() {
+        scanGeneration += 1
     }
 
     func getPairedDevices() throws -> [BluetoothDevice] {
@@ -287,14 +311,7 @@ extension UniversalBluetoothPlugin: IOBluetoothDeviceInquiryDelegate {
             print("Inquiry failed with error: \(error)")
         }
         guard scanRequested, !aborted else { return }
-        DispatchQueue.main.asyncAfter(deadline: .now() + inquiryRestartDelay) { [weak self] in
-            guard let self, self.scanRequested else { return }
-            do {
-                try self.startInquiry()
-            } catch {
-                print("Failed to restart inquiry: \(error)")
-            }
-        }
+        scheduleInquiryRestart()
     }
 
     @objc public func deviceInquiryDeviceFound(_: IOBluetoothDeviceInquiry, device: IOBluetoothDevice) {
