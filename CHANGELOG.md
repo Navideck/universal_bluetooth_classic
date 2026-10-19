@@ -5,9 +5,10 @@
   until `stopScan` is called. Restarts that macOS throttles are retried, and
   `isScanning` reports whether a scan was requested, including the restart
   delay.
-* macOS: report devices again from `deviceInquiryDeviceNameUpdated`, so
-  listeners that filter by device name no longer miss devices that were first
-  discovered before macOS resolved their name.
+* macOS: resolve device names after an inquiry stops. macOS can report a
+  found device with its address as the name; the plugin now issues remote name
+  requests between inquiry rounds and re-emits the device when the name
+  arrives, instead of relying on the system name cache.
 * macOS: propagate `IOBluetoothDeviceInquiry.start()` failures from
   `startScan` instead of silently doing nothing.
 

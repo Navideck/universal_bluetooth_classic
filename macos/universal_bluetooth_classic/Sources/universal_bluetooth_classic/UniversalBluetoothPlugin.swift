@@ -21,8 +21,11 @@ public class UniversalBluetoothPlugin: NSObject, FlutterPlugin {
     lazy var inquiry: IOBluetoothDeviceInquiry = .init(delegate: self)
     private var scanRequested = false
     private var scanGeneration = 0
+    private var isInquiryRunning = false
+    private var pendingNameRequests: Set<String> = []
     private let inquiryLengthSeconds: UInt8 = 5
     private let inquiryRestartDelay: TimeInterval = 1
+    private let nameRequestTimeout: TimeInterval = 8
 
     // We initialize IOBluetoothPairingController in ObjC because in Swift no modal is shown
     // This also does not work on native apps
@@ -174,6 +177,7 @@ extension UniversalBluetoothPlugin: FlutterAccessoryPlatformChannel {
 
     func stopScan() throws {
         scanRequested = false
+        isInquiryRunning = false
         invalidatePendingInquiryRestart()
         inquiry.stop()
     }
@@ -187,22 +191,25 @@ extension UniversalBluetoothPlugin: FlutterAccessoryPlatformChannel {
     /// requested. macOS throttles back-to-back inquiries, so a failed restart
     /// is retried instead of ending the scan.
     private func startInquiry() throws {
-        inquiry.updateNewDeviceNames = true
+        inquiry.updateNewDeviceNames = false
         inquiry.inquiryLength = inquiryLengthSeconds
         let result = inquiry.start()
         guard result == kIOReturnSuccess else {
+            isInquiryRunning = false
             throw PigeonError(
                 code: "Failed",
                 message: "Failed to start inquiry: \(result)",
                 details: nil
             )
         }
+        isInquiryRunning = true
     }
 
-    private func scheduleInquiryRestart() {
+    private func scheduleInquiryRestart(after delay: TimeInterval? = nil) {
         scanGeneration += 1
         let generation = scanGeneration
-        DispatchQueue.main.asyncAfter(deadline: .now() + inquiryRestartDelay) { [weak self] in
+        let restartDelay = delay ?? inquiryRestartDelay
+        DispatchQueue.main.asyncAfter(deadline: .now() + restartDelay) { [weak self] in
             guard let self, self.scanRequested, self.scanGeneration == generation else {
                 return
             }
@@ -217,6 +224,37 @@ extension UniversalBluetoothPlugin: FlutterAccessoryPlatformChannel {
 
     private func invalidatePendingInquiryRestart() {
         scanGeneration += 1
+    }
+
+    /// macOS reports devices before it resolves their names, and sometimes the
+    /// name stays equal to the address for the whole inquiry. Request names once
+    /// the inquiry has stopped (remote name requests must not run while an
+    /// inquiry is active), then let [remoteNameRequestComplete] report them.
+    private func requestNamesForUnresolvedDevices() {
+        guard let devices = inquiry.foundDevices() as? [IOBluetoothDevice] else {
+            return
+        }
+        for device in devices where !Self.hasResolvedName(device) {
+            guard let address = device.addressString else { continue }
+            pendingNameRequests.insert(address)
+            let result = device.remoteNameRequest(self)
+            if result != kIOReturnSuccess {
+                pendingNameRequests.remove(address)
+            }
+        }
+    }
+
+    private static func hasResolvedName(_ device: IOBluetoothDevice) -> Bool {
+        guard let name = device.name, !name.isEmpty, let address = device.addressString else {
+            return false
+        }
+        let normalizedName = name
+            .replacingOccurrences(of: ":", with: "")
+            .replacingOccurrences(of: "-", with: "")
+        let normalizedAddress = address
+            .replacingOccurrences(of: ":", with: "")
+            .replacingOccurrences(of: "-", with: "")
+        return normalizedName.caseInsensitiveCompare(normalizedAddress) != .orderedSame
     }
 
     func getPairedDevices() throws -> [BluetoothDevice] {
@@ -290,6 +328,14 @@ extension UniversalBluetoothPlugin: FlutterAccessoryPlatformChannel {
 extension UniversalBluetoothPlugin: IOBluetoothDeviceAsyncCallbacks {
     public func remoteNameRequestComplete(_ device: IOBluetoothDevice, status: IOReturn) {
         print("RemoteNameRequestComplete \(String(describing: device.addressString)) \(status)")
+        guard let address = device.addressString else { return }
+        pendingNameRequests.remove(address)
+        if status == kIOReturnSuccess {
+            accessoryManagerCallbackChannel.onDeviceDiscover(device: device.toBLuetoothDevice(delegateMap)) { _ in }
+        }
+        if scanRequested, !isInquiryRunning, pendingNameRequests.isEmpty {
+            scheduleInquiryRestart()
+        }
     }
 
     public func connectionComplete(_ device: IOBluetoothDevice, status: IOReturn) {
@@ -307,11 +353,15 @@ extension UniversalBluetoothPlugin: IOBluetoothDeviceAsyncCallbacks {
 
 extension UniversalBluetoothPlugin: IOBluetoothDeviceInquiryDelegate {
     @objc public func deviceInquiryComplete(_: IOBluetoothDeviceInquiry, error: IOReturn, aborted: Bool) {
-        if error != kIOReturnSuccess {
+        isInquiryRunning = false
+        if error != kIOReturnSuccess && !aborted {
             print("Inquiry failed with error: \(error)")
         }
         guard scanRequested, !aborted else { return }
-        scheduleInquiryRestart()
+        requestNamesForUnresolvedDevices()
+        scheduleInquiryRestart(
+            after: pendingNameRequests.isEmpty ? nil : nameRequestTimeout
+        )
     }
 
     @objc public func deviceInquiryDeviceFound(_: IOBluetoothDeviceInquiry, device: IOBluetoothDevice) {
