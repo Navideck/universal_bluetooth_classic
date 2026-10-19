@@ -9,6 +9,10 @@
   found device with its address as the name; the plugin now issues remote name
   requests between inquiry rounds and re-emits the device when the name
   arrives, instead of relying on the system name cache.
+* macOS: pair with a longer page timeout and up to three attempts. Classic
+  `openConnection` can return `I/O Timeout` on the first page after discovery,
+  especially when the device just switched from BLE to classic discoverable
+  mode.
 * macOS: propagate `IOBluetoothDeviceInquiry.start()` failures from
   `startScan` instead of silently doing nothing.
 

@@ -283,25 +283,32 @@ extension UniversalBluetoothPlugin: FlutterAccessoryPlatformChannel {
                 return
             }
 
-            if device.isConnected() {
-                print("Already connected \(address)")
-                completion(.success(true))
-                return
+            let maxAttempts = 3
+            var lastError = ""
+            for attempt in 1...maxAttempts {
+                if device.isConnected() {
+                    print("Already connected \(address)")
+                    completion(.success(true))
+                    return
+                }
+
+                let ioReturn: IOReturn = device.openConnection(
+                    nil,
+                    withPageTimeout: UInt16(round(10.0 * 1600)),
+                    authenticationRequired: true
+                )
+                if ioReturn == kIOReturnSuccess {
+                    completion(.success(true))
+                    return
+                }
+
+                lastError = String(cString: mach_error_string(Int32(ioReturn)))
+                print("Pair attempt \(attempt) for \(address) failed: \(ioReturn) \(lastError)")
+                if attempt < maxAttempts {
+                    Thread.sleep(forTimeInterval: 1)
+                }
             }
-
-            let ioReturn: IOReturn = device.openConnection(
-                nil,
-                withPageTimeout: UInt16(round(2.0 * 1600)),
-                authenticationRequired: true
-            )
-
-            if ioReturn == kIOReturnSuccess {
-                completion(.success(true))
-                return
-            }
-
-            let errorString = String(cString: mach_error_string(Int32(ioReturn)))
-            completion(.failure(PigeonError(code: "Failed", message: errorString, details: nil)))
+            completion(.failure(PigeonError(code: "Failed", message: lastError, details: nil)))
         }
     }
 
