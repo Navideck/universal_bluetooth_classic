@@ -1,3 +1,10 @@
+## 1.3.1
+
+* Windows: include `<winrt/Windows.Foundation.h>` and
+  `<winrt/Windows.Foundation.Collections.h>` in `bluetooth_serial_manager.h` so
+  the WinRT coroutine operators (`co_await`), `IClosable::Close`, and
+  `IVectorView` collections compile cleanly with MSVC.
+
 ## 1.3.0
 
 * macOS: keep a requested scan running. `IOBluetoothDeviceInquiry` only runs
