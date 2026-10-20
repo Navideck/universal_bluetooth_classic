@@ -117,6 +117,14 @@ if (isScanning) {
 
 Scanning is available on Android, macOS, Windows, and Linux.
 
+On macOS a scan keeps running until `stopScan` is called: the plugin cycles
+short Bluetooth Classic inquiries, so `isScanning` reports whether a scan is
+requested rather than whether an inquiry is currently in flight. macOS may
+report a device before it has resolved the device name, so a device can be
+delivered once without a name and again once the name is available. Each device
+is reported once per scan unless its name changes, and no discovery events are
+delivered after `stopScan`.
+
 ### Paired devices
 
 ```dart

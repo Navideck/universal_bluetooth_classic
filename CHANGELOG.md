@@ -1,3 +1,26 @@
+## 1.3.0
+
+* macOS: keep a requested scan running. `IOBluetoothDeviceInquiry` only runs
+  for `inquiryLength` seconds, so the plugin restarts it after a short delay
+  until `stopScan` is called. Restarts that macOS throttles are retried, and
+  `isScanning` reports whether a scan was requested, including the restart
+  delay.
+* macOS: resolve device names after an inquiry stops. macOS can report a
+  found device with its address as the name; the plugin now issues remote name
+  requests between inquiry rounds and re-emits the device when the name
+  arrives, instead of relying on the system name cache.
+* macOS: report each device once per scan and again only when its name
+  changes, instead of re-emitting every device on every inquiry round. Pending
+  name requests are dropped by `stopScan`, so no discovery events arrive after
+  a scan is stopped.
+* macOS: pair with a longer page timeout and up to three attempts. Classic
+  `openConnection` can return `I/O Timeout` on the first page after discovery,
+  especially when the device just switched from BLE to classic discoverable
+  mode. Only timeouts are retried, so a rejected pairing or an unreachable
+  device fails immediately instead of prompting again.
+* macOS: propagate `IOBluetoothDeviceInquiry.start()` failures from
+  `startScan` instead of silently doing nothing.
+
 ## 1.2.0
 
 * Add a generic serial (SPP/RFCOMM) transport on Android, macOS, and Windows.

@@ -18,8 +18,7 @@ public class UniversalBluetoothPlugin: NSObject, FlutterPlugin {
     var interruptNotification: IOBluetoothUserNotification?
 
     var delegateMap: [String: BTDevice] = [:]
-    lazy var inquiry: IOBluetoothDeviceInquiry = .init(delegate: self)
-    private var isInquiryStarted = false
+    private lazy var inquiryScanner = MacInquiryScanner()
 
     // We initialize IOBluetoothPairingController in ObjC because in Swift no modal is shown
     // This also does not work on native apps
@@ -29,6 +28,12 @@ public class UniversalBluetoothPlugin: NSObject, FlutterPlugin {
         accessoryManagerCallbackChannel = callbackChannel
         hidCallbackChannel = hidCallback
         super.init()
+        inquiryScanner.onDeviceFound = { [weak self] device in
+            guard let self else { return }
+            self.accessoryManagerCallbackChannel.onDeviceDiscover(
+                device: device.toBLuetoothDevice(self.delegateMap)
+            ) { _ in }
+        }
     }
 
     public static func register(with registrar: FlutterPluginRegistrar) {
@@ -158,17 +163,23 @@ extension UniversalBluetoothPlugin: BluetoothHidManagerPlatformChannel {
 
 extension UniversalBluetoothPlugin: FlutterAccessoryPlatformChannel {
     func startScan() throws {
-        inquiry.updateNewDeviceNames = true
-        inquiry.inquiryLength = 3
-        inquiry.start()
+        do {
+            try inquiryScanner.start()
+        } catch MacInquiryError.failedToStart(let code) {
+            throw PigeonError(
+                code: "Failed",
+                message: "Failed to start inquiry: \(code)",
+                details: nil
+            )
+        }
     }
 
     func stopScan() throws {
-        inquiry.stop()
+        inquiryScanner.stop()
     }
 
     func isScanning() throws -> Bool {
-        return isInquiryStarted
+        inquiryScanner.isScanning
     }
 
     func getPairedDevices() throws -> [BluetoothDevice] {
@@ -189,33 +200,17 @@ extension UniversalBluetoothPlugin: FlutterAccessoryPlatformChannel {
     }
 
     func pair(address: String, completion: @escaping (Result<Bool, Error>) -> Void) {
-        // Open the connection off the platform thread, since it can block while
-        // the page timeout elapses.
-        DispatchQueue.global(qos: .background).async {
-            guard let device = IOBluetoothDevice(addressString: address) else {
-                completion(.failure(PigeonError(code: "Failed", message: "Device not found", details: nil)))
-                return
+        MacPairer.pair(address: address) { result in
+            switch result {
+            case .success(let paired):
+                completion(.success(paired))
+            case .failure(let error):
+                completion(.failure(PigeonError(
+                    code: "Failed",
+                    message: String(describing: error),
+                    details: nil
+                )))
             }
-
-            if device.isConnected() {
-                print("Already connected \(address)")
-                completion(.success(true))
-                return
-            }
-
-            let ioReturn: IOReturn = device.openConnection(
-                nil,
-                withPageTimeout: UInt16(round(2.0 * 1600)),
-                authenticationRequired: true
-            )
-
-            if ioReturn == kIOReturnSuccess {
-                completion(.success(true))
-                return
-            }
-
-            let errorString = String(cString: mach_error_string(Int32(ioReturn)))
-            completion(.failure(PigeonError(code: "Failed", message: errorString, details: nil)))
         }
     }
 
@@ -254,31 +249,6 @@ extension UniversalBluetoothPlugin: IOBluetoothDeviceAsyncCallbacks {
         } else {
             print("SDP query failed with status: \(status)")
         }
-    }
-}
-
-extension UniversalBluetoothPlugin: IOBluetoothDeviceInquiryDelegate {
-    @objc public func deviceInquiryStarted(_: IOBluetoothDeviceInquiry) {
-        isInquiryStarted = true
-    }
-
-    @objc public func deviceInquiryComplete(_: IOBluetoothDeviceInquiry, error: IOReturn, aborted _: Bool) {
-        isInquiryStarted = false
-        if error != kIOReturnSuccess {
-            print("Inquiry failed with error: \(error)")
-        }
-    }
-
-    @objc public func deviceInquiryDeviceFound(_: IOBluetoothDeviceInquiry, device: IOBluetoothDevice) {
-        accessoryManagerCallbackChannel.onDeviceDiscover(device: device.toBLuetoothDevice(delegateMap)) { _ in }
-    }
-
-    @objc public func deviceInquiryUpdatingDeviceNamesStarted(_: IOBluetoothDeviceInquiry, devicesRemaining: UInt32) {
-        print("Updating device names started: devicesRemaining = \(devicesRemaining)")
-    }
-
-    @objc public func deviceInquiryDeviceNameUpdated(_: IOBluetoothDeviceInquiry, device: IOBluetoothDevice, devicesRemaining: UInt32) {
-        print("Device name updated: devicesRemaining = \(devicesRemaining), name = \(String(describing: device.nameOrAddress))")
     }
 }
 
