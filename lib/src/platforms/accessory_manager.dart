@@ -105,6 +105,7 @@ class AccessoryManager extends UniversalBluetoothInterface {
     String deviceId, {
     BluetoothTransport? transport,
     String? serviceUuid,
+    Duration? timeout,
   }) {
     if (_pendingConnects.containsKey(deviceId)) {
       return Future<void>.error(
@@ -115,6 +116,7 @@ class AccessoryManager extends UniversalBluetoothInterface {
       deviceId,
       transport: transport,
       serviceUuid: serviceUuid,
+      timeout: timeout,
     );
     _pendingConnects[deviceId] = future;
     return future.whenComplete(() {
@@ -128,13 +130,14 @@ class AccessoryManager extends UniversalBluetoothInterface {
     String deviceId, {
     BluetoothTransport? transport,
     String? serviceUuid,
+    Duration? timeout,
   }) async {
     final resolved = _router.resolveConnect(transport);
     _router.record(deviceId, resolved);
     try {
       switch (resolved) {
         case BluetoothTransport.hid:
-          await _hidManagerChannel.connect(deviceId);
+          await _hidManagerChannel.connect(deviceId, timeout?.inMilliseconds);
         case BluetoothTransport.spp:
           await _serialChannel.connect(deviceId, serviceUuid ?? sppServiceUuid);
         case BluetoothTransport.externalAccessory:
@@ -156,6 +159,16 @@ class AccessoryManager extends UniversalBluetoothInterface {
       return _serialChannel.send(deviceId, data);
     }
     return _hidManagerChannel.send(deviceId, data);
+  }
+
+  @override
+  Future<void> sendHidReport(String deviceId, int reportId, Uint8List data) {
+    if (_router.transportFor(deviceId) != BluetoothTransport.hid) {
+      throw UnsupportedError(
+        'HID reports with a report id require a Bluetooth HID connection.',
+      );
+    }
+    return _hidManagerChannel.sendHidReport(deviceId, reportId, data);
   }
 
   @override
@@ -252,6 +265,23 @@ class _HidCallbackHandler extends BluetoothHidManagerCallbackChannel {
     int bufferSize,
   ) async {
     return _owner.callbacks.onGetReport?.call(deviceId, type, bufferSize);
+  }
+
+  @override
+  Future<ReportReply?> onReportRequest(
+    String deviceId,
+    ReportType type,
+    int reportId,
+    int bufferSize,
+  ) async {
+    // The report-id-aware callback wins when it answers; otherwise the legacy
+    // callback gets its turn on the native side.
+    return _owner.callbacks.onReportRequest?.call(
+      deviceId,
+      type,
+      reportId,
+      bufferSize,
+    );
   }
 
   @override

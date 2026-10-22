@@ -1,3 +1,27 @@
+## 1.4.0
+
+* Add `sendHidReport(deviceId, reportId, payload)` and
+  `UniversalBluetooth.sendHidReport`. The report id is passed separately from
+  the payload, matching Android's `BluetoothHidDevice.sendReport`; on macOS the
+  plugin frames the HIDP DATA|INPUT header and report id itself. `send` keeps
+  its raw/report-id-0 behaviour.
+* Add `onReportRequest`, an additive HID get-report callback carrying the
+  requested report id alongside device, type, and buffer size. A non-null reply
+  takes precedence over `onGetReport`, which remains supported.
+* Android: honour the Classic HID connect timeout. `connect` accepts
+  `timeoutMillis` (15 s when omitted); `STATE_CONNECTING` is no longer reported
+  as connected, and a timeout cancels the native request, settles the pending
+  callback, and ignores the late confirmation.
+* Android: settle a pending connect when the caller explicitly disconnects.
+* Android: retry HID app registration after 5 seconds when `onAppStatusChanged`
+  reports a loss, and report registration state to Dart.
+* macOS: incoming L2CAP channels now create or attach to a session even when the
+  app did not start the connect; a session is only reported connected once both
+  the control and interrupt channels are open, and closing either channel tears
+  the session down and reports the loss once. A partial open failure now closes
+  the channel that did open.
+* `UniversalBluetooth.connect` accepts an optional `timeout`.
+
 ## 1.3.1
 
 * Windows: include `<winrt/Windows.Foundation.h>` and

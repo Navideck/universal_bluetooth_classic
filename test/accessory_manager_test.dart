@@ -21,6 +21,7 @@ void main() {
   final channels = <String>[
     '$hidBase.connect',
     '$hidBase.send',
+    '$hidBase.sendHidReport',
     '$hidBase.disconnect',
     '$serialBase.connect',
     '$serialBase.send',
@@ -70,6 +71,19 @@ void main() {
       '$serialBase.connect',
       '$serialBase.send',
       '$serialBase.disconnect',
+    ]);
+  });
+
+  test('routes a HID report with its report id to the HID channel', () async {
+    final manager = AccessoryManager.instance;
+    const id = 'AA:BB:CC:DD:EE:FF';
+
+    await manager.connect(id);
+    await manager.sendHidReport(id, 3, Uint8List.fromList([0xE9, 0x00]));
+
+    expect(calls, <String>[
+      '$hidBase.connect',
+      '$hidBase.sendHidReport',
     ]);
   });
 

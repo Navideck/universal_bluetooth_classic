@@ -65,13 +65,14 @@ extension UniversalBluetoothPlugin: BluetoothHidManagerPlatformChannel {
         hidCallbackChannel.onSdpServiceRegistrationUpdate(registered: false) { _ in }
     }
 
-    func connect(deviceId: String, completion: @escaping (Result<Void, Error>) -> Void) {
+    func connect(deviceId: String, timeoutMillis: Int64?, completion: @escaping (Result<Void, Error>) -> Void) {
         guard let device = IOBluetoothDevice(addressString: deviceId) else {
             completion(.failure(PigeonError(code: "Failed", message: "Device not found", details: nil)))
             return
         }
 
-        if device.isConnected() {
+        let existing = delegateMap[deviceId]
+        if device.isConnected(), existing?.controlChannel != nil {
             setupL2CAPChannels(device: device, deviceId: deviceId, completion: completion)
             return
         }
@@ -104,6 +105,7 @@ extension UniversalBluetoothPlugin: BluetoothHidManagerPlatformChannel {
 
         if btDevice.interruptChannel != nil && btDevice.controlChannel != nil {
             print("Channel already opened")
+            btDevice.reportedConnected = true
             onConnectionUpdate(deviceId: deviceId, connected: true)
             completion(.success(()))
             return
@@ -112,22 +114,38 @@ extension UniversalBluetoothPlugin: BluetoothHidManagerPlatformChannel {
         btDevice.device = device
         device.performSDPQuery(self)
 
-        var result = device.openL2CAPChannelSync(&btDevice.controlChannel, withPSM: BTChannels.Control, delegate: self)
+        var controlChannel: IOBluetoothL2CAPChannel?
+        var result = device.openL2CAPChannelSync(&controlChannel, withPSM: BTChannels.Control, delegate: self)
         if result != kIOReturnSuccess {
             let errorString = String(cString: mach_error_string(Int32(result)))
             completion(.failure(PigeonError(code: "Failed", message: "Failed to open ControlChannel \(result) \(errorString)", details: nil)))
             return
         }
+        btDevice.controlChannel = controlChannel
 
-        result = device.openL2CAPChannelSync(&btDevice.interruptChannel, withPSM: BTChannels.Interrupt, delegate: self)
+        var interruptChannel: IOBluetoothL2CAPChannel?
+        result = device.openL2CAPChannelSync(&interruptChannel, withPSM: BTChannels.Interrupt, delegate: self)
         if result != kIOReturnSuccess {
+            // A half-open session must not look usable: close what we opened.
+            controlChannel?.close()
+            btDevice.controlChannel = nil
+            btDevice.interruptChannel = nil
+            btDevice.reportedConnected = false
             let errorString = String(cString: mach_error_string(Int32(result)))
             completion(.failure(PigeonError(code: "Failed", message: "Failed to open Interrupt \(result) \(errorString)", details: nil)))
             return
         }
+        btDevice.interruptChannel = interruptChannel
 
-        self.delegateMap[device.addressString] = btDevice
-        completion(.success(()))
+        delegateMap[device.addressString] = btDevice
+        // Only both channels together are a usable HID session.
+        if btDevice.controlChannel != nil && btDevice.interruptChannel != nil {
+            btDevice.reportedConnected = true
+            onConnectionUpdate(deviceId: deviceId, connected: true)
+            completion(.success(()))
+        } else {
+            completion(.failure(PigeonError(code: "Failed", message: "HID channels incomplete", details: nil)))
+        }
     }
 
 
@@ -155,6 +173,22 @@ extension UniversalBluetoothPlugin: BluetoothHidManagerPlatformChannel {
         let byteArray = [UInt8](data.data)
         if let interruptChannel = delegateMap[deviceId]?.interruptChannel {
             try sendBytes(channel: interruptChannel, byteArray)
+        } else {
+            throw PigeonError(code: "Failed", message: "No interruptChannel", details: nil)
+        }
+    }
+
+    func sendHidReport(deviceId: String, reportId: Int64, data: FlutterStandardTypedData) throws {
+        // macOS writes raw HIDP packets to the interrupt channel. The first
+        // octet is the DATA|INPUT transaction header, followed by the report id
+        // when the descriptor declares one.
+        var payload = [UInt8](data.data)
+        if reportId > 0 {
+            payload.insert(UInt8(reportId & 0xFF), at: 0)
+        }
+        payload.insert(0xA1, at: 0)
+        if let interruptChannel = delegateMap[deviceId]?.interruptChannel {
+            try sendBytes(channel: interruptChannel, payload)
         } else {
             throw PigeonError(code: "Failed", message: "No interruptChannel", details: nil)
         }
@@ -342,14 +376,16 @@ extension UniversalBluetoothPlugin: IOBluetoothL2CAPChannelDelegate {
         switch channel.psm {
         case BTChannels.Control:
             print("Opened ControlChannel for \(deviceId)")
-            delegateMap[deviceId]?.controlChannel = channel
+            let btDevice = session(for: deviceId)
+            btDevice.controlChannel = channel
         case BTChannels.Interrupt:
             print("Opened InterruptChannel for \(deviceId)")
-            delegateMap[deviceId]?.interruptChannel = channel
-            onConnectionUpdate(deviceId: deviceId, connected: true)
+            let btDevice = session(for: deviceId)
+            btDevice.interruptChannel = channel
         default:
             return
         }
+        reportConnectedIfReady(deviceId: deviceId)
     }
 
     @objc public func l2capChannelClosed(_ channel: IOBluetoothL2CAPChannel) {
@@ -357,16 +393,37 @@ extension UniversalBluetoothPlugin: IOBluetoothL2CAPChannelDelegate {
             print("ChannelClosed but no device address")
             return
         }
+        let btDevice = delegateMap[deviceId]
         switch channel.psm {
         case BTChannels.Control:
             print("Closed ControlChannel for \(deviceId)")
-            delegateMap[deviceId]?.controlChannel = nil
+            if btDevice?.controlChannel === channel {
+                btDevice?.controlChannel = nil
+            }
         case BTChannels.Interrupt:
             print("Closed InterruptChannel for \(deviceId)")
-            delegateMap[deviceId]?.interruptChannel = nil
-            onConnectionUpdate(deviceId: deviceId, connected: false)
+            if btDevice?.interruptChannel === channel {
+                btDevice?.interruptChannel = nil
+            }
         default:
             return
+        }
+        // Either channel closing invalidates the session, even if the other one
+        // is still open. Report the loss once and drop ownership of the broken
+        // session so a reconnect starts from a clean state.
+        let wasConnected = btDevice?.reportedConnected == true
+        if let btDevice {
+            btDevice.reportedConnected = false
+            if btDevice.controlChannel == nil || btDevice.interruptChannel == nil {
+                btDevice.controlChannel?.close()
+                btDevice.interruptChannel?.close()
+                btDevice.controlChannel = nil
+                btDevice.interruptChannel = nil
+                delegateMap.removeValue(forKey: deviceId)
+            }
+        }
+        if wasConnected {
+            onConnectionUpdate(deviceId: deviceId, connected: false)
         }
     }
 
@@ -377,6 +434,40 @@ extension UniversalBluetoothPlugin: IOBluetoothL2CAPChannelDelegate {
     @objc func newL2CAPChannelOpened(notification _: IOBluetoothUserNotification, channel: IOBluetoothL2CAPChannel) {
         print("NewChannelOpened")
         channel.setDelegate(self)
+        guard let deviceId = channel.device?.addressString else { return }
+        let btDevice = session(for: deviceId)
+        switch channel.psm {
+        case BTChannels.Control:
+            btDevice.controlChannel = channel
+        case BTChannels.Interrupt:
+            btDevice.interruptChannel = channel
+        default:
+            return
+        }
+        reportConnectedIfReady(deviceId: deviceId)
+    }
+
+    /// The established session for [deviceId], creating and owning it when the
+    /// first channel arrives. Incoming channels can therefore create a session
+    /// even when the app never initiated a connect.
+    private func session(for deviceId: String) -> BTDevice {
+        if let existing = delegateMap[deviceId] {
+            return existing
+        }
+        let session = BTDevice()
+        session.device = IOBluetoothDevice(addressString: deviceId)
+        delegateMap[deviceId] = session
+        return session
+    }
+
+    /// Emits a single connected event once both HID channels are open.
+    private func reportConnectedIfReady(deviceId: String) {
+        guard let btDevice = delegateMap[deviceId],
+              btDevice.controlChannel != nil,
+              btDevice.interruptChannel != nil else { return }
+        if btDevice.reportedConnected { return }
+        btDevice.reportedConnected = true
+        onConnectionUpdate(deviceId: deviceId, connected: true)
     }
 
     @objc private func l2capChannelData(channel: IOBluetoothL2CAPChannel, data dataPointer: UnsafePointer<UInt8>, length dataLength: Int) {
@@ -451,6 +542,7 @@ class BTDevice {
     var device: IOBluetoothDevice?
     var interruptChannel: IOBluetoothL2CAPChannel?
     var controlChannel: IOBluetoothL2CAPChannel?
+    var reportedConnected = false
 }
 
 extension BluetoothDeviceClassMajor {

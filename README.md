@@ -215,9 +215,23 @@ UniversalBluetooth.onData = (identifier, data) {
 };
 ```
 
-On the HID platforms `send` writes an output report and `onData` delivers the
-bytes the connected device sends. On iOS both operate on the open External
-Accessory session. `sendReport` has been replaced by `send`.
+On the HID platforms `send` writes a raw output report (report id 0) and
+`onData` delivers the bytes the connected device sends. On iOS both operate on
+the open External Accessory session. `sendReport` has been replaced by `send`.
+
+For descriptors that declare report ids, use `sendHidReport`, which passes the
+id separately from the payload:
+
+```dart
+await UniversalBluetooth.sendHidReport(
+  address,
+  3, // consumer report id
+  Uint8List.fromList([0xE9, 0x00]), // Volume Increment
+);
+```
+
+`connect` accepts an optional `timeout`; the HID transport completes only on a
+confirmed connection, not on a request that is still connecting.
 
 Respond to HID get-report requests:
 
@@ -227,6 +241,17 @@ UniversalBluetooth.onGetReport =
   return ReportReply(
     data: Uint8List.fromList([0x01, 0x02, 0x03]),
   );
+};
+```
+
+Use `onReportRequest` when the reply depends on the requested report id. It is
+consulted first; `onGetReport` runs only when it declines:
+
+```dart
+UniversalBluetooth.onReportRequest =
+    (deviceId, reportType, reportId, bufferSize) {
+  if (reportId != 3) return null;
+  return ReportReply(data: Uint8List.fromList([0xE9, 0x00]));
 };
 ```
 

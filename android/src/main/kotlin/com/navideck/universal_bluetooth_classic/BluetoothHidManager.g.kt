@@ -274,9 +274,18 @@ private open class BluetoothHidManagerPigeonCodec : StandardMessageCodec() {
  */
 interface BluetoothHidManagerPlatformChannel {
   fun closeSdp()
-  fun connect(deviceId: String, callback: (Result<Unit>) -> Unit)
+  fun connect(deviceId: String, timeoutMillis: Long?, callback: (Result<Unit>) -> Unit)
   fun disconnect(deviceId: String, callback: (Result<Unit>) -> Unit)
   fun send(deviceId: String, data: ByteArray)
+  /**
+   * Sends an input report with an explicit HID report id.
+   *
+   * [reportId] is passed separately from [data], matching Android's
+   * `BluetoothHidDevice.sendReport` and the macOS report channel. Prefer this
+   * over [send] for descriptors that declare report ids: the id must not be
+   * embedded in the payload.
+   */
+  fun sendHidReport(deviceId: String, reportId: Long, data: ByteArray)
 
   companion object {
     /** The codec used by BluetoothHidManagerPlatformChannel. */
@@ -309,7 +318,8 @@ interface BluetoothHidManagerPlatformChannel {
           channel.setMessageHandler { message, reply ->
             val args = message as List<Any?>
             val deviceIdArg = args[0] as String
-            api.connect(deviceIdArg) { result: Result<Unit> ->
+            val timeoutMillisArg = args[1] as Long?
+            api.connect(deviceIdArg, timeoutMillisArg) { result: Result<Unit> ->
               val error = result.exceptionOrNull()
               if (error != null) {
                 reply.reply(BluetoothHidManagerPigeonUtils.wrapError(error))
@@ -350,6 +360,26 @@ interface BluetoothHidManagerPlatformChannel {
             val dataArg = args[1] as ByteArray
             val wrapped: List<Any?> = try {
               api.send(deviceIdArg, dataArg)
+              listOf(null)
+            } catch (exception: Throwable) {
+              BluetoothHidManagerPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerPlatformChannel.sendHidReport$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val deviceIdArg = args[0] as String
+            val reportIdArg = args[1] as Long
+            val dataArg = args[2] as ByteArray
+            val wrapped: List<Any?> = try {
+              api.sendHidReport(deviceIdArg, reportIdArg, dataArg)
               listOf(null)
             } catch (exception: Throwable) {
               BluetoothHidManagerPigeonUtils.wrapError(exception)
@@ -415,6 +445,30 @@ class BluetoothHidManagerCallbackChannel(private val binaryMessenger: BinaryMess
     val channelName = "dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerCallbackChannel.onGetReport$separatedMessageChannelSuffix"
     val channel = BasicMessageChannel<Any?>(binaryMessenger, channelName, codec)
     channel.send(listOf(deviceIdArg, typeArg, bufferSizeArg)) {
+      if (it is List<*>) {
+        if (it.size > 1) {
+          callback(Result.failure(FlutterError(it[0] as String, it[1] as String, it[2] as String?)))
+        } else {
+          val output = it[0] as ReportReply?
+          callback(Result.success(output))
+        }
+      } else {
+        callback(Result.failure(BluetoothHidManagerPigeonUtils.createConnectionError(channelName)))
+      } 
+    }
+  }
+  /**
+   * Additive report request carrying the requested report id.
+   *
+   * A non-null reply takes precedence over [onGetReport]. When neither
+   * callback answers, the native side reports an unsupported request.
+   */
+  fun onReportRequest(deviceIdArg: String, typeArg: ReportType, reportIdArg: Long, bufferSizeArg: Long, callback: (Result<ReportReply?>) -> Unit)
+{
+    val separatedMessageChannelSuffix = if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
+    val channelName = "dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerCallbackChannel.onReportRequest$separatedMessageChannelSuffix"
+    val channel = BasicMessageChannel<Any?>(binaryMessenger, channelName, codec)
+    channel.send(listOf(deviceIdArg, typeArg, reportIdArg, bufferSizeArg)) {
       if (it is List<*>) {
         if (it.size > 1) {
           callback(Result.failure(FlutterError(it[0] as String, it[1] as String, it[2] as String?)))
