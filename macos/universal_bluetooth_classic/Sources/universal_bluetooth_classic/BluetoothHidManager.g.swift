@@ -267,9 +267,16 @@ class BluetoothHidManagerPigeonCodec: FlutterStandardMessageCodec, @unchecked Se
 /// Generated protocol from Pigeon that represents a handler of messages from Flutter.
 protocol BluetoothHidManagerPlatformChannel {
   func closeSdp() throws
-  func connect(deviceId: String, completion: @escaping (Result<Void, Error>) -> Void)
+  func connect(deviceId: String, timeoutMillis: Int64?, completion: @escaping (Result<Void, Error>) -> Void)
   func disconnect(deviceId: String, completion: @escaping (Result<Void, Error>) -> Void)
   func send(deviceId: String, data: FlutterStandardTypedData) throws
+  /// Sends an input report with an explicit HID report id.
+  ///
+  /// [reportId] is passed separately from [data], matching Android's
+  /// `BluetoothHidDevice.sendReport` and the macOS report channel. Prefer this
+  /// over [send] for descriptors that declare report ids: the id must not be
+  /// embedded in the payload.
+  func sendHidReport(deviceId: String, reportId: Int64, data: FlutterStandardTypedData) throws
 }
 
 /// Generated setup class from Pigeon to handle messages through the `binaryMessenger`.
@@ -296,7 +303,8 @@ class BluetoothHidManagerPlatformChannelSetup {
       connectChannel.setMessageHandler { message, reply in
         let args = message as! [Any?]
         let deviceIdArg = args[0] as! String
-        api.connect(deviceId: deviceIdArg) { result in
+        let timeoutMillisArg: Int64? = nilOrValue(args[1])
+        api.connect(deviceId: deviceIdArg, timeoutMillis: timeoutMillisArg) { result in
           switch result {
           case .success:
             reply(wrapResult(nil))
@@ -341,6 +349,29 @@ class BluetoothHidManagerPlatformChannelSetup {
     } else {
       sendChannel.setMessageHandler(nil)
     }
+    /// Sends an input report with an explicit HID report id.
+    ///
+    /// [reportId] is passed separately from [data], matching Android's
+    /// `BluetoothHidDevice.sendReport` and the macOS report channel. Prefer this
+    /// over [send] for descriptors that declare report ids: the id must not be
+    /// embedded in the payload.
+    let sendHidReportChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerPlatformChannel.sendHidReport\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      sendHidReportChannel.setMessageHandler { message, reply in
+        let args = message as! [Any?]
+        let deviceIdArg = args[0] as! String
+        let reportIdArg = args[1] as! Int64
+        let dataArg = args[2] as! FlutterStandardTypedData
+        do {
+          try api.sendHidReport(deviceId: deviceIdArg, reportId: reportIdArg, data: dataArg)
+          reply(wrapResult(nil))
+        } catch {
+          reply(wrapError(error))
+        }
+      }
+    } else {
+      sendHidReportChannel.setMessageHandler(nil)
+    }
   }
 }
 
@@ -351,6 +382,11 @@ protocol BluetoothHidManagerCallbackChannelProtocol {
   func onConnectionStateChanged(deviceId deviceIdArg: String, connected connectedArg: Bool, completion: @escaping (Result<Void, PigeonError>) -> Void)
   func onSdpServiceRegistrationUpdate(registered registeredArg: Bool, completion: @escaping (Result<Void, PigeonError>) -> Void)
   func onGetReport(deviceId deviceIdArg: String, type typeArg: ReportType, bufferSize bufferSizeArg: Int64, completion: @escaping (Result<ReportReply?, PigeonError>) -> Void)
+  /// Additive report request carrying the requested report id.
+  ///
+  /// A non-null reply takes precedence over [onGetReport]. When neither
+  /// callback answers, the native side reports an unsupported request.
+  func onReportRequest(deviceId deviceIdArg: String, type typeArg: ReportType, reportId reportIdArg: Int64, bufferSize bufferSizeArg: Int64, completion: @escaping (Result<ReportReply?, PigeonError>) -> Void)
   func onData(deviceId deviceIdArg: String, data dataArg: FlutterStandardTypedData, completion: @escaping (Result<Void, PigeonError>) -> Void)
 }
 class BluetoothHidManagerCallbackChannel: BluetoothHidManagerCallbackChannelProtocol {
@@ -403,6 +439,29 @@ class BluetoothHidManagerCallbackChannel: BluetoothHidManagerCallbackChannelProt
     let channelName: String = "dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerCallbackChannel.onGetReport\(messageChannelSuffix)"
     let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
     channel.sendMessage([deviceIdArg, typeArg, bufferSizeArg] as [Any?]) { response in
+      guard let listResponse = response as? [Any?] else {
+        completion(.failure(createConnectionError(withChannelName: channelName)))
+        return
+      }
+      if listResponse.count > 1 {
+        let code: String = listResponse[0] as! String
+        let message: String? = nilOrValue(listResponse[1])
+        let details: String? = nilOrValue(listResponse[2])
+        completion(.failure(PigeonError(code: code, message: message, details: details)))
+      } else {
+        let result: ReportReply? = nilOrValue(listResponse[0])
+        completion(.success(result))
+      }
+    }
+  }
+  /// Additive report request carrying the requested report id.
+  ///
+  /// A non-null reply takes precedence over [onGetReport]. When neither
+  /// callback answers, the native side reports an unsupported request.
+  func onReportRequest(deviceId deviceIdArg: String, type typeArg: ReportType, reportId reportIdArg: Int64, bufferSize bufferSizeArg: Int64, completion: @escaping (Result<ReportReply?, PigeonError>) -> Void) {
+    let channelName: String = "dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerCallbackChannel.onReportRequest\(messageChannelSuffix)"
+    let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
+    channel.sendMessage([deviceIdArg, typeArg, reportIdArg, bufferSizeArg] as [Any?]) { response in
       guard let listResponse = response as? [Any?] else {
         completion(.failure(createConnectionError(withChannelName: channelName)))
         return

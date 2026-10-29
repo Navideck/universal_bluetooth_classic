@@ -68,11 +68,13 @@ class UniversalBluetooth {
     String deviceId, {
     BluetoothTransport? transport,
     String? serviceUuid,
+    Duration? timeout,
   }) =>
       _platform.connect(
         deviceId,
         transport: transport,
         serviceUuid: serviceUuid,
+        timeout: timeout,
       );
 
   /// Sends raw [data] to the connected device with the given [identifier].
@@ -84,6 +86,17 @@ class UniversalBluetooth {
   /// bytes are written to the RFCOMM channel.
   static Future<void> send(String identifier, Uint8List data) =>
       _platform.send(identifier, data);
+
+  /// Sends a HID input report with an explicit [reportId].
+  ///
+  /// Available on Android and macOS. [reportId] must not also be embedded at
+  /// the front of [data].
+  static Future<void> sendHidReport(
+    String identifier,
+    int reportId,
+    Uint8List data,
+  ) =>
+      _platform.sendHidReport(identifier, reportId, data);
 
   /// Registers a Bluetooth HID service using the given platform-specific
   /// [config].
@@ -131,6 +144,13 @@ class UniversalBluetooth {
   /// Called when the platform requests a HID report.
   static set onGetReport(GetReportCallback? callback) {
     _callbacks.onGetReport = callback;
+  }
+
+  /// Called when the platform requests a HID report, with its report id.
+  ///
+  /// A non-null reply takes precedence over [onGetReport].
+  static set onReportRequest(ReportRequestCallback? callback) {
+    _callbacks.onReportRequest = callback;
   }
 
   /// Called when data is received from a connected device.

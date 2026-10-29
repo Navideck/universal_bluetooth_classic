@@ -29,12 +29,20 @@ abstract class BluetoothHidManagerPlatformChannel {
   void closeSdp();
 
   @asyncCallback
-  void connect(String deviceId);
+  void connect(String deviceId, int? timeoutMillis);
 
   @asyncCallback
   void disconnect(String deviceId);
 
   void send(String deviceId, Uint8List data);
+
+  /// Sends an input report with an explicit HID report id.
+  ///
+  /// [reportId] is passed separately from [data], matching Android's
+  /// `BluetoothHidDevice.sendReport` and the macOS report channel. Prefer this
+  /// over [send] for descriptors that declare report ids: the id must not be
+  /// embedded in the payload.
+  void sendHidReport(String deviceId, int reportId, Uint8List data);
 }
 
 /// Native -> Flutter
@@ -48,6 +56,18 @@ abstract class BluetoothHidManagerCallbackChannel {
 
   @asyncCallback
   ReportReply? onGetReport(String deviceId, ReportType type, int bufferSize);
+
+  /// Additive report request carrying the requested report id.
+  ///
+  /// A non-null reply takes precedence over [onGetReport]. When neither
+  /// callback answers, the native side reports an unsupported request.
+  @asyncCallback
+  ReportReply? onReportRequest(
+    String deviceId,
+    ReportType type,
+    int reportId,
+    int bufferSize,
+  );
 
   @asyncCallback
   void onData(String deviceId, Uint8List data);

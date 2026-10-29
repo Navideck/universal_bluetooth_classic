@@ -25,6 +25,7 @@ class ExternalAccessory extends UniversalBluetoothInterface {
     String deviceId, {
     BluetoothTransport? transport,
     String? serviceUuid,
+    Duration? timeout,
   }) async {
     switch (transport) {
       case null:

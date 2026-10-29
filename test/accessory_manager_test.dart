@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:universal_bluetooth_classic/src/platforms/accessory_manager.dart';
+import 'package:universal_bluetooth_classic/src/generated/bluetooth_hid_manager.g.dart'
+    as hid;
 import 'package:universal_bluetooth_classic/universal_bluetooth_classic.dart';
 
 /// Exercises the transport routing in [AccessoryManager] by intercepting the
@@ -21,6 +23,7 @@ void main() {
   final channels = <String>[
     '$hidBase.connect',
     '$hidBase.send',
+    '$hidBase.sendHidReport',
     '$hidBase.disconnect',
     '$serialBase.connect',
     '$serialBase.send',
@@ -72,6 +75,73 @@ void main() {
       '$serialBase.disconnect',
     ]);
   });
+
+  test('routes a HID report with its report id to the HID channel', () async {
+    final manager = AccessoryManager.instance;
+    const id = 'AA:BB:CC:DD:EE:FF';
+
+    await manager.connect(id);
+    await manager.sendHidReport(id, 3, Uint8List.fromList([0xE9, 0x00]));
+
+    expect(calls, <String>[
+      '$hidBase.connect',
+      '$hidBase.sendHidReport',
+    ]);
+  },
+      skip:
+          kIsWeb ? 'Native HID Pigeon codec requires Int64 accessors.' : false);
+
+  test('sends identified reports on a peer-initiated HID connection', () async {
+    final manager = AccessoryManager.instance;
+    const id = '10:20:30:40:50:60';
+    final delivered = Completer<void>();
+    messenger.handlePlatformMessage(
+      'dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerCallbackChannel.onConnectionStateChanged',
+      codec.encodeMessage(<Object?>[id, true]),
+      (_) => delivered.complete(),
+    );
+    await delivered.future;
+    await manager.sendHidReport(id, 128, Uint8List.fromList([1]));
+    expect(calls, <String>['$hidBase.sendHidReport']);
+    await manager.disconnect(id);
+  },
+      skip:
+          kIsWeb ? 'Native HID Pigeon codec requires Int64 accessors.' : false);
+
+  test('delivers report requests as a model and returns the reply', () async {
+    final manager = AccessoryManager.instance;
+    HidReportRequest? request;
+    manager.callbacks.onReportRequest = (value) {
+      request = value;
+      return ReportReply(data: Uint8List.fromList([42]));
+    };
+    addTearDown(() => manager.callbacks.onReportRequest = null);
+    const requestCodec =
+        hid.BluetoothHidManagerCallbackChannel.pigeonChannelCodec;
+    final response = Completer<ByteData?>();
+    messenger.handlePlatformMessage(
+      'dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerCallbackChannel.onReportRequest',
+      requestCodec.encodeMessage(<Object?>['peer', ReportType.input, 128, 64]),
+      response.complete,
+    );
+    final reply = requestCodec.decodeMessage(await response.future) as List;
+    expect(request!.deviceId, 'peer');
+    expect(request!.type, ReportType.input);
+    expect(request!.reportId, 128);
+    expect(request!.bufferSize, 64);
+    expect((reply.single as ReportReply).data, <int>[42]);
+
+    manager.callbacks.onReportRequest = null;
+    final declined = Completer<ByteData?>();
+    messenger.handlePlatformMessage(
+      'dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerCallbackChannel.onReportRequest',
+      requestCodec.encodeMessage(<Object?>['peer', ReportType.input, 128, 64]),
+      declined.complete,
+    );
+    expect(requestCodec.decodeMessage(await declined.future), <Object?>[null]);
+  },
+      skip:
+          kIsWeb ? 'Native HID Pigeon codec requires Int64 accessors.' : false);
 
   test('routes the default connection, send, and disconnect to the HID channel',
       () async {

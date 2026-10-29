@@ -231,7 +231,7 @@ class BluetoothHidManagerPlatformChannel {
     );
   }
 
-  Future<void> connect(String deviceId) async {
+  Future<void> connect(String deviceId, int? timeoutMillis) async {
     final pigeonVar_channelName =
         'dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerPlatformChannel.connect$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
@@ -240,7 +240,7 @@ class BluetoothHidManagerPlatformChannel {
       binaryMessenger: pigeonVar_binaryMessenger,
     );
     final Future<Object?> pigeonVar_sendFuture =
-        pigeonVar_channel.send(<Object?>[deviceId]);
+        pigeonVar_channel.send(<Object?>[deviceId, timeoutMillis]);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
     _extractReplyValueOrThrow(
@@ -287,6 +287,32 @@ class BluetoothHidManagerPlatformChannel {
       isNullValid: true,
     );
   }
+
+  /// Sends an input report with an explicit HID report id.
+  ///
+  /// [reportId] is passed separately from [data], matching Android's
+  /// `BluetoothHidDevice.sendReport` and the macOS report channel. Prefer this
+  /// over [send] for descriptors that declare report ids: the id must not be
+  /// embedded in the payload.
+  Future<void> sendHidReport(
+      String deviceId, int reportId, Uint8List data) async {
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerPlatformChannel.sendHidReport$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture =
+        pigeonVar_channel.send(<Object?>[deviceId, reportId, data]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    _extractReplyValueOrThrow(
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: true,
+    );
+  }
 }
 
 /// Native -> Flutter
@@ -299,6 +325,13 @@ abstract class BluetoothHidManagerCallbackChannel {
 
   Future<ReportReply?> onGetReport(
       String deviceId, ReportType type, int bufferSize);
+
+  /// Additive report request carrying the requested report id.
+  ///
+  /// A non-null reply takes precedence over [onGetReport]. When neither
+  /// callback answers, the native side reports an unsupported request.
+  Future<ReportReply?> onReportRequest(
+      String deviceId, ReportType type, int reportId, int bufferSize);
 
   Future<void> onData(String deviceId, Uint8List data);
 
@@ -372,6 +405,33 @@ abstract class BluetoothHidManagerCallbackChannel {
           try {
             final ReportReply? output =
                 await api.onGetReport(arg_deviceId, arg_type, arg_bufferSize);
+            return wrapResponse(result: output);
+          } on PlatformException catch (e) {
+            return wrapResponse(error: e);
+          } catch (e) {
+            return wrapResponse(
+                error: PlatformException(code: 'error', message: e.toString()));
+          }
+        });
+      }
+    }
+    {
+      final pigeonVar_channel = BasicMessageChannel<Object?>(
+          'dev.flutter.pigeon.universal_bluetooth_classic.BluetoothHidManagerCallbackChannel.onReportRequest$messageChannelSuffix',
+          pigeonChannelCodec,
+          binaryMessenger: binaryMessenger);
+      if (api == null) {
+        pigeonVar_channel.setMessageHandler(null);
+      } else {
+        pigeonVar_channel.setMessageHandler((Object? message) async {
+          final List<Object?> args = message! as List<Object?>;
+          final String arg_deviceId = args[0]! as String;
+          final ReportType arg_type = args[1]! as ReportType;
+          final int arg_reportId = args[2]! as int;
+          final int arg_bufferSize = args[3]! as int;
+          try {
+            final ReportReply? output = await api.onReportRequest(
+                arg_deviceId, arg_type, arg_reportId, arg_bufferSize);
             return wrapResponse(result: output);
           } on PlatformException catch (e) {
             return wrapResponse(error: e);

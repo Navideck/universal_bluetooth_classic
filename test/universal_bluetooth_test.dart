@@ -163,6 +163,7 @@ class _FakeUniversalBluetooth extends UniversalBluetoothInterface {
     String deviceId, {
     BluetoothTransport? transport,
     String? serviceUuid,
+    Duration? timeout,
   }) async {
     connectedDeviceId = deviceId;
     connectedTransport = transport;
