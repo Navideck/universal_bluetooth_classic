@@ -10,9 +10,9 @@ import 'package:flutter/services.dart';
 import 'package:meta/meta.dart' show immutable, protected, visibleForTesting;
 
 Object? _extractReplyValueOrThrow(
-    List<Object?>? replyList,
-    String channelName, {
-    required bool isNullValid,
+  List<Object?>? replyList,
+  String channelName, {
+  required bool isNullValid,
 }) {
   if (replyList == null) {
     throw PlatformException(
@@ -96,7 +96,6 @@ int _deepHash(Object? value) {
   return value.hashCode;
 }
 
-
 /// The Bluetooth SDP record published by the macOS host.
 class MacSdpConfig {
   MacSdpConfig({
@@ -119,7 +118,8 @@ class MacSdpConfig {
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static MacSdpConfig decode(Object result) {
     result as List<Object?>;
@@ -138,7 +138,8 @@ class MacSdpConfig {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(sdpPlistFile, other.sdpPlistFile) && _deepEquals(data, other.data);
+    return _deepEquals(sdpPlistFile, other.sdpPlistFile) &&
+        _deepEquals(data, other.data);
   }
 
   @override
@@ -151,7 +152,6 @@ class MacSdpConfig {
   }
 }
 
-
 class _PigeonCodec extends StandardMessageCodec {
   const _PigeonCodec();
   @override
@@ -159,7 +159,7 @@ class _PigeonCodec extends StandardMessageCodec {
     if (value is int) {
       buffer.putUint8(4);
       buffer.putInt64(value);
-    }    else if (value is MacSdpConfig) {
+    } else if (value is MacSdpConfig) {
       buffer.putUint8(129);
       writeValue(buffer, value.encode());
     } else {
@@ -184,34 +184,34 @@ class MacSdpChannel {
   /// available for dependency injection. If it is left null, the default
   /// BinaryMessenger will be used which routes to the host platform.
   MacSdpChannel({
-      BinaryMessenger? binaryMessenger, 
-      String messageChannelSuffix = '', 
-      })
-      : pigeonVar_binaryMessenger = binaryMessenger,
-        pigeonVar_messageChannelSuffix = messageChannelSuffix.isNotEmpty ? '.$messageChannelSuffix' : '';
+    BinaryMessenger? binaryMessenger,
+    String messageChannelSuffix = '',
+  })  : pigeonVar_binaryMessenger = binaryMessenger,
+        pigeonVar_messageChannelSuffix =
+            messageChannelSuffix.isNotEmpty ? '.$messageChannelSuffix' : '';
 
   final BinaryMessenger? pigeonVar_binaryMessenger;
   static const MessageCodec<Object?> pigeonChannelCodec = _PigeonCodec();
 
   final String pigeonVar_messageChannelSuffix;
 
-
   /// Publishes the macOS Bluetooth SDP service record.
   Future<void> setupSdp(MacSdpConfig config) async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.universal_bluetooth_classic.MacSdpChannel.setupSdp$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.universal_bluetooth_classic.MacSdpChannel.setupSdp$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
       binaryMessenger: pigeonVar_binaryMessenger,
     );
-    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[config]);
+    final Future<Object?> pigeonVar_sendFuture =
+        pigeonVar_channel.send(<Object?>[config]);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
     _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: true,
-    )
-    ;
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: true,
+    );
   }
 }

@@ -10,9 +10,9 @@ import 'package:flutter/services.dart';
 import 'package:meta/meta.dart' show immutable, protected, visibleForTesting;
 
 Object? _extractReplyValueOrThrow(
-    List<Object?>? replyList,
-    String channelName, {
-    required bool isNullValid,
+  List<Object?>? replyList,
+  String channelName, {
+  required bool isNullValid,
 }) {
   if (replyList == null) {
     throw PlatformException(
@@ -34,8 +34,8 @@ Object? _extractReplyValueOrThrow(
   return replyList.firstOrNull;
 }
 
-
-List<Object?> wrapResponse({Object? result, PlatformException? error, bool empty = false}) {
+List<Object?> wrapResponse(
+    {Object? result, PlatformException? error, bool empty = false}) {
   if (empty) {
     return <Object?>[];
   }
@@ -44,6 +44,7 @@ List<Object?> wrapResponse({Object? result, PlatformException? error, bool empty
   }
   return <Object?>[error.code, error.message, error.details];
 }
+
 bool _deepEquals(Object? a, Object? b) {
   if (identical(a, b)) {
     return true;
@@ -106,29 +107,38 @@ int _deepHash(Object? value) {
   return value.hashCode;
 }
 
-
 /// The class of a Bluetooth device.
 enum DeviceClass {
   /// Audio or video device, for example a headset or speaker.
   audioVideo,
+
   /// Computer or computer-like device.
   computer,
+
   /// Health device, for example a heart-rate monitor.
   health,
+
   /// Imaging device, for example a printer.
   imaging,
+
   /// Miscellaneous device.
   misc,
+
   /// Networking device, for example a modem or router.
   networking,
+
   /// Peripheral device, for example a keyboard or mouse.
   peripheral,
+
   /// Phone or smartphone.
   phone,
+
   /// Toy.
   toy,
+
   /// Uncategorized device.
   uncategorized,
+
   /// Wearable device.
   wearable;
 }
@@ -137,10 +147,13 @@ enum DeviceClass {
 enum DeviceType {
   /// Bluetooth Classic device.
   classic,
+
   /// Bluetooth Low Energy device.
   le,
+
   /// Dual-mode device supporting both Classic and LE.
   dual,
+
   /// Unknown type.
   unknown;
 }
@@ -191,7 +204,8 @@ class BluetoothDevice {
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static BluetoothDevice decode(Object result) {
     result as List<Object?>;
@@ -215,7 +229,13 @@ class BluetoothDevice {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(address, other.address) && _deepEquals(name, other.name) && _deepEquals(paired, other.paired) && _deepEquals(isConnectedWithHid, other.isConnectedWithHid) && _deepEquals(rssi, other.rssi) && _deepEquals(deviceClass, other.deviceClass) && _deepEquals(deviceType, other.deviceType);
+    return _deepEquals(address, other.address) &&
+        _deepEquals(name, other.name) &&
+        _deepEquals(paired, other.paired) &&
+        _deepEquals(isConnectedWithHid, other.isConnectedWithHid) &&
+        _deepEquals(rssi, other.rssi) &&
+        _deepEquals(deviceClass, other.deviceClass) &&
+        _deepEquals(deviceType, other.deviceType);
   }
 
   @override
@@ -228,7 +248,6 @@ class BluetoothDevice {
   }
 }
 
-
 class _PigeonCodec extends StandardMessageCodec {
   const _PigeonCodec();
   @override
@@ -236,13 +255,13 @@ class _PigeonCodec extends StandardMessageCodec {
     if (value is int) {
       buffer.putUint8(4);
       buffer.putInt64(value);
-    }    else if (value is DeviceClass) {
+    } else if (value is DeviceClass) {
       buffer.putUint8(129);
       writeValue(buffer, value.index);
-    }    else if (value is DeviceType) {
+    } else if (value is DeviceType) {
       buffer.putUint8(130);
       writeValue(buffer, value.index);
-    }    else if (value is BluetoothDevice) {
+    } else if (value is BluetoothDevice) {
       buffer.putUint8(131);
       writeValue(buffer, value.encode());
     } else {
@@ -273,38 +292,39 @@ class FlutterAccessoryPlatformChannel {
   /// available for dependency injection. If it is left null, the default
   /// BinaryMessenger will be used which routes to the host platform.
   FlutterAccessoryPlatformChannel({
-      BinaryMessenger? binaryMessenger, 
-      String messageChannelSuffix = '', 
-      })
-      : pigeonVar_binaryMessenger = binaryMessenger,
-        pigeonVar_messageChannelSuffix = messageChannelSuffix.isNotEmpty ? '.$messageChannelSuffix' : '';
+    BinaryMessenger? binaryMessenger,
+    String messageChannelSuffix = '',
+  })  : pigeonVar_binaryMessenger = binaryMessenger,
+        pigeonVar_messageChannelSuffix =
+            messageChannelSuffix.isNotEmpty ? '.$messageChannelSuffix' : '';
 
   final BinaryMessenger? pigeonVar_binaryMessenger;
   static const MessageCodec<Object?> pigeonChannelCodec = _PigeonCodec();
 
   final String pigeonVar_messageChannelSuffix;
 
-
   Future<void> showBluetoothAccessoryPicker(List<String> withNames) async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryPlatformChannel.showBluetoothAccessoryPicker$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryPlatformChannel.showBluetoothAccessoryPicker$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
       binaryMessenger: pigeonVar_binaryMessenger,
     );
-    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[withNames]);
+    final Future<Object?> pigeonVar_sendFuture =
+        pigeonVar_channel.send(<Object?>[withNames]);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
     _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: true,
-    )
-    ;
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: true,
+    );
   }
 
   Future<void> startScan() async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryPlatformChannel.startScan$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryPlatformChannel.startScan$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
@@ -314,15 +334,15 @@ class FlutterAccessoryPlatformChannel {
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
     _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: true,
-    )
-    ;
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: true,
+    );
   }
 
   Future<void> stopScan() async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryPlatformChannel.stopScan$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryPlatformChannel.stopScan$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
@@ -332,15 +352,15 @@ class FlutterAccessoryPlatformChannel {
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
     _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: true,
-    )
-    ;
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: true,
+    );
   }
 
   Future<bool> isScanning() async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryPlatformChannel.isScanning$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryPlatformChannel.isScanning$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
@@ -350,16 +370,16 @@ class FlutterAccessoryPlatformChannel {
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
     final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: false,
-    )
-    ;
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: false,
+    );
     return pigeonVar_replyValue! as bool;
   }
 
   Future<List<BluetoothDevice>> getPairedDevices() async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryPlatformChannel.getPairedDevices$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryPlatformChannel.getPairedDevices$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
@@ -369,49 +389,50 @@ class FlutterAccessoryPlatformChannel {
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
     final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: false,
-    )
-    ;
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: false,
+    );
     return (pigeonVar_replyValue! as List<Object?>).cast<BluetoothDevice>();
   }
 
   Future<bool> pair(String address) async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryPlatformChannel.pair$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryPlatformChannel.pair$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
       binaryMessenger: pigeonVar_binaryMessenger,
     );
-    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[address]);
+    final Future<Object?> pigeonVar_sendFuture =
+        pigeonVar_channel.send(<Object?>[address]);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
     final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: false,
-    )
-    ;
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: false,
+    );
     return pigeonVar_replyValue! as bool;
   }
 
   Future<void> unpair(String address) async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryPlatformChannel.unpair$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryPlatformChannel.unpair$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
       binaryMessenger: pigeonVar_binaryMessenger,
     );
-    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[address]);
+    final Future<Object?> pigeonVar_sendFuture =
+        pigeonVar_channel.send(<Object?>[address]);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
     _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: true,
-    )
-    ;
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: true,
+    );
   }
 }
 
@@ -423,15 +444,17 @@ abstract class FlutterAccessoryCallbackChannel {
 
   Future<void> onDeviceRemoved(BluetoothDevice device);
 
-  static void setUp(FlutterAccessoryCallbackChannel? api, {
-    BinaryMessenger? binaryMessenger, 
+  static void setUp(
+    FlutterAccessoryCallbackChannel? api, {
+    BinaryMessenger? binaryMessenger,
     String messageChannelSuffix = '',
-  }) 
-{
-    messageChannelSuffix = messageChannelSuffix.isNotEmpty ? '.$messageChannelSuffix' : '';
+  }) {
+    messageChannelSuffix =
+        messageChannelSuffix.isNotEmpty ? '.$messageChannelSuffix' : '';
     {
       final pigeonVar_channel = BasicMessageChannel<Object?>(
-          'dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryCallbackChannel.onDeviceDiscover$messageChannelSuffix', pigeonChannelCodec,
+          'dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryCallbackChannel.onDeviceDiscover$messageChannelSuffix',
+          pigeonChannelCodec,
           binaryMessenger: binaryMessenger);
       if (api == null) {
         pigeonVar_channel.setMessageHandler(null);
@@ -444,15 +467,17 @@ abstract class FlutterAccessoryCallbackChannel {
             return wrapResponse(empty: true);
           } on PlatformException catch (e) {
             return wrapResponse(error: e);
-          }          catch (e) {
-            return wrapResponse(error: PlatformException(code: 'error', message: e.toString()));
+          } catch (e) {
+            return wrapResponse(
+                error: PlatformException(code: 'error', message: e.toString()));
           }
         });
       }
     }
     {
       final pigeonVar_channel = BasicMessageChannel<Object?>(
-          'dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryCallbackChannel.onDeviceRemoved$messageChannelSuffix', pigeonChannelCodec,
+          'dev.flutter.pigeon.universal_bluetooth_classic.FlutterAccessoryCallbackChannel.onDeviceRemoved$messageChannelSuffix',
+          pigeonChannelCodec,
           binaryMessenger: binaryMessenger);
       if (api == null) {
         pigeonVar_channel.setMessageHandler(null);
@@ -465,8 +490,9 @@ abstract class FlutterAccessoryCallbackChannel {
             return wrapResponse(empty: true);
           } on PlatformException catch (e) {
             return wrapResponse(error: e);
-          }          catch (e) {
-            return wrapResponse(error: PlatformException(code: 'error', message: e.toString()));
+          } catch (e) {
+            return wrapResponse(
+                error: PlatformException(code: 'error', message: e.toString()));
           }
         });
       }

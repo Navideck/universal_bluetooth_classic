@@ -10,9 +10,9 @@ import 'package:flutter/services.dart';
 import 'package:meta/meta.dart' show immutable, protected, visibleForTesting;
 
 Object? _extractReplyValueOrThrow(
-    List<Object?>? replyList,
-    String channelName, {
-    required bool isNullValid,
+  List<Object?>? replyList,
+  String channelName, {
+  required bool isNullValid,
 }) {
   if (replyList == null) {
     throw PlatformException(
@@ -34,8 +34,8 @@ Object? _extractReplyValueOrThrow(
   return replyList.firstOrNull;
 }
 
-
-List<Object?> wrapResponse({Object? result, PlatformException? error, bool empty = false}) {
+List<Object?> wrapResponse(
+    {Object? result, PlatformException? error, bool empty = false}) {
   if (empty) {
     return <Object?>[];
   }
@@ -44,6 +44,7 @@ List<Object?> wrapResponse({Object? result, PlatformException? error, bool empty
   }
   return <Object?>[error.code, error.message, error.details];
 }
+
 bool _deepEquals(Object? a, Object? b) {
   if (identical(a, b)) {
     return true;
@@ -106,7 +107,6 @@ int _deepHash(Object? value) {
   return value.hashCode;
 }
 
-
 class EAAccessory {
   EAAccessory({
     required this.isConnected,
@@ -157,7 +157,8 @@ class EAAccessory {
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static EAAccessory decode(Object result) {
     result as List<Object?>;
@@ -184,7 +185,16 @@ class EAAccessory {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(isConnected, other.isConnected) && _deepEquals(connectionID, other.connectionID) && _deepEquals(manufacturer, other.manufacturer) && _deepEquals(name, other.name) && _deepEquals(modelNumber, other.modelNumber) && _deepEquals(serialNumber, other.serialNumber) && _deepEquals(firmwareRevision, other.firmwareRevision) && _deepEquals(hardwareRevision, other.hardwareRevision) && _deepEquals(dockType, other.dockType) && _deepEquals(protocolStrings, other.protocolStrings);
+    return _deepEquals(isConnected, other.isConnected) &&
+        _deepEquals(connectionID, other.connectionID) &&
+        _deepEquals(manufacturer, other.manufacturer) &&
+        _deepEquals(name, other.name) &&
+        _deepEquals(modelNumber, other.modelNumber) &&
+        _deepEquals(serialNumber, other.serialNumber) &&
+        _deepEquals(firmwareRevision, other.firmwareRevision) &&
+        _deepEquals(hardwareRevision, other.hardwareRevision) &&
+        _deepEquals(dockType, other.dockType) &&
+        _deepEquals(protocolStrings, other.protocolStrings);
   }
 
   @override
@@ -197,7 +207,6 @@ class EAAccessory {
   }
 }
 
-
 class _PigeonCodec extends StandardMessageCodec {
   const _PigeonCodec();
   @override
@@ -205,7 +214,7 @@ class _PigeonCodec extends StandardMessageCodec {
     if (value is int) {
       buffer.putUint8(4);
       buffer.putInt64(value);
-    }    else if (value is EAAccessory) {
+    } else if (value is EAAccessory) {
       buffer.putUint8(129);
       writeValue(buffer, value.encode());
     } else {
@@ -230,88 +239,91 @@ class ExternalAccessoryChannel {
   /// available for dependency injection. If it is left null, the default
   /// BinaryMessenger will be used which routes to the host platform.
   ExternalAccessoryChannel({
-      BinaryMessenger? binaryMessenger, 
-      String messageChannelSuffix = '', 
-      })
-      : pigeonVar_binaryMessenger = binaryMessenger,
-        pigeonVar_messageChannelSuffix = messageChannelSuffix.isNotEmpty ? '.$messageChannelSuffix' : '';
+    BinaryMessenger? binaryMessenger,
+    String messageChannelSuffix = '',
+  })  : pigeonVar_binaryMessenger = binaryMessenger,
+        pigeonVar_messageChannelSuffix =
+            messageChannelSuffix.isNotEmpty ? '.$messageChannelSuffix' : '';
 
   final BinaryMessenger? pigeonVar_binaryMessenger;
   static const MessageCodec<Object?> pigeonChannelCodec = _PigeonCodec();
 
   final String pigeonVar_messageChannelSuffix;
 
-
   Future<void> showBluetoothAccessoryPicker(List<String> withNames) async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.universal_bluetooth_classic.ExternalAccessoryChannel.showBluetoothAccessoryPicker$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.universal_bluetooth_classic.ExternalAccessoryChannel.showBluetoothAccessoryPicker$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
       binaryMessenger: pigeonVar_binaryMessenger,
     );
-    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[withNames]);
+    final Future<Object?> pigeonVar_sendFuture =
+        pigeonVar_channel.send(<Object?>[withNames]);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
     _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: true,
-    )
-    ;
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: true,
+    );
   }
 
   Future<void> openSession(String protocolString) async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.universal_bluetooth_classic.ExternalAccessoryChannel.openSession$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.universal_bluetooth_classic.ExternalAccessoryChannel.openSession$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
       binaryMessenger: pigeonVar_binaryMessenger,
     );
-    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[protocolString]);
+    final Future<Object?> pigeonVar_sendFuture =
+        pigeonVar_channel.send(<Object?>[protocolString]);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
     _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: true,
-    )
-    ;
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: true,
+    );
   }
 
   Future<void> send(String protocolString, Uint8List data) async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.universal_bluetooth_classic.ExternalAccessoryChannel.send$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.universal_bluetooth_classic.ExternalAccessoryChannel.send$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
       binaryMessenger: pigeonVar_binaryMessenger,
     );
-    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[protocolString, data]);
+    final Future<Object?> pigeonVar_sendFuture =
+        pigeonVar_channel.send(<Object?>[protocolString, data]);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
     _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: true,
-    )
-    ;
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: true,
+    );
   }
 
   Future<void> closeSession(String? protocolString) async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.universal_bluetooth_classic.ExternalAccessoryChannel.closeSession$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.universal_bluetooth_classic.ExternalAccessoryChannel.closeSession$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
       binaryMessenger: pigeonVar_binaryMessenger,
     );
-    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[protocolString]);
+    final Future<Object?> pigeonVar_sendFuture =
+        pigeonVar_channel.send(<Object?>[protocolString]);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
     _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: true,
-    )
-    ;
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: true,
+    );
   }
 }
 
@@ -323,15 +335,17 @@ abstract class ExternalAccessoryCallbackChannel {
 
   Future<void> onData(String protocolString, Uint8List data);
 
-  static void setUp(ExternalAccessoryCallbackChannel? api, {
-    BinaryMessenger? binaryMessenger, 
+  static void setUp(
+    ExternalAccessoryCallbackChannel? api, {
+    BinaryMessenger? binaryMessenger,
     String messageChannelSuffix = '',
-  }) 
-{
-    messageChannelSuffix = messageChannelSuffix.isNotEmpty ? '.$messageChannelSuffix' : '';
+  }) {
+    messageChannelSuffix =
+        messageChannelSuffix.isNotEmpty ? '.$messageChannelSuffix' : '';
     {
       final pigeonVar_channel = BasicMessageChannel<Object?>(
-          'dev.flutter.pigeon.universal_bluetooth_classic.ExternalAccessoryCallbackChannel.onConnectionStateChanged$messageChannelSuffix', pigeonChannelCodec,
+          'dev.flutter.pigeon.universal_bluetooth_classic.ExternalAccessoryCallbackChannel.onConnectionStateChanged$messageChannelSuffix',
+          pigeonChannelCodec,
           binaryMessenger: binaryMessenger);
       if (api == null) {
         pigeonVar_channel.setMessageHandler(null);
@@ -345,15 +359,17 @@ abstract class ExternalAccessoryCallbackChannel {
             return wrapResponse(empty: true);
           } on PlatformException catch (e) {
             return wrapResponse(error: e);
-          }          catch (e) {
-            return wrapResponse(error: PlatformException(code: 'error', message: e.toString()));
+          } catch (e) {
+            return wrapResponse(
+                error: PlatformException(code: 'error', message: e.toString()));
           }
         });
       }
     }
     {
       final pigeonVar_channel = BasicMessageChannel<Object?>(
-          'dev.flutter.pigeon.universal_bluetooth_classic.ExternalAccessoryCallbackChannel.onData$messageChannelSuffix', pigeonChannelCodec,
+          'dev.flutter.pigeon.universal_bluetooth_classic.ExternalAccessoryCallbackChannel.onData$messageChannelSuffix',
+          pigeonChannelCodec,
           binaryMessenger: binaryMessenger);
       if (api == null) {
         pigeonVar_channel.setMessageHandler(null);
@@ -367,8 +383,9 @@ abstract class ExternalAccessoryCallbackChannel {
             return wrapResponse(empty: true);
           } on PlatformException catch (e) {
             return wrapResponse(error: e);
-          }          catch (e) {
-            return wrapResponse(error: PlatformException(code: 'error', message: e.toString()));
+          } catch (e) {
+            return wrapResponse(
+                error: PlatformException(code: 'error', message: e.toString()));
           }
         });
       }

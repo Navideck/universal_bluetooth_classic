@@ -95,7 +95,8 @@ class UniversalBluetooth {
     String identifier,
     int reportId,
     Uint8List data,
-  ) => _platform.sendHidReport(identifier, reportId, data);
+  ) =>
+      _platform.sendHidReport(identifier, reportId, data);
 
   /// Registers a Bluetooth HID service using the given platform-specific
   /// [config].

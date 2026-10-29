@@ -12,7 +12,8 @@ import 'package:pigeon/pigeon.dart';
     swiftOut:
         'macos/universal_bluetooth_classic/Sources/universal_bluetooth_classic/UniversalBluetooth.g.swift',
     swiftOptions: SwiftOptions(),
-    kotlinOptions: KotlinOptions(package: 'com.navideck.universal_bluetooth_classic'),
+    kotlinOptions:
+        KotlinOptions(package: 'com.navideck.universal_bluetooth_classic'),
     cppOptions: CppOptions(namespace: 'universal_bluetooth_classic'),
     cppHeaderOut: 'windows/UniversalBluetooth.g.h',
     cppSourceOut: 'windows/UniversalBluetooth.g.cpp',
