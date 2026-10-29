@@ -6,8 +6,12 @@
   plugin frames the HIDP DATA|INPUT header and report id itself. `send` keeps
   its raw/report-id-0 behaviour.
 * Add `onReportRequest`, an additive HID get-report callback carrying the
-  requested report id alongside device, type, and buffer size. A non-null reply
+  requested report id alongside device, type, and buffer size in a
+  `HidReportRequest` model. A non-null reply
   takes precedence over `onGetReport`, which remains supported.
+* Track peer-initiated HID connections so `sendHidReport` can use them.
+* Android: preserve unsigned report IDs and connection confirmations that arrive
+  before the native connect request returns.
 * Android: honour the Classic HID connect timeout. `connect` accepts
   `timeoutMillis` (15 s when omitted); `STATE_CONNECTING` is no longer reported
   as connected, and a timeout cancels the native request, settles the pending

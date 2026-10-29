@@ -184,15 +184,33 @@ typedef GetReportCallback = ReportReply? Function(
   int bufferSize,
 );
 
+/// A HID report requested by the connected peer.
+class HidReportRequest {
+  /// Creates a request received from the native HID transport.
+  const HidReportRequest({
+    required this.deviceId,
+    required this.type,
+    required this.reportId,
+    required this.bufferSize,
+  });
+
+  /// The requesting device's address.
+  final String deviceId;
+
+  /// The requested report type.
+  final ReportType type;
+
+  /// The unsigned report ID from the descriptor, or zero if IDs are unused.
+  final int reportId;
+
+  /// The buffer size requested by the peer.
+  final int bufferSize;
+}
+
 /// Callback for HID report requests that carry the report id.
 ///
 /// Takes precedence over [GetReportCallback] when a non-null reply is returned.
-typedef ReportRequestCallback = ReportReply? Function(
-  String deviceId,
-  ReportType type,
-  int reportId,
-  int bufferSize,
-);
+typedef ReportRequestCallback = ReportReply? Function(HidReportRequest request);
 
 /// Callback for data received from a connected device.
 typedef DataCallback = void Function(String identifier, Uint8List data);

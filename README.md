@@ -40,12 +40,14 @@ All APIs are called through the same `UniversalBluetooth` class. Platform differ
 | `getPairedDevices` | ✔️ | — | ✔️ | ✔️ | ✔️ |
 | `connect` | ✔️ | ✔️ | ✔️ | ✔️ | — |
 | `disconnect` | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ |
+| `sendHidReport` | ✔️ | — | ✔️ | — | — |
 | `send` | ✔️ | ✔️ | ✔️ | ✔️ | — |
 | `setupSdp` / `closeSdp` | ✔️ | — | ✔️ | — | — |
 | `onDeviceDiscovered` | ✔️ | — | ✔️ | ✔️ | ✔️ |
 | `onDeviceRemoved` | ✔️ | — | ✔️ | ✔️ | — |
 | `onConnectionStateChanged` | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ |
 | `onData` | ✔️ | ✔️ | ✔️ | ✔️ | — |
+| `onReportRequest` | ✔️ | — | — | — | — |
 | `onGetReport` | ✔️ | — | ✔️ | — | — |
 | `onSdpServiceRegistrationUpdate` | ✔️ | — | ✔️ | — | — |
 
@@ -249,8 +251,8 @@ consulted first; `onGetReport` runs only when it declines:
 
 ```dart
 UniversalBluetooth.onReportRequest =
-    (deviceId, reportType, reportId, bufferSize) {
-  if (reportId != 3) return null;
+    (request) {
+  if (request.reportId != 3) return null;
   return ReportReply(data: Uint8List.fromList([0xE9, 0x00]));
 };
 ```

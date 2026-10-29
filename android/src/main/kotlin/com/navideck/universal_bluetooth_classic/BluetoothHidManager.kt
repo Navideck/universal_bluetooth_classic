@@ -89,7 +89,7 @@ class BluetoothHidManager(
                     11250,
                     BluetoothHidDeviceAppQosSettings.MAX
                 ),
-                Runnable::run,
+                { command -> handler.post(command) },
                 this@BluetoothHidManager
             )
         } catch (e: Exception) {
@@ -162,13 +162,6 @@ class BluetoothHidManager(
                 return
             }
 
-            // Make connection request. STATE_CONNECTING is not a connection: the
-            // caller must wait for the confirmed state change like any other.
-            if (!btHidProxy.connect(bluetoothDevice)) {
-                callback(Result.failure(FlutterError("Failed", "Failed to connect")))
-                return
-            }
-
             Log.d(TAG, "Waiting for connection result of $deviceId")
             connectionCallbacks[deviceId] = callback
             val timeout = timeoutMillis?.takeIf { it > 0 } ?: DEFAULT_CONNECT_TIMEOUT_MS
@@ -183,11 +176,22 @@ class BluetoothHidManager(
             }
             connectionTimeouts[deviceId] = timeoutRunnable
             handler.postDelayed(timeoutRunnable, timeout)
+            // Install pending state before requesting a connection: confirmation
+            // may arrive before the native call returns.
+            if (!btHidProxy.connect(bluetoothDevice)) {
+                connectionTimeouts.remove(deviceId)?.let { handler.removeCallbacks(it) }
+                connectionCallbacks.remove(deviceId)?.invoke(
+                    Result.failure(FlutterError("Failed", "Failed to connect"))
+                )
+            }
         } catch (e: Exception) {
             // The BluetoothHidDevice proxy calls above can throw (for example a
             // SecurityException when BLUETOOTH_CONNECT is not granted). Convert
             // that into a failure reply so the caller does not wait forever.
-            callback(Result.failure(FlutterError(code = "Error", message = e.toString())))
+            connectionTimeouts.remove(deviceId)?.let { handler.removeCallbacks(it) }
+            connectionCallbacks.remove(deviceId)?.invoke(
+                Result.failure(FlutterError(code = "Error", message = e.toString()))
+            ) ?: callback(Result.failure(FlutterError(code = "Error", message = e.toString())))
         }
     }
 
@@ -291,7 +295,7 @@ class BluetoothHidManager(
             callbackChannel.onReportRequest(
                 device.address,
                 type.toReportType(),
-                id.toLong(),
+                (id.toInt() and 0xFF).toLong(),
                 bufferSize.toLong()
             ) { reportResult ->
                 val reportReply = reportResult.getOrNull()

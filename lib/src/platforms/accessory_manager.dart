@@ -242,6 +242,9 @@ class _HidCallbackHandler extends BluetoothHidManagerCallbackChannel {
 
   @override
   Future<void> onConnectionStateChanged(String deviceId, bool connected) async {
+    if (connected) {
+      _owner._router.record(deviceId, BluetoothTransport.hid);
+    }
     _owner.callbacks.onConnectionStateChanged?.call(
       BluetoothConnectionEvent(
         identifier: deviceId,
@@ -277,10 +280,12 @@ class _HidCallbackHandler extends BluetoothHidManagerCallbackChannel {
     // The report-id-aware callback wins when it answers; otherwise the legacy
     // callback gets its turn on the native side.
     return _owner.callbacks.onReportRequest?.call(
-      deviceId,
-      type,
-      reportId,
-      bufferSize,
+      HidReportRequest(
+        deviceId: deviceId,
+        type: type,
+        reportId: reportId,
+        bufferSize: bufferSize,
+      ),
     );
   }
 
